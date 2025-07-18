@@ -1,5 +1,44 @@
 <template>
   <div class="login">
+    <!-- 动态背景 -->
+    <div class="background-container">
+      <!-- 网格背景 -->
+      <div class="code-grid"></div>
+
+      <!-- 光晕效果 -->
+      <div class="glow glow-1"></div>
+      <div class="glow glow-2"></div>
+
+      <!-- 浮动元素 -->
+      <div class="floating-element element-1 circle"></div>
+      <div class="floating-element element-2 ring"></div>
+      <div class="floating-element element-3 circle"></div>
+      <div class="floating-element element-4 ring"></div>
+      <div class="floating-element element-5 circle"></div>
+      <div class="floating-element element-6 cat-shape"></div>
+      <div class="floating-element element-7 cat-shape"></div>
+
+      <!-- 粒子效果 -->
+      <div class="particle" style="left: 10%; animation-duration: 8s;"></div>
+      <div class="particle" style="left: 20%; animation-duration: 12s;"></div>
+      <div class="particle" style="left: 30%; animation-duration: 10s;"></div>
+      <div class="particle" style="left: 40%; animation-duration: 14s;"></div>
+      <div class="particle" style="left: 50%; animation-duration: 9s;"></div>
+      <div class="particle" style="left: 60%; animation-duration: 11s;"></div>
+      <div class="particle" style="left: 70%; animation-duration: 13s;"></div>
+      <div class="particle" style="left: 80%; animation-duration: 15s;"></div>
+      <div class="particle" style="left: 90%; animation-duration: 7s;"></div>
+
+      <!-- 主Logo区域 -->
+      <div class="logo-area">
+        <div class="main-logo">
+          <div class="logo-ring"></div>
+        </div>
+        <div class="logo-text">Dromara</div>
+      </div>
+    </div>
+
+    <!-- 登录表单 -->
     <el-form ref="loginRef" :model="loginForm" :rules="loginRules" class="login-form">
       <div class="title-box">
         <h3 class="title">{{ title }}</h3>
@@ -71,6 +110,7 @@
         </div>
       </el-form-item>
     </el-form>
+
     <!--  底部  -->
     <div class="el-login-footer">
       <span>Copyright © 2018-2025 疯狂的狮子Li All Rights Reserved.</span>
@@ -240,9 +280,239 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   align-items: center;
+  height: 100vh;
+  overflow: hidden;
+  background: linear-gradient(135deg, #87CEEB 0%, #4A90E2 25%, #6B8FC1 75%, #5A7BA8 100%);
+  position: relative;
+  font-family: 'Arial', sans-serif;
+}
+
+.background-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
   height: 100%;
-  background-image: url('../assets/images/login-background.jpg');
-  background-size: cover;
+  overflow: hidden;
+  z-index: 1;
+}
+
+/* 动态几何图形 */
+.floating-element {
+  position: absolute;
+  opacity: 0.1;
+  animation: float 8s ease-in-out infinite;
+}
+
+.circle {
+  border-radius: 50%;
+  background: linear-gradient(45deg, #FFD700, #FFA500);
+}
+
+.ring {
+  border-radius: 50%;
+  border: 4px solid #FFD700;
+  background: transparent;
+}
+
+.cat-shape {
+  width: 60px;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  position: relative;
+}
+
+.cat-shape::before,
+.cat-shape::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 50% 50% 50% 0;
+  top: -10px;
+}
+
+.cat-shape::before {
+  left: 10px;
+  transform: rotate(-45deg);
+}
+
+.cat-shape::after {
+  right: 10px;
+  transform: rotate(45deg);
+}
+
+/* 位置和大小变化 */
+.element-1 {
+  top: 10%;
+  left: 15%;
+  width: 80px;
+  height: 80px;
+  animation-delay: 0s;
+}
+
+.element-2 {
+  top: 60%;
+  right: 20%;
+  width: 120px;
+  height: 120px;
+  animation-delay: 2s;
+}
+
+.element-3 {
+  bottom: 20%;
+  left: 10%;
+  width: 100px;
+  height: 100px;
+  animation-delay: 4s;
+}
+
+.element-4 {
+  top: 30%;
+  right: 10%;
+  width: 60px;
+  height: 60px;
+  animation-delay: 1s;
+}
+
+.element-5 {
+  bottom: 40%;
+  right: 40%;
+  width: 90px;
+  height: 90px;
+  animation-delay: 3s;
+}
+
+.element-6 {
+  top: 20%;
+  left: 60%;
+  animation-delay: 5s;
+}
+
+.element-7 {
+  bottom: 60%;
+  left: 40%;
+  animation-delay: 6s;
+}
+
+/* 代码网格背景 */
+.code-grid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 50px 50px;
+  opacity: 0.6;
+  animation: gridMove 20s linear infinite;
+}
+
+/* 光晕效果 */
+.glow {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.2) 0%, transparent 70%);
+  animation: pulse 4s ease-in-out infinite;
+}
+
+.glow-1 {
+  top: 20%;
+  left: 20%;
+  animation-delay: 0s;
+}
+
+.glow-2 {
+  bottom: 20%;
+  right: 20%;
+  animation-delay: 2s;
+}
+
+/* 粒子效果 */
+.particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: #FFD700;
+  border-radius: 50%;
+  opacity: 0.8;
+  animation: particle 10s linear infinite;
+}
+
+.particle:nth-child(odd) {
+  animation-delay: 0s;
+}
+
+.particle:nth-child(even) {
+  animation-delay: 5s;
+}
+
+/* 主Logo区域 */
+.logo-area {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 2;
+  opacity: 0.15;
+}
+
+.main-logo {
+  width: 200px;
+  height: 200px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  position: relative;
+  margin: 0 auto 20px;
+  animation: logoFloat 6s ease-in-out infinite;
+}
+
+.main-logo::before,
+.main-logo::after {
+  content: '';
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50% 50% 50% 0;
+  top: -30px;
+}
+
+.main-logo::before {
+  left: 40px;
+  transform: rotate(-45deg);
+}
+
+.main-logo::after {
+  right: 40px;
+  transform: rotate(45deg);
+}
+
+.logo-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 250px;
+  height: 120px;
+  border: 8px solid rgba(255, 215, 0, 0.3);
+  border-radius: 50%;
+  animation: ringRotate 12s linear infinite;
+}
+
+.logo-text {
+  font-size: 48px;
+  font-weight: bold;
+  color: rgba(255, 255, 255, 0.2);
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+  letter-spacing: 2px;
 }
 
 .title-box {
@@ -261,11 +531,16 @@ onMounted(() => {
 }
 
 .login-form {
-  border-radius: 6px;
-  background: #ffffff;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   width: 400px;
   padding: 25px 25px 5px 25px;
-  z-index: 1;
+  z-index: 100;
+  position: relative;
+
   .el-input {
     height: 40px;
     input {
@@ -308,10 +583,72 @@ onMounted(() => {
   font-family: Arial, serif;
   font-size: 12px;
   letter-spacing: 1px;
+  z-index: 10;
 }
 
 .login-code-img {
   height: 40px;
   padding-left: 12px;
+}
+
+/* 动画定义 */
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(180deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 0.2; }
+  50% { transform: scale(1.1); opacity: 0.3; }
+}
+
+@keyframes gridMove {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(50px, 50px); }
+}
+
+@keyframes particle {
+  0% {
+    transform: translateY(100vh) translateX(0px);
+    opacity: 0;
+  }
+  10% { opacity: 0.8; }
+  90% { opacity: 0.8; }
+  100% {
+    transform: translateY(-100px) translateX(100px);
+    opacity: 0;
+  }
+}
+
+@keyframes logoFloat {
+  0%, 100% { transform: translate(-50%, -50%) translateY(0px); }
+  50% { transform: translate(-50%, -50%) translateY(-10px); }
+}
+
+@keyframes ringRotate {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .main-logo {
+    width: 120px;
+    height: 120px;
+  }
+
+  .logo-ring {
+    width: 150px;
+    height: 75px;
+  }
+
+  .logo-text {
+    font-size: 24px;
+  }
+
+  .login-form {
+    width: 350px;
+    margin: 0 20px;
+  }
 }
 </style>

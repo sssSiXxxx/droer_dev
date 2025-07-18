@@ -2,6 +2,7 @@ import { defineConfig, loadEnv } from 'vite';
 import createPlugins from './vite/plugins';
 import autoprefixer from 'autoprefixer'; // css自动添加兼容性前缀
 import path from 'path';
+import vue from '@vitejs/plugin-vue';
 
 export default defineConfig(({ mode, command }) => {
   const env = loadEnv(mode, process.cwd());
@@ -28,6 +29,11 @@ export default defineConfig(({ mode, command }) => {
           changeOrigin: true,
           ws: true,
           rewrite: (path) => path.replace(new RegExp('^' + env.VITE_APP_BASE_API), '')
+        },
+        '/gitee-api': {
+          target: 'https://gitee.com/api/v5',
+          changeOrigin: true,
+          rewrite: path => path.replace(/^\/gitee-api/, '')
         }
       }
     },
