@@ -17,9 +17,9 @@ import org.dromara.workflow.domain.FlowCategory;
  * @date 2023-06-27
  */
 @Data
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(callSuper = false)
 @AutoMapper(target = FlowCategory.class, reverseConvertGenerate = false)
-public class FlowCategoryBo extends BaseEntity {
+public class FlowCategoryBo {
 
     /**
      * 流程分类ID

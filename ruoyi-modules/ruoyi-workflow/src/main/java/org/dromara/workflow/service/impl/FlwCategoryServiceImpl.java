@@ -51,7 +51,8 @@ public class FlwCategoryServiceImpl implements IFlwCategoryService {
      */
     @Override
     public FlowCategoryVo queryById(Long categoryId) {
-        return baseMapper.selectVoById(categoryId);
+        FlowCategory entity = baseMapper.selectById(categoryId);
+        return MapstructUtils.convert(entity, FlowCategoryVo.class);
     }
 
     /**
@@ -80,7 +81,8 @@ public class FlwCategoryServiceImpl implements IFlwCategoryService {
     @Override
     public List<FlowCategoryVo> queryList(FlowCategoryBo bo) {
         LambdaQueryWrapper<FlowCategory> lqw = buildQueryWrapper(bo);
-        return baseMapper.selectVoList(lqw);
+        List<FlowCategory> list = baseMapper.selectList(lqw);
+        return MapstructUtils.convert(list, FlowCategoryVo.class);
     }
 
     /**
@@ -231,7 +233,7 @@ public class FlwCategoryServiceImpl implements IFlwCategoryService {
      */
     private void updateCategoryChildren(Long categoryId, String newAncestors, String oldAncestors) {
         List<FlowCategory> children = baseMapper.selectList(new LambdaQueryWrapper<FlowCategory>()
-            .apply(DataBaseHelper.findInSet(categoryId, "ancestors")));
+            .like(FlowCategory::getAncestors, categoryId));
         List<FlowCategory> list = new ArrayList<>();
         for (FlowCategory child : children) {
             FlowCategory category = new FlowCategory();
@@ -240,7 +242,9 @@ public class FlwCategoryServiceImpl implements IFlwCategoryService {
             list.add(category);
         }
         if (CollUtil.isNotEmpty(list)) {
-            baseMapper.updateBatchById(list);
+            for (FlowCategory category : list) {
+                baseMapper.updateById(category);
+            }
         }
     }
 

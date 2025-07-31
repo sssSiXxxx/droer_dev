@@ -42,7 +42,7 @@
         <el-col :span="16">
           <div class="section-card">
             <div class="section-header">
-              <h2>🔥 热门项目</h2>
+              <h2>热门项目</h2>
               <p>按 Star 数排序的社区热门项目</p>
             </div>
             
@@ -54,11 +54,10 @@
                 @click="openLink(project.html_url)"
               >
                 <div class="project-header">
-                  <div class="project-avatar">
-                    <img :src="project.avatar_url" :alt="project.name">
+                  <div class="project-name-highlight">
+                    <span class="project-name">{{ project.name }}</span>
                   </div>
                   <div class="project-info">
-                    <h3>{{ project.name }}</h3>
                     <p class="project-desc">{{ project.description || '暂无描述' }}</p>
                   </div>
                 </div>
@@ -80,14 +79,32 @@
               </div>
             </div>
           </div>
+          
+          <!-- 新增：社区公告 -->
+          <div class="section-card" style="margin-top: 20px;">
+            <div class="section-header">
+              <h2>社区公告</h2>
+              <p>最新社区动态与公告信息</p>
+            </div>
+            
+            <div class="announcement-list">
+              <div class="announcement-item" v-for="(item, index) in announcements" :key="index">
+                <div class="announcement-date">{{ item.date }}</div>
+                <div class="announcement-content">
+                  <h4>{{ item.title }}</h4>
+                  <p>{{ item.content }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </el-col>
 
         <!-- 右栏：本周贡献榜 -->
         <el-col :span="8">
           <div class="section-card">
             <div class="section-header">
-              <h2>👑 贡献榜</h2>
-              <p>本周活跃贡献者</p>
+              <h2>本周贡献榜</h2>
+              <p>最近7天活跃贡献者</p>
             </div>
             
             <div class="contributor-list" v-loading="contributorsLoading">
@@ -101,16 +118,36 @@
                   {{ index + 1 }}
                 </div>
                 <div class="contributor-avatar">
-                  <img :src="contributor.avatar_url" :alt="contributor.name || contributor.login">
+                  <img 
+                    :src="contributor.avatar_url" 
+                    :alt="contributor.name || contributor.login"
+                    @error="handleAvatarError"
+                    :onerror="'this.src=\'https://gitee.com/assets/no_portrait-2b772d6b.png\''"
+                  >
                 </div>
                 <div class="contributor-info">
                   <h4>{{ contributor.name || contributor.login }}</h4>
                   <p>@{{ contributor.login }}</p>
                   <div class="contribution-count">
                     <el-icon><Trophy /></el-icon>
-                    <span>{{ contributor.contributions }} 贡献</span>
+                    <span>本周贡献: {{ contributor.contributions }}</span>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 新增：快速入口 -->
+          <div class="section-card" style="margin-top: 20px;">
+            <div class="section-header">
+              <h2>快速入口</h2>
+              <p>常用功能与链接</p>
+            </div>
+            
+            <div class="quick-entry-grid">
+              <div class="quick-entry-item" v-for="(item, index) in quickEntries" :key="index" @click="openLink(item.link)">
+                <el-icon class="quick-entry-icon"><component :is="item.icon" /></el-icon>
+                <span class="quick-entry-title">{{ item.title }}</span>
               </div>
             </div>
           </div>
@@ -122,7 +159,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { Star, Share, Link, Trophy } from '@element-plus/icons-vue'
+import { Star, Share, Link, Trophy, Document, Setting, User, Monitor, Calendar, Bell } from '@element-plus/icons-vue'
 import { getHotProjects, getWeeklyContributors, getCommunityStats, type ProjectInfo, type ContributorInfo } from '@/api/community'
 
 // 响应式数据
@@ -139,12 +176,41 @@ const totalContributors = ref(0)
 // 错误信息
 const errorMessage = ref('')
 
+// 社区公告数据
+const announcements = ref([
+  {
+    date: '2024-07-31',
+    title: '系统升级通知',
+    content: '为提供更好的服务体验，系统将于8月5日进行升级维护，届时部分功能可能暂时不可用。'
+  },
+  {
+    date: '2024-07-28',
+    title: 'Dromara社区月度活动',
+    content: '8月线上技术分享会将于8月15日晚8点举行，主题为"微服务架构最佳实践"，欢迎参与。'
+  },
+  {
+    date: '2024-07-25',
+    title: '新项目加入公告',
+    content: '热烈欢迎"FastRequest"项目正式加入Dromara开源社区，这是一款高效的API调试工具。'
+  }
+])
+
+// 快速入口
+const quickEntries = ref([
+  { title: '项目文档', icon: 'Document', link: 'https://dromara.org/zh-cn/docs/' },
+  { title: '系统设置', icon: 'Setting', link: '/system/user' },
+  { title: '个人中心', icon: 'User', link: '/user/profile' },
+  { title: '系统监控', icon: 'Monitor', link: '/monitor/server' },
+  { title: '日程安排', icon: 'Calendar', link: '#' },
+  { title: '消息通知', icon: 'Bell', link: '#' }
+])
+
 // 获取热门项目
 const fetchHotProjects = async () => {
   projectsLoading.value = true
   errorMessage.value = ''
   try {
-    const projects = await getHotProjects(1, 15)
+    const projects = await getHotProjects(1, 20)
     hotProjects.value = projects
     if (projects.length > 0) {
       console.log('✅ 成功获取热门项目:', projects.length, '个')
@@ -226,23 +292,33 @@ const getRankClass = (index: number): string => {
   return ''
 }
 
+// 处理头像加载失败
+const handleAvatarError = (event: Event) => {
+  const target = event.target as HTMLImageElement;
+  target.src = 'https://gitee.com/assets/no_portrait-2b772d6b.png';
+};
+
 // 页面加载时获取数据
-onMounted(() => {
-  fetchHotProjects()
-  fetchWeeklyContributors()
-  fetchCommunityStats()
+onMounted(async () => {
+  // 并行加载所有数据以提高性能
+  await Promise.all([
+    fetchHotProjects(),
+    fetchWeeklyContributors(),
+    fetchCommunityStats()
+  ])
+  console.log('首页数据加载完成')
 })
 </script>
 
 <style scoped>
 .community-home {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #f5f7fa;
   padding: 0;
 }
 
 .community-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #409eff;
   color: white;
   padding: 60px 0;
   position: relative;
@@ -382,10 +458,11 @@ onMounted(() => {
 
 .section-card {
   background: white;
-  border-radius: 12px;
-  padding: 30px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  padding: 20px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   height: 100%;
+  border: 1px solid #ebeef5;
 }
 
 .section-header {
@@ -395,56 +472,69 @@ onMounted(() => {
 
 .section-header h2 {
   margin: 0 0 10px 0;
-  font-size: 24px;
-  color: #2c3e50;
+  font-size: 22px;
+  font-weight: 600;
+  color: #303133;
 }
 
 .section-header p {
   margin: 0;
-  color: #7f8c8d;
+  color: #909399;
   font-size: 14px;
 }
 
 .project-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 20px;
+  max-height: 600px;
+  overflow-y: auto;
+  padding-right: 10px;
 }
 
 .project-card {
-  border: 1px solid #e8e8e8;
-  border-radius: 8px;
-  padding: 20px;
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+  padding: 15px;
   cursor: pointer;
   transition: all 0.3s ease;
-  background: #fafafa;
+  background: #ffffff;
 }
 
 .project-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-  border-color: #3498db;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  border-color: #409eff;
 }
 
 .project-header {
   display: flex;
-  align-items: flex-start;
-  gap: 15px;
+  flex-direction: column;
   margin-bottom: 15px;
 }
 
-.project-avatar {
-  width: 50px;
-  height: 50px;
-  border-radius: 8px;
-  overflow: hidden;
-  flex-shrink: 0;
+.project-name-highlight {
+  margin-bottom: 10px;
+  position: relative;
+  padding-left: 12px;
 }
 
-.project-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.project-name-highlight::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 16px;
+  background: #409eff;
+  border-radius: 2px;
+}
+
+.project-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
 }
 
 .project-info h3 {
@@ -493,23 +583,110 @@ onMounted(() => {
 .contributor-list {
   display: flex;
   flex-direction: column;
+  gap: 12px;
+  max-height: 500px;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.announcement-list {
+  display: flex;
+  flex-direction: column;
   gap: 15px;
+}
+
+.announcement-item {
+  display: flex;
+  padding: 12px;
+  border-radius: 4px;
+  background: #ffffff;
+  border: 1px solid #ebeef5;
+  transition: all 0.3s ease;
+}
+
+.announcement-item:hover {
+  background: #f5f7fa;
+  border-color: #c6e2ff;
+}
+
+.announcement-date {
+  flex-shrink: 0;
+  width: 80px;
+  color: #909399;
+  font-size: 13px;
+}
+
+.announcement-content {
+  flex: 1;
+}
+
+.announcement-content h4 {
+  margin: 0 0 8px 0;
+  font-size: 15px;
+  color: #303133;
+  font-weight: 600;
+}
+
+.announcement-content p {
+  margin: 0;
+  font-size: 13px;
+  color: #606266;
+  line-height: 1.5;
+}
+
+.quick-entry-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.quick-entry-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 15px;
+  border-radius: 4px;
+  background: #ffffff;
+  border: 1px solid #ebeef5;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.quick-entry-item:hover {
+  background: #f5f7fa;
+  border-color: #c6e2ff;
+  transform: translateY(-2px);
+}
+
+.quick-entry-icon {
+  font-size: 24px;
+  margin-bottom: 8px;
+  color: #409eff;
+}
+
+.quick-entry-title {
+  font-size: 14px;
+  color: #303133;
 }
 
 .contributor-item {
   display: flex;
   align-items: center;
   gap: 15px;
-  padding: 15px;
-  border-radius: 8px;
+  padding: 12px;
+  border-radius: 4px;
   cursor: pointer;
   transition: all 0.3s ease;
-  background: #f8f9fa;
+  background: #ffffff;
+  border: 1px solid #ebeef5;
+  margin-bottom: 8px;
 }
 
 .contributor-item:hover {
-  background: #e9ecef;
+  background: #f5f7fa;
   transform: translateX(5px);
+  border-color: #c6e2ff;
 }
 
 .rank-badge {
@@ -527,15 +704,15 @@ onMounted(() => {
 }
 
 .rank-badge.gold {
-  background: linear-gradient(45deg, #FFD700, #FFA500);
+  background: #f0c53f;
 }
 
 .rank-badge.silver {
-  background: linear-gradient(45deg, #C0C0C0, #A8A8A8);
+  background: #c0c0c0;
 }
 
 .rank-badge.bronze {
-  background: linear-gradient(45deg, #CD7F32, #B8860B);
+  background: #cd7f32;
 }
 
 .contributor-avatar {
@@ -544,12 +721,23 @@ onMounted(() => {
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
+  border: 2px solid #f0f0f0;
+  background: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .contributor-avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-radius: 50%;
+}
+
+.contributor-avatar img:hover {
+  transform: scale(1.1);
+  transition: transform 0.3s ease;
 }
 
 .contributor-info {
@@ -558,15 +746,15 @@ onMounted(() => {
 
 .contributor-info h4 {
   margin: 0 0 5px 0;
-  font-size: 16px;
-  color: #2c3e50;
+  font-size: 15px;
+  color: #303133;
   font-weight: 600;
 }
 
 .contributor-info p {
   margin: 0 0 8px 0;
-  font-size: 14px;
-  color: #7f8c8d;
+  font-size: 13px;
+  color: #909399;
 }
 
 .contribution-count {
@@ -574,8 +762,31 @@ onMounted(() => {
   align-items: center;
   gap: 5px;
   font-size: 12px;
-  color: #e67e22;
-  font-weight: 600;
+  color: #409eff;
+  font-weight: 500;
+}
+
+/* 自定义滚动条样式 */
+.project-grid::-webkit-scrollbar,
+.contributor-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.project-grid::-webkit-scrollbar-track,
+.contributor-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.project-grid::-webkit-scrollbar-thumb,
+.contributor-list::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.project-grid::-webkit-scrollbar-thumb:hover,
+.contributor-list::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }
 
 @media (max-width: 768px) {

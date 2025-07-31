@@ -1,10 +1,7 @@
 package org.dromara.workflow.mapper;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import org.dromara.common.mybatis.annotation.DataColumn;
-import org.dromara.common.mybatis.annotation.DataPermission;
-import org.dromara.common.mybatis.core.mapper.BaseMapperPlus;
-import org.dromara.common.mybatis.helper.DataBaseHelper;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.dromara.workflow.domain.FlowCategory;
 import org.dromara.workflow.domain.vo.FlowCategoryVo;
 
@@ -18,7 +15,7 @@ import java.util.stream.Stream;
  * @author may
  * @date 2023-06-27
  */
-public interface FlwCategoryMapper extends BaseMapperPlus<FlowCategory, FlowCategoryVo> {
+public interface FlwCategoryMapper extends BaseMapper<FlowCategory> {
 
     /**
      * 统计指定流程分类ID的分类数量
@@ -26,9 +23,6 @@ public interface FlwCategoryMapper extends BaseMapperPlus<FlowCategory, FlowCate
      * @param categoryId 流程分类ID
      * @return 该流程分类ID的分类数量
      */
-    @DataPermission({
-        @DataColumn(key = "deptName", value = "createDept")
-    })
     default long countCategoryById(Long categoryId) {
         return this.selectCount(new LambdaQueryWrapper<FlowCategory>().eq(FlowCategory::getCategoryId, categoryId));
     }
@@ -41,8 +35,7 @@ public interface FlwCategoryMapper extends BaseMapperPlus<FlowCategory, FlowCate
      */
     default List<FlowCategory> selectListByParentId(Long parentId) {
         return this.selectList(new LambdaQueryWrapper<FlowCategory>()
-            .select(FlowCategory::getCategoryId)
-            .apply(DataBaseHelper.findInSet(parentId, "ancestors")));
+            .select(FlowCategory::getCategoryId));
     }
 
     /**

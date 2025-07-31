@@ -30,11 +30,18 @@ export default defineConfig(({ mode, command }) => {
           ws: true,
           rewrite: (path) => path.replace(new RegExp('^' + env.VITE_APP_BASE_API), '')
         },
-        '/gitee-api': {
-          target: 'https://gitee.com/api/v5',
-          changeOrigin: true,
-          rewrite: path => path.replace(/^\/gitee-api/, '')
-        }
+        // 已改用直接请求Gitee API，不再需要代理
+        // '/gitee-api': {
+        //   target: 'https://gitee.com/api/v5',
+        //   changeOrigin: true,
+        //   rewrite: path => path.replace(/^\/gitee-api/, '')
+        // },
+        // open-giteye-api 暂时不可用，已移除代理配置
+        // '/giteye-api': {
+        //   target: 'https://giteye-api.dromara.org',
+        //   changeOrigin: true,
+        //   rewrite: path => path.replace(/^\/giteye-api/, '/api')
+        // }
       }
     },
     css: {
