@@ -147,6 +147,13 @@
             </dependency>
 
             <dependency>
+                <groupId>org.dromara</groupId>
+                <artifactId>ruoyi-common-core</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+
+            <dependency>
                 <groupId>org.springdoc</groupId>
                 <artifactId>springdoc-openapi-starter-webmvc-api</artifactId>
                 <version>${springdoc.version}</version>
@@ -357,6 +364,12 @@
                 <version>${revision}</version>
             </dependency>
 
+            <dependency>
+                <groupId>org.dromara</groupId>
+                <artifactId>ruoyi-project</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 
@@ -365,6 +378,7 @@
         <module>ruoyi-common</module>
         <module>ruoyi-extend</module>
         <module>ruoyi-modules</module>
+        <module>ruoyi-project</module>
     </modules>
     <packaging>pom</packaging>
 
