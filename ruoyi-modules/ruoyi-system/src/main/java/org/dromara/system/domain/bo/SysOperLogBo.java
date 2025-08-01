@@ -18,10 +18,7 @@ import java.util.Map;
  */
 
 @Data
-@AutoMappers({
-    @AutoMapper(target = SysOperLog.class, reverseConvertGenerate = false),
-    @AutoMapper(target = OperLogEvent.class)
-})
+@AutoMapper(target = SysOperLog.class, reverseConvertGenerate = false)
 public class SysOperLogBo {
 
     /**
