@@ -98,6 +98,12 @@
             <artifactId>ruoyi-workflow</artifactId>
         </dependency>
 
+        <!-- 开源社区管理模块 -->
+        <dependency>
+            <groupId>org.dromara</groupId>
+            <artifactId>ruoyi-osc</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>de.codecentric</groupId>
             <artifactId>spring-boot-admin-starter-client</artifactId>
