@@ -92,13 +92,14 @@
           <image-upload v-model="form.logoUrl"/>
         </el-form-item>
         <el-form-item label="项目状态" prop="status">
-          <el-radio-group v-model="form.status">
-            <el-radio
+          <el-select v-model="form.status" placeholder="请选择项目状态" style="width: 100%">
+            <el-option
               v-for="dict in osc_project_status"
               :key="dict.value"
+              :label="dict.label"
               :value="dict.value"
-            >{{dict.label}}</el-radio>
-          </el-radio-group>
+            />
+          </el-select>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
             <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" />
