@@ -1,5 +1,10 @@
 export interface ProjectVO {
   /**
+   * 项目ID
+   */
+  projectId: number;
+
+  /**
    * 项目名称
    */
   projectName: string;
@@ -47,9 +52,19 @@ export interface ProjectVO {
 
 export interface ProjectForm extends BaseEntity {
   /**
+   * 项目ID
+   */
+  projectId?: number;
+
+  /**
    * 项目名称
    */
   projectName?: string;
+
+  /**
+   * 项目编号（可选）
+   */
+  projectCode?: string;
 
   /**
    * 项目描述

@@ -36,6 +36,8 @@ CREATE TABLE `os_project` (
   INDEX `idx_project_create_dept` (`create_dept`)
 ) COMMENT='开源项目表';
 
+ALTER TABLE os_project MODIFY COLUMN project_code varchar(50) NULL COMMENT '项目代号';
+
 -- 项目审核表
 CREATE TABLE `os_project_audit` (
   `audit_id` bigint NOT NULL AUTO_INCREMENT COMMENT '审核ID',

@@ -42,12 +42,69 @@
 
       <el-table v-loading="loading" border :data="projectList" @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="55" align="center" />
+        <el-table-column label="序号" align="center" width="60">
+          <template #default="scope">
+            {{ (queryParams.pageNum - 1) * queryParams.pageSize + scope.$index + 1 }}
+          </template>
+        </el-table-column>
         <el-table-column label="项目ID" align="center" prop="projectId" v-if="false" />
-        <el-table-column label="项目名称" align="center" prop="projectName" />
-        <el-table-column label="项目编号" align="center" prop="projectCode" />
-        <el-table-column label="项目描述" align="center" prop="description" />
-        <el-table-column label="代码仓库" align="center" prop="repositoryUrl" />
-        <el-table-column label="项目网站" align="center" prop="websiteUrl" />
+        <el-table-column label="项目名称" align="center" prop="projectName" width="150">
+          <template #default="scope">
+            <el-tooltip
+              :content="scope.row.projectName"
+              placement="top"
+              :show-after="500"
+            >
+              <div class="project-name-cell">
+                {{ scope.row.projectName }}
+              </div>
+            </el-tooltip>
+          </template>
+        </el-table-column>
+        <el-table-column label="项目描述" align="center" prop="description" width="200">
+          <template #default="scope">
+            <el-tooltip
+              :content="scope.row.description"
+              placement="top"
+              :show-after="500"
+              :hide-after="3000"
+            >
+              <div class="description-cell">
+                {{ scope.row.description }}
+              </div>
+            </el-tooltip>
+          </template>
+        </el-table-column>
+        <el-table-column label="代码仓库" align="center" prop="repositoryUrl" width="150">
+          <template #default="scope">
+            <el-link
+              v-if="scope.row.repositoryUrl"
+              :href="scope.row.repositoryUrl"
+              target="_blank"
+              type="primary"
+              :underline="false"
+            >
+              <el-icon><Link /></el-icon>
+              查看仓库
+            </el-link>
+            <span v-else class="text-gray-400">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="项目网站" align="center" prop="websiteUrl" width="150">
+          <template #default="scope">
+            <el-link
+              v-if="scope.row.websiteUrl"
+              :href="scope.row.websiteUrl"
+              target="_blank"
+              type="primary"
+              :underline="false"
+            >
+              <el-icon><Link /></el-icon>
+              访问网站
+            </el-link>
+            <span v-else class="text-gray-400">-</span>
+          </template>
+        </el-table-column>
         <el-table-column label="项目Logo" align="center" prop="logoUrlUrl" width="100">
           <template #default="scope">
             <image-preview :src="scope.row.logoUrlUrl" :width="50" :height="50"/>
@@ -58,7 +115,21 @@
             <dict-tag :options="osc_project_status" :value="scope.row.status"/>
           </template>
         </el-table-column>
-        <el-table-column label="备注" align="center" prop="remark" />
+        <el-table-column label="备注" align="center" prop="remark" width="120">
+          <template #default="scope">
+            <el-tooltip
+              v-if="scope.row.remark"
+              :content="scope.row.remark"
+              placement="top"
+              :show-after="500"
+            >
+              <div class="remark-cell">
+                {{ scope.row.remark }}
+              </div>
+            </el-tooltip>
+            <span v-else class="text-gray-400">-</span>
+          </template>
+        </el-table-column>
         <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
           <template #default="scope">
             <el-tooltip content="修改" placement="top">
@@ -79,14 +150,15 @@
         <el-form-item label="项目名称" prop="projectName">
           <el-input v-model="form.projectName" placeholder="请输入项目名称" />
         </el-form-item>
+
         <el-form-item label="项目描述" prop="description">
             <el-input v-model="form.description" type="textarea" placeholder="请输入内容" />
         </el-form-item>
         <el-form-item label="代码仓库" prop="repositoryUrl">
-          <el-input v-model="form.repositoryUrl" placeholder="请输入代码仓库" />
+          <el-input v-model="form.repositoryUrl" placeholder="请输入仓库地址" />
         </el-form-item>
         <el-form-item label="项目网站" prop="websiteUrl">
-          <el-input v-model="form.websiteUrl" placeholder="请输入项目网站" />
+          <el-input v-model="form.websiteUrl" placeholder="请输入项目网址" />
         </el-form-item>
         <el-form-item label="项目Logo" prop="logoUrl">
           <image-upload v-model="form.logoUrl"/>
@@ -140,7 +212,9 @@ const dialog = reactive<DialogOption>({
 });
 
 const initFormData: ProjectForm = {
+  projectId: undefined,
   projectName: undefined,
+  projectCode: undefined,
   description: undefined,
   repositoryUrl: undefined,
   websiteUrl: undefined,
@@ -270,3 +344,46 @@ onMounted(() => {
   getList();
 });
 </script>
+
+<style scoped>
+.description-cell {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  max-width: 180px;
+  text-align: left;
+}
+
+.description-cell:hover {
+  color: #409eff;
+}
+
+.project-name-cell {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  max-width: 130px;
+  text-align: left;
+  font-weight: 500;
+}
+
+.project-name-cell:hover {
+  color: #409eff;
+}
+
+.remark-cell {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  max-width: 100px;
+  text-align: left;
+  color: #666;
+}
+
+.remark-cell:hover {
+  color: #409eff;
+}
+</style>

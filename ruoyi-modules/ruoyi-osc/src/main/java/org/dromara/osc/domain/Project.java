@@ -2,6 +2,7 @@ package org.dromara.osc.domain;
 
 import org.dromara.common.mybatis.core.domain.BaseEntity;
 import com.baomidou.mybatisplus.annotation.*;
+import io.github.linpeilie.annotations.AutoMapper;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.dromara.common.translation.annotation.Translation;
@@ -18,6 +19,7 @@ import java.io.Serial;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("os_project")
+@AutoMapper(target = org.dromara.osc.domain.vo.ProjectVo.class)
 public class Project extends BaseEntity {
 
     @Serial

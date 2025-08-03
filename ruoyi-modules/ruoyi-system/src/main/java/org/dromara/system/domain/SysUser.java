@@ -1,6 +1,7 @@
 package org.dromara.system.domain;
 
 import com.baomidou.mybatisplus.annotation.*;
+import io.github.linpeilie.annotations.AutoMapper;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -19,6 +20,7 @@ import java.util.Date;
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @TableName("sys_user")
+@AutoMapper(target = org.dromara.system.domain.vo.SysUserVo.class)
 public class SysUser extends BaseEntity {
 
     /**

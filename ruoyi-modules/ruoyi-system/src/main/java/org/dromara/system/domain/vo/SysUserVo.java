@@ -22,7 +22,7 @@ import java.util.List;
  * @author Michelle.Chung
  */
 @Data
-@AutoMapper(target = SysUser.class)
+@AutoMapper(target = SysUser.class, reverseConvertGenerate = false)
 public class SysUserVo implements Serializable {
 
     @Serial

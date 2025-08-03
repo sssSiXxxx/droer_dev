@@ -37,7 +37,6 @@ public class ProjectBo extends BaseEntity {
     /**
      * 项目编号
      */
-    @NotBlank(message = "项目编号不能为空", groups = { AddGroup.class, EditGroup.class })
     private String projectCode;
 
     /**

@@ -24,11 +24,16 @@ import java.util.Date;
  */
 @Data
 @ExcelIgnoreUnannotated
-@AutoMapper(target = Project.class)
+@AutoMapper(target = Project.class, reverseConvertGenerate = false)
 public class ProjectVo implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
+    /**
+     * 项目ID
+     */
+    private Long projectId;
 
     /**
      * 项目名称
@@ -69,13 +74,13 @@ public class ProjectVo implements Serializable {
     /**
      * 项目LogoUrl
      */
-    @Translation(type = TransConstant.OSS_ID_TO_URL, mapper = "logoUrl")
+    @Translation(type = TransConstant.OSS_ID_TO_URL, mapper = "logoUrl", other = "")
     private String logoUrlUrl;
     /**
      * 项目状态
      */
     @ExcelProperty(value = "项目状态", converter = ExcelDictConvert.class)
-    @ExcelDictFormat(dictType = "osc_project_status")
+    @ExcelDictFormat(dictType = "osc_project_status", readConverterExp = "", separator = "")
     private String status;
 
     /**
