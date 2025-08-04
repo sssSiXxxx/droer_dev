@@ -1,8 +1,10 @@
 package org.dromara.osc.controller;
 
 import java.util.List;
+import java.util.ArrayList;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.*;
 import cn.dev33.satoken.annotation.SaCheckPermission;
@@ -18,9 +20,11 @@ import org.dromara.common.core.validate.EditGroup;
 import org.dromara.common.log.enums.BusinessType;
 import org.dromara.common.excel.utils.ExcelUtil;
 import org.dromara.osc.domain.vo.ProjectVo;
+import org.dromara.osc.domain.vo.ProjectImportVo;
 import org.dromara.osc.domain.bo.ProjectBo;
 import org.dromara.osc.service.IProjectService;
 import org.dromara.common.mybatis.core.page.TableDataInfo;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 项目列表
@@ -30,6 +34,7 @@ import org.dromara.common.mybatis.core.page.TableDataInfo;
  */
 @Validated
 @RequiredArgsConstructor
+@Slf4j
 @RestController
 @RequestMapping("/osc/project")
 public class ProjectController extends BaseController {
@@ -101,5 +106,31 @@ public class ProjectController extends BaseController {
     public R<Void> remove(@NotEmpty(message = "主键不能为空")
                           @PathVariable Long[] projectIds) {
         return toAjax(projectService.deleteWithValidByIds(List.of(projectIds), true));
+    }
+
+    /**
+     * 导入项目数据
+     */
+    @Log(title = "项目列表", businessType = BusinessType.IMPORT)
+    @RepeatSubmit()
+    @PostMapping("/importData")
+    public R<String> importData(MultipartFile file, boolean updateSupport) throws Exception {
+        log.info("接收到导入请求，文件大小：{} bytes，updateSupport：{}", file.getSize(), updateSupport);
+        try {
+            projectService.importData(file, updateSupport);
+            log.info("导入处理完成");
+            return R.ok("导入成功");
+        } catch (Exception e) {
+            log.error("导入过程中发生错误：{}", e.getMessage(), e);
+            return R.fail("导入失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 下载导入模板
+     */
+    @PostMapping("/importTemplate")
+    public void importTemplate(HttpServletResponse response) {
+        ExcelUtil.exportExcel(new ArrayList<>(), "项目数据", ProjectImportVo.class, response);
     }
 }

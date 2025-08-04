@@ -28,7 +28,7 @@ public class Project extends BaseEntity {
     /**
      * 项目ID
      */
-    @TableId(value = "project_id")
+    @TableId(value = "project_id", type = IdType.AUTO)
     private Long projectId;
 
     /**

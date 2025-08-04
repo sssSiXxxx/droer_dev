@@ -7,6 +7,7 @@ import org.dromara.common.mybatis.core.page.PageQuery;
 
 import java.util.Collection;
 import java.util.List;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 项目列表Service接口
@@ -65,4 +66,13 @@ public interface IProjectService {
      * @return 是否删除成功
      */
     Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid);
+
+    /**
+     * 导入项目数据
+     *
+     * @param file          导入文件
+     * @param updateSupport 是否更新已存在的数据
+     * @throws Exception 导入异常
+     */
+    void importData(MultipartFile file, boolean updateSupport) throws Exception;
 }
