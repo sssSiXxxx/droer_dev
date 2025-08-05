@@ -79,6 +79,8 @@ public class ProjectServiceImpl implements IProjectService {
         lqw.orderByAsc(Project::getProjectId);
         lqw.like(StringUtils.isNotBlank(bo.getProjectName()), Project::getProjectName, bo.getProjectName());
         lqw.eq(StringUtils.isNotBlank(bo.getStatus()), Project::getStatus, bo.getStatus());
+        lqw.eq(StringUtils.isNotBlank(bo.getTechStack()), Project::getTechStack, bo.getTechStack());
+        lqw.eq(StringUtils.isNotBlank(bo.getProgrammingLanguage()), Project::getProgrammingLanguage, bo.getProgrammingLanguage());
         return lqw;
     }
 

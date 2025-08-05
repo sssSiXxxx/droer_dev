@@ -1,3 +1,4 @@
+
 /*
  * 开源社区管理系统数据库脚本
  * 
@@ -37,6 +38,19 @@ CREATE TABLE `os_project` (
 ) COMMENT='开源项目表';
 
 ALTER TABLE os_project MODIFY COLUMN project_code varchar(50) NULL COMMENT '项目代号';
+ALTER TABLE os_project ADD COLUMN tech_stack VARCHAR(500) COMMENT '技术栈';
+ALTER TABLE os_project ADD COLUMN programming_language VARCHAR(200) COMMENT '编程语言';
+ALTER TABLE os_project ADD COLUMN star_count INT DEFAULT 0 COMMENT 'Star数';
+ALTER TABLE os_project ADD COLUMN fork_count INT DEFAULT 0 COMMENT 'Fork数';
+ALTER TABLE os_project ADD COLUMN core_contributors TEXT COMMENT '核心贡献者';
+ALTER TABLE os_project ADD COLUMN contact_info VARCHAR(500) COMMENT '联系方式';
+ALTER TABLE os_project ADD COLUMN version_info VARCHAR(100) COMMENT '版本信息';
+ALTER TABLE os_project ADD COLUMN issues_count INT DEFAULT 0 COMMENT 'Issues数';
+ALTER TABLE os_project ADD COLUMN pr_count INT DEFAULT 0 COMMENT 'PR数';
+ALTER TABLE os_project ADD COLUMN readme_url VARCHAR(500) COMMENT 'README链接';
+ALTER TABLE os_project ADD COLUMN wiki_url VARCHAR(500) COMMENT 'Wiki链接';
+ALTER TABLE os_project ADD COLUMN api_doc_url VARCHAR(500) COMMENT 'API文档链接';
+ALTER TABLE os_project ADD COLUMN last_commit_time DATETIME COMMENT '最后提交时间';
 
 -- 项目审核表
 CREATE TABLE `os_project_audit` (

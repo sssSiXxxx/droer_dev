@@ -89,5 +89,85 @@ public class ProjectVo implements Serializable {
     @ExcelProperty(value = "备注")
     private String remark;
 
+    /**
+     * 技术栈
+     */
+    @ExcelProperty(value = "技术栈")
+    private String techStack;
+
+    /**
+     * 编程语言
+     */
+    @ExcelProperty(value = "编程语言")
+    private String programmingLanguage;
+
+
+
+    /**
+     * 核心贡献者
+     */
+    @ExcelProperty(value = "核心贡献者")
+    private String coreContributors;
+
+    /**
+     * 联系方式
+     */
+    @ExcelProperty(value = "联系方式")
+    private String contactInfo;
+
+    /**
+     * 版本信息
+     */
+    @ExcelProperty(value = "版本信息")
+    private String versionInfo;
+
+    /**
+     * Star数
+     */
+    @ExcelProperty(value = "Star数")
+    private Integer starCount;
+
+    /**
+     * Fork数
+     */
+    @ExcelProperty(value = "Fork数")
+    private Integer forkCount;
+
+    /**
+     * Issues数
+     */
+    @ExcelProperty(value = "Issues数")
+    private Integer issuesCount;
+
+    /**
+     * PR数
+     */
+    @ExcelProperty(value = "PR数")
+    private Integer prCount;
+
+    /**
+     * README链接
+     */
+    @ExcelProperty(value = "README链接")
+    private String readmeUrl;
+
+    /**
+     * Wiki链接
+     */
+    @ExcelProperty(value = "Wiki链接")
+    private String wikiUrl;
+
+    /**
+     * API文档链接
+     */
+    @ExcelProperty(value = "API文档链接")
+    private String apiDocUrl;
+
+    /**
+     * 最后提交时间
+     */
+    @ExcelProperty(value = "最后提交时间")
+    private Date lastCommitTime;
+
 
 }

@@ -7,11 +7,21 @@
             <el-form-item label="项目名称" prop="projectName">
               <el-input v-model="queryParams.projectName" placeholder="请输入项目名称" clearable @keyup.enter="handleQuery" />
             </el-form-item>
-            <el-form-item label="项目状态" prop="status">
-              <el-select v-model="queryParams.status" placeholder="请选择项目状态" clearable >
-                <el-option v-for="dict in osc_project_status" :key="dict.value" :label="dict.label" :value="dict.value"/>
-              </el-select>
-            </el-form-item>
+                         <el-form-item label="项目状态" prop="status">
+               <el-select v-model="queryParams.status" placeholder="请选择项目状态" clearable >
+                 <el-option v-for="dict in osc_project_status" :key="dict.value" :label="dict.label" :value="dict.value"/>
+               </el-select>
+             </el-form-item>
+             <el-form-item label="技术栈" prop="techStack">
+               <el-select v-model="queryParams.techStack" placeholder="请选择技术栈" clearable >
+                 <el-option v-for="dict in osc_project_tech" :key="dict.value" :label="dict.label" :value="dict.value"/>
+               </el-select>
+             </el-form-item>
+             <el-form-item label="编程语言" prop="programmingLanguage">
+               <el-select v-model="queryParams.programmingLanguage" placeholder="请选择编程语言" clearable >
+                 <el-option v-for="dict in osc_project_prolan" :key="dict.value" :label="dict.label" :value="dict.value"/>
+               </el-select>
+             </el-form-item>
             <el-form-item>
               <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
               <el-button icon="Refresh" @click="resetQuery">重置</el-button>
@@ -51,90 +61,106 @@
            </template>
          </el-table-column>
          <el-table-column label="项目ID" align="center" prop="projectId" v-if="false" />
+         
+         <!-- 项目名称 -->
          <el-table-column label="项目名称" align="center" prop="projectName" min-width="150">
-           <template #default="scope">
-             <el-tooltip
-               :content="scope.row.projectName"
-               placement="top"
-               :show-after="500"
-             >
-               <div class="project-name-cell">
-                 {{ scope.row.projectName }}
-               </div>
-             </el-tooltip>
-           </template>
-         </el-table-column>
+            <template #default="scope">
+              <el-tooltip
+                :content="scope.row.projectName"
+                placement="top"
+                :show-after="500"
+              >
+                <div class="project-name-cell">
+                  <el-link
+                    v-if="scope.row.websiteUrl"
+                    :href="scope.row.websiteUrl"
+                    target="_blank"
+                    type="primary"
+                    :underline="false"
+                    class="project-name-link"
+                  >
+                    {{ scope.row.projectName }}
+                  </el-link>
+                  <span v-else>{{ scope.row.projectName }}</span>
+                </div>
+              </el-tooltip>
+            </template>
+          </el-table-column>
+         
+         <!-- 项目描述 -->
          <el-table-column label="项目描述" align="center" prop="description" min-width="200">
-           <template #default="scope">
-             <el-tooltip
-               :content="scope.row.description"
-               placement="top"
-               :show-after="500"
-               :hide-after="3000"
-             >
-               <div class="description-cell">
-                 {{ scope.row.description }}
+            <template #default="scope">
+              <el-tooltip
+                :content="scope.row.description"
+                placement="top"
+                :show-after="500"
+              >
+                <div class="description-cell">
+                  {{ scope.row.description || '暂无描述' }}
+                </div>
+              </el-tooltip>
+            </template>
+          </el-table-column>
+         
+         <!-- 技术栈 -->
+         <el-table-column label="技术栈" align="center" prop="techStack" min-width="120">
+            <template #default="scope">
+              <div v-if="scope.row.techStack && typeof scope.row.techStack === 'string'" class="tech-stack">
+                <el-tag 
+                  v-for="tech in scope.row.techStack.split(',')" 
+                  :key="tech" 
+                  size="small" 
+                  type="info"
+                  class="tech-tag"
+                >
+                  {{ getDictLabel(techStackDict, tech) }}
+                </el-tag>
+              </div>
+              <span v-else class="text-gray-400">-</span>
+            </template>
+          </el-table-column>
+         
+         <!-- 编程语言 -->
+         <el-table-column label="编程语言" align="center" prop="programmingLanguage" width="100">
+             <template #default="scope">
+               <div v-if="scope.row.programmingLanguage && typeof scope.row.programmingLanguage === 'string'" class="programming-language">
+                 <el-tag 
+                   v-for="lang in scope.row.programmingLanguage.split(',')" 
+                   :key="lang" 
+                   size="small" 
+                   type="success"
+                   class="lang-tag"
+                 >
+                   {{ getDictLabel(programmingLanguageDict, lang) }}
+                 </el-tag>
                </div>
-             </el-tooltip>
-           </template>
-         </el-table-column>
-         <el-table-column label="代码仓库" align="center" prop="repositoryUrl" min-width="120">
-           <template #default="scope">
-             <el-link
-               v-if="scope.row.repositoryUrl"
-               :href="scope.row.repositoryUrl"
-               target="_blank"
-               type="primary"
-               :underline="false"
-               class="link-button"
-             >
-               <el-icon><Link /></el-icon>
-               查看仓库
-             </el-link>
-             <span v-else class="text-gray-400">-</span>
-           </template>
-         </el-table-column>
-         <el-table-column label="项目网站" align="center" prop="websiteUrl" min-width="120">
-           <template #default="scope">
-             <el-link
-               v-if="scope.row.websiteUrl"
-               :href="scope.row.websiteUrl"
-               target="_blank"
-               type="primary"
-               :underline="false"
-               class="link-button"
-             >
-               <el-icon><Link /></el-icon>
-               访问网站
-             </el-link>
-             <span v-else class="text-gray-400">-</span>
-           </template>
-         </el-table-column>
-         <el-table-column label="Logo" align="center" prop="logoUrl" width="80">
-           <template #default="scope">
-             <image-preview :src="scope.row.logoUrlUrl" :width="40" :height="40"/>
-           </template>
-         </el-table-column>
-         <el-table-column label="项目状态" align="center" prop="status" width="90">
-           <template #default="scope">
-             <dict-tag :options="osc_project_status" :value="scope.row.status"/>
-           </template>
-         </el-table-column>
-         <el-table-column label="备注" align="center" prop="remark" min-width="100">
-           <template #default="scope">
-             <el-tooltip
-               v-if="scope.row.remark"
-               :content="scope.row.remark"
-               placement="top"
-               :show-after="500"
-             >
-               <div class="remark-cell">
-                 {{ scope.row.remark }}
-               </div>
-             </el-tooltip>
-             <span v-else class="text-gray-400">-</span>
-           </template>
-         </el-table-column>
+               <span v-else class="text-gray-400">-</span>
+             </template>
+           </el-table-column>
+         
+         <!-- 状态 -->
+         <el-table-column label="状态" align="center" prop="status" width="90">
+             <template #default="scope">
+               <dict-tag :options="osc_project_status" :value="scope.row.status"/>
+             </template>
+           </el-table-column>
+         
+         <!-- 详细信息 -->
+         <el-table-column label="详细信息" align="center" prop="description" min-width="120">
+            <template #default="scope">
+              <el-button 
+                type="primary" 
+                link 
+                @click="showProjectDetail(scope.row)"
+                class="detail-btn"
+              >
+                <el-icon><View /></el-icon>
+                查看详情
+              </el-button>
+            </template>
+          </el-table-column>
+         
+         <!-- 操作 -->
          <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="100">
            <template #default="scope">
              <el-tooltip content="修改" placement="top">
@@ -172,6 +198,42 @@
           <el-select v-model="form.status" placeholder="请选择项目状态" style="width: 100%">
             <el-option
               v-for="dict in osc_project_status"
+              :key="dict.value"
+              :label="dict.label"
+              :value="dict.value"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="技术栈" prop="techStack">
+          <el-select 
+            v-model="form.techStack" 
+            multiple 
+            filterable 
+            placeholder="搜索或选择技术栈" 
+            style="width: 100%"
+            :filter-method="filterTechStack"
+            :reserve-keyword="true"
+          >
+            <el-option
+              v-for="dict in filteredTechStack"
+              :key="dict.value"
+              :label="dict.label"
+              :value="dict.value"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="编程语言" prop="programmingLanguage">
+          <el-select 
+            v-model="form.programmingLanguage" 
+            multiple 
+            filterable 
+            placeholder="搜索或选择编程语言" 
+            style="width: 100%"
+            :filter-method="filterProgrammingLanguage"
+            :reserve-keyword="true"
+          >
+            <el-option
+              v-for="dict in filteredProgrammingLanguage"
               :key="dict.value"
               :label="dict.label"
               :value="dict.value"
@@ -233,9 +295,126 @@
 import { listProject, getProject, delProject, addProject, updateProject } from '@/api/osc/project';
 import { ProjectVO, ProjectQuery, ProjectForm } from '@/api/osc/project/types';
 import { useUserStore } from '@/store/modules/user';
+import { View } from '@element-plus/icons-vue';
+import { ElMessageBox } from 'element-plus';
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
-const { osc_project_status } = toRefs<any>(proxy?.useDict('osc_project_status'));
+// 尝试不同的字典类型名称
+const { osc_project_status, osc_project_tech, osc_project_prolan } = toRefs<any>(proxy?.useDict('osc_project_status', 'osc_project_tech', 'osc_project_prolan'));
+
+// 如果编程语言字典为空，尝试其他可能的名称
+const programmingLanguageDict = computed(() => {
+  if (osc_project_prolan.value && osc_project_prolan.value.length > 0) {
+    return osc_project_prolan.value;
+  }
+  // 如果为空，返回一个默认的编程语言列表
+  return [
+    { value: '1', label: 'Java' },
+    { value: '2', label: 'Python' },
+    { value: '3', label: 'Go' },
+    { value: '4', label: 'C' },
+    { value: '5', label: 'C++' },
+    { value: '6', label: 'JavaScript' },
+    { value: '7', label: 'Vue' },
+    { value: '8', label: 'PHP' },
+    { value: '9', label: 'Swift' },
+    { value: '10', label: 'Kotlin' },
+    { value: '11', label: 'TypeScript' },
+    { value: '12', label: 'Rust' },
+    { value: '13', label: 'Scala' },
+    { value: '14', label: 'Perl' },
+    { value: '15', label: 'Lua' },
+    { value: '16', label: 'R' },
+    { value: '17', label: 'Shell' },
+    { value: '18', label: 'MATLAB' },
+    { value: '19', label: 'HTML' }
+  ];
+});
+
+// 技术栈字典数据（更新后的完整列表）
+const techStackDict = computed(() => {
+  if (osc_project_tech.value && osc_project_tech.value.length > 0) {
+    return osc_project_tech.value;
+  }
+  // 如果为空，返回更新后的技术栈列表
+  return [
+    { value: '1', label: 'Spring Boot' },
+    { value: '2', label: 'Spring Cloud' },
+    { value: '3', label: 'Docker' },
+    { value: '4', label: 'MyBatis-Plus' },
+    { value: '5', label: '微服务架构' },
+    { value: '6', label: 'DevOps' },
+    { value: '7', label: '云原生技术' },
+    { value: '8', label: '云计算技术' },
+    { value: '9', label: '分布式系统' },
+    { value: '10', label: '数据库技术' },
+    { value: '11', label: 'NoSQL' },
+    { value: '12', label: 'Elasticsearch' },
+    { value: '13', label: 'Apache Kafka' },
+    { value: '14', label: 'Redis' },
+    { value: '15', label: 'Nginx' },
+    { value: '16', label: 'Apache Mesos' },
+    { value: '17', label: 'RabbitMQ' },
+    { value: '18', label: 'Prometheus' },
+    { value: '19', label: 'Grafana' },
+    { value: '20', label: 'Netty' },
+    { value: '21', label: 'gRPC' },
+    { value: '22', label: 'Zookeeper' },
+    { value: '23', label: '机器学习' },
+    { value: '24', label: '大数据技术' },
+    { value: '25', label: 'Hadoop' },
+    { value: '26', label: 'Dubbo' },
+    { value: '27', label: 'Nacos' },
+    { value: '28', label: 'Seata' },
+    { value: '29', label: 'Sentinel' },
+    { value: '30', label: 'Spring Security' },
+    { value: '31', label: 'Sa-Token' },
+    { value: '32', label: 'MySQL' },
+    { value: '33', label: 'PostgreSQL' },
+    { value: '34', label: 'MongoDB' },
+    { value: '35', label: 'RocketMQ' },
+    { value: '36', label: 'Kubernetes' },
+    { value: '37', label: 'Vue 3' },
+    { value: '38', label: 'React' },
+    { value: '39', label: 'TypeScript' },
+    { value: '40', label: 'SkyWalking' },
+    { value: '41', label: 'Maven' },
+    { value: '42', label: 'Jenkins' },
+    { value: '43', label: 'OAuth 2.0' },
+    { value: '44', label: 'JWT' },
+    { value: '45', label: 'JUnit 5' }
+  ];
+});
+
+// 过滤后的技术栈列表
+const filteredTechStack = ref(techStackDict.value);
+
+// 过滤后的编程语言列表
+const filteredProgrammingLanguage = ref(programmingLanguageDict.value);
+
+// 技术栈搜索过滤函数
+const filterTechStack = (query: string) => {
+  if (query === '') {
+    filteredTechStack.value = techStackDict.value;
+  } else {
+    filteredTechStack.value = techStackDict.value.filter(item => 
+      item.label.toLowerCase().includes(query.toLowerCase())
+    );
+  }
+};
+
+// 编程语言搜索过滤函数
+const filterProgrammingLanguage = (query: string) => {
+  if (query === '') {
+    filteredProgrammingLanguage.value = programmingLanguageDict.value;
+  } else {
+    filteredProgrammingLanguage.value = programmingLanguageDict.value.filter(item => 
+      item.label.toLowerCase().includes(query.toLowerCase())
+    );
+  }
+};
+
+
 
 const projectList = ref<ProjectVO[]>([]);
 const buttonLoading = ref(false);
@@ -280,7 +459,20 @@ const initFormData: ProjectForm = {
   websiteUrl: undefined,
   logoUrl: undefined,
   status: undefined,
-  remark: undefined
+  remark: undefined,
+  techStack: undefined,
+  programmingLanguage: undefined,
+  coreContributors: undefined,
+  contactInfo: undefined,
+  versionInfo: undefined,
+  starCount: undefined,
+  forkCount: undefined,
+  issuesCount: undefined,
+  prCount: undefined,
+  readmeUrl: undefined,
+  wikiUrl: undefined,
+  apiDocUrl: undefined,
+  lastCommitTime: undefined
 }
 const data = reactive<PageData<ProjectForm, ProjectQuery>>({
   form: {...initFormData},
@@ -289,6 +481,8 @@ const data = reactive<PageData<ProjectForm, ProjectQuery>>({
     pageSize: 10,
     projectName: undefined,
     status: undefined,
+    techStack: undefined,
+    programmingLanguage: undefined,
     params: {
     }
   },
@@ -310,6 +504,14 @@ const data = reactive<PageData<ProjectForm, ProjectQuery>>({
 
 const { queryParams, form, rules } = toRefs(data);
 
+/** 根据字典值获取标签 */
+const getDictLabel = (dictList: any[], value: string) => {
+  const dict = dictList.find(item => item.value === value);
+  return dict ? dict.label : value;
+};
+
+
+
 /** 查询项目列表列表 */
 const getList = async () => {
   loading.value = true;
@@ -328,6 +530,9 @@ const cancel = () => {
 /** 表单重置 */
 const reset = () => {
   form.value = {...initFormData};
+  // 确保多选字段初始化为数组
+  (form.value as any).techStack = [];
+  (form.value as any).programmingLanguage = [];
   projectFormRef.value?.resetFields();
 }
 
@@ -363,6 +568,20 @@ const handleUpdate = async (row?: ProjectVO) => {
   const _projectId = row?.projectId || ids.value[0]
   const res = await getProject(_projectId);
   Object.assign(form.value, res.data);
+  
+  // 处理多选字段：将字符串转换为数组
+  if (form.value.techStack && typeof form.value.techStack === 'string') {
+    (form.value as any).techStack = form.value.techStack.split(',').filter((item: string) => item.trim());
+  } else {
+    (form.value as any).techStack = [];
+  }
+  
+  if (form.value.programmingLanguage && typeof form.value.programmingLanguage === 'string') {
+    (form.value as any).programmingLanguage = form.value.programmingLanguage.split(',').filter((item: string) => item.trim());
+  } else {
+    (form.value as any).programmingLanguage = [];
+  }
+  
   dialog.visible = true;
   dialog.title = "修改项目列表";
 }
@@ -372,10 +591,20 @@ const submitForm = () => {
   projectFormRef.value?.validate(async (valid: boolean) => {
     if (valid) {
       buttonLoading.value = true;
+      
+      // 处理多选字段：将数组转换为字符串
+      const submitData = { ...form.value };
+      if (Array.isArray(submitData.techStack)) {
+        submitData.techStack = submitData.techStack.join(',');
+      }
+      if (Array.isArray(submitData.programmingLanguage)) {
+        submitData.programmingLanguage = submitData.programmingLanguage.join(',');
+      }
+      
       if (form.value.projectId) {
-        await updateProject(form.value).finally(() =>  buttonLoading.value = false);
+        await updateProject(submitData).finally(() =>  buttonLoading.value = false);
       } else {
-        await addProject(form.value).finally(() =>  buttonLoading.value = false);
+        await addProject(submitData).finally(() =>  buttonLoading.value = false);
       }
       proxy?.$modal.msgSuccess("操作成功");
       dialog.visible = false;
@@ -431,8 +660,76 @@ const submitFileForm = () => {
   uploadRef.value.submit();
 };
 
+/** 查看项目详情 */
+const showProjectDetail = (row: ProjectVO) => {
+  // 获取字典标签的辅助函数
+  const getDictLabelFromValue = (dictList: any[], value: string) => {
+    const dict = dictList.find(item => item.value === value);
+    return dict ? dict.label : value;
+  };
+  
+  // 处理多选字段的显示
+  const formatMultiSelect = (value: string, dictList: any[]) => {
+    if (!value) return '暂无信息';
+    return value.split(',').map(item => getDictLabelFromValue(dictList, item.trim())).join('、');
+  };
+  
+  // 创建项目详情对话框
+  ElMessageBox.alert(`
+    <div style="text-align: left;">
+      <h3 style="margin-bottom: 20px; color: #409EFF;">${row.projectName}</h3>
+      
+      <div style="margin-bottom: 15px;">
+        <strong>项目描述：</strong>
+        <p style="margin: 5px 0; color: #666;">${row.description || '暂无描述'}</p>
+      </div>
+      
+      <div style="margin-bottom: 15px;">
+        <strong>技术栈：</strong>
+                 <p style="margin: 5px 0; color: #666;">${formatMultiSelect(row.techStack, techStackDict.value)}</p>
+      </div>
+      
+      <div style="margin-bottom: 15px;">
+        <strong>编程语言：</strong>
+                         <p style="margin: 5px 0; color: #666;">${formatMultiSelect(row.programmingLanguage, programmingLanguageDict.value)}</p>
+      </div>
+      
+      <div style="margin-bottom: 15px;">
+        <strong>代码仓库：</strong>
+        <p style="margin: 5px 0;">
+          <a href="${row.repositoryUrl}" target="_blank" style="color: #409EFF;">${row.repositoryUrl || '暂无仓库地址'}</a>
+        </p>
+      </div>
+      
+      <div style="margin-bottom: 15px;">
+        <strong>项目网站：</strong>
+        <p style="margin: 5px 0;">
+          <a href="${row.websiteUrl}" target="_blank" style="color: #409EFF;">${row.websiteUrl || '暂无网站地址'}</a>
+        </p>
+      </div>
+      
+      <div style="margin-bottom: 15px;">
+        <strong>项目状态：</strong>
+        <p style="margin: 5px 0; color: #666;">${getDictLabelFromValue(osc_project_status.value, row.status) || '暂无状态信息'}</p>
+      </div>
+      
+      <div style="margin-bottom: 15px;">
+        <strong>备注：</strong>
+        <p style="margin: 5px 0; color: #666;">${row.remark || '暂无备注'}</p>
+      </div>
+    </div>
+  `, '项目详情', {
+    dangerouslyUseHTMLString: true,
+    confirmButtonText: '确定',
+    customClass: 'project-detail-dialog'
+  });
+};
+
 onMounted(() => {
   getList();
+  // 初始化过滤列表
+  filteredTechStack.value = techStackDict.value;
+  filteredProgrammingLanguage.value = programmingLanguageDict.value;
 });
 </script>
 
@@ -496,6 +793,72 @@ onMounted(() => {
 .project-name-cell:hover {
   color: #409eff;
 }
+
+/* 项目名称链接 */
+.project-name-link {
+  font-weight: 500;
+  color: #409eff;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.project-name-link:hover {
+  color: #66b1ff;
+  transform: translateY(-1px);
+}
+
+/* 详情按钮 */
+.detail-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+}
+
+/* 技术栈标签 */
+.tech-stack {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+}
+
+.tech-stack .el-tag {
+  margin: 2px;
+}
+
+.tech-tag {
+  margin: 2px;
+  border-radius: 12px;
+  font-size: 11px;
+  padding: 2px 6px;
+}
+
+/* 编程语言标签 */
+.programming-language {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  gap: 2px;
+  overflow-x: auto;
+  padding: 2px 0;
+  max-width: 100%;
+}
+
+.lang-tag {
+  margin: 1px;
+  border-radius: 10px;
+  font-size: 10px;
+  padding: 2px 6px;
+  min-width: 50px;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+
 
 /* 项目描述 */
 .description-cell {

@@ -1,120 +1,66 @@
 export interface ProjectVO {
-  /**
-   * 项目ID
-   */
-  projectId: number;
-
-  /**
-   * 项目名称
-   */
-  projectName: string;
-
-  /**
-   * 项目编号
-   */
-  projectCode: string;
-
-  /**
-   * 项目描述
-   */
-  description: string;
-
-  /**
-   * 代码仓库
-   */
-  repositoryUrl: string;
-
-  /**
-   * 项目网站
-   */
-  websiteUrl: string;
-
-  /**
-   * 项目Logo
-   */
-  logoUrl: string;
-
-  /**
-   * 项目LogoUrl
-   */
-  logoUrlUrl: string;
-  /**
-   * 项目状态
-   */
-  status: string;
-
-  /**
-   * 备注
-   */
-  remark: string;
-
-}
-
-export interface ProjectForm extends BaseEntity {
-  /**
-   * 项目ID
-   */
   projectId?: number;
-
-  /**
-   * 项目名称
-   */
   projectName?: string;
-
-  /**
-   * 项目编号（可选）
-   */
   projectCode?: string;
-
-  /**
-   * 项目描述
-   */
   description?: string;
-
-  /**
-   * 代码仓库
-   */
   repositoryUrl?: string;
-
-  /**
-   * 项目网站
-   */
   websiteUrl?: string;
-
-  /**
-   * 项目Logo
-   */
   logoUrl?: string;
-
-  /**
-   * 项目状态
-   */
+  logoUrlUrl?: string;
   status?: string;
-
-  /**
-   * 备注
-   */
   remark?: string;
-
+  techStack?: string;
+  programmingLanguage?: string;
+  coreContributors?: string;
+  contactInfo?: string;
+  versionInfo?: string;
+  starCount?: number;
+  forkCount?: number;
+  issuesCount?: number;
+  prCount?: number;
+  readmeUrl?: string;
+  wikiUrl?: string;
+  apiDocUrl?: string;
+  lastCommitTime?: string;
+  createDept?: number;
+  createBy?: number;
+  createTime?: string;
+  updateBy?: number;
+  updateTime?: string;
 }
 
-export interface ProjectQuery extends PageQuery {
-
-  /**
-   * 项目名称
-   */
+export interface ProjectForm {
+  projectId?: number;
   projectName?: string;
-
-  /**
-   * 项目状态
-   */
+  projectCode?: string;
+  description?: string;
+  repositoryUrl?: string;
+  websiteUrl?: string;
+  logoUrl?: string;
   status?: string;
-
-    /**
-     * 日期范围参数
-     */
-    params?: any;
+  remark?: string;
+  techStack?: string[];
+  programmingLanguage?: string[];
+  coreContributors?: string;
+  contactInfo?: string;
+  versionInfo?: string;
+  starCount?: number;
+  forkCount?: number;
+  issuesCount?: number;
+  prCount?: number;
+  readmeUrl?: string;
+  wikiUrl?: string;
+  apiDocUrl?: string;
+  lastCommitTime?: string;
 }
 
-
-
+export interface ProjectQuery {
+  pageNum?: number;
+  pageSize?: number;
+  projectName?: string;
+  projectCode?: string;
+  status?: string;
+  techStack?: string;
+  programmingLanguage?: string;
+  params?: any;
+}
