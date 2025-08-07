@@ -38,6 +38,9 @@
             <el-button type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="['osc:project:add']">新增</el-button>
           </el-col>
           <el-col :span="1.5">
+            <el-button type="info" plain icon="List" @click="handleMyProjects">我的创建</el-button>
+          </el-col>
+          <el-col :span="1.5">
             <el-button type="success" plain icon="Edit" :disabled="single" @click="handleUpdate()" v-hasPermi="['osc:project:edit']">修改</el-button>
           </el-col>
           <el-col :span="1.5">
@@ -63,47 +66,35 @@
          <el-table-column label="项目ID" align="center" prop="projectId" v-if="false" />
          
          <!-- 项目名称 -->
-         <el-table-column label="项目名称" align="center" prop="projectName" min-width="150">
+         <el-table-column label="项目名称" align="center" prop="projectName" min-width="120" :show-overflow-tooltip="true">
             <template #default="scope">
-              <el-tooltip
-                :content="scope.row.projectName"
-                placement="top"
-                :show-after="500"
-              >
-                <div class="project-name-cell">
-                  <el-link
-                    v-if="scope.row.websiteUrl"
-                    :href="scope.row.websiteUrl"
-                    target="_blank"
-                    type="primary"
-                    :underline="false"
-                    class="project-name-link"
-                  >
-                    {{ scope.row.projectName }}
-                  </el-link>
-                  <span v-else>{{ scope.row.projectName }}</span>
-                </div>
-              </el-tooltip>
+              <div class="project-name-cell">
+                <el-link
+                  v-if="scope.row.websiteUrl"
+                  :href="scope.row.websiteUrl"
+                  target="_blank"
+                  type="primary"
+                  :underline="false"
+                  class="project-name-link"
+                >
+                  {{ scope.row.projectName }}
+                </el-link>
+                <span v-else>{{ scope.row.projectName }}</span>
+              </div>
             </template>
           </el-table-column>
          
          <!-- 项目描述 -->
-         <el-table-column label="项目描述" align="center" prop="description" min-width="200">
+         <el-table-column label="项目描述" align="center" prop="description" min-width="180" :show-overflow-tooltip="true">
             <template #default="scope">
-              <el-tooltip
-                :content="scope.row.description"
-                placement="top"
-                :show-after="500"
-              >
-                <div class="description-cell">
-                  {{ scope.row.description || '暂无描述' }}
-                </div>
-              </el-tooltip>
+              <div class="description-cell">
+                {{ scope.row.description || '暂无描述' }}
+              </div>
             </template>
           </el-table-column>
          
          <!-- 技术栈 -->
-         <el-table-column label="技术栈" align="center" prop="techStack" min-width="120">
+         <el-table-column label="技术栈" align="center" prop="techStack" min-width="150">
             <template #default="scope">
               <div v-if="scope.row.techStack && typeof scope.row.techStack === 'string'" class="tech-stack">
                 <el-tag 
@@ -121,7 +112,7 @@
           </el-table-column>
          
          <!-- 编程语言 -->
-         <el-table-column label="编程语言" align="center" prop="programmingLanguage" width="100">
+         <el-table-column label="编程语言" align="center" prop="programmingLanguage" min-width="150">
              <template #default="scope">
                <div v-if="scope.row.programmingLanguage && typeof scope.row.programmingLanguage === 'string'" class="programming-language">
                  <el-tag 
@@ -139,7 +130,7 @@
            </el-table-column>
          
          <!-- 状态 -->
-         <el-table-column label="状态" align="center" prop="status" width="90">
+         <el-table-column label="状态" align="center" prop="status" min-width="80">
              <template #default="scope">
                <dict-tag :options="osc_project_status" :value="scope.row.status"/>
              </template>
@@ -296,6 +287,7 @@ import { listProject, getProject, delProject, addProject, updateProject } from '
 import { ProjectVO, ProjectQuery, ProjectForm } from '@/api/osc/project/types';
 import { useUserStore } from '@/store/modules/user';
 import { View } from '@element-plus/icons-vue';
+import { useRoute } from 'vue-router';
 import { ElMessageBox } from 'element-plus';
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
@@ -309,25 +301,25 @@ const programmingLanguageDict = computed(() => {
   }
   // 如果为空，返回一个默认的编程语言列表
   return [
-    { value: '1', label: 'Java' },
-    { value: '2', label: 'Python' },
-    { value: '3', label: 'Go' },
-    { value: '4', label: 'C' },
-    { value: '5', label: 'C++' },
-    { value: '6', label: 'JavaScript' },
-    { value: '7', label: 'Vue' },
-    { value: '8', label: 'PHP' },
-    { value: '9', label: 'Swift' },
-    { value: '10', label: 'Kotlin' },
-    { value: '11', label: 'TypeScript' },
-    { value: '12', label: 'Rust' },
-    { value: '13', label: 'Scala' },
-    { value: '14', label: 'Perl' },
-    { value: '15', label: 'Lua' },
-    { value: '16', label: 'R' },
-    { value: '17', label: 'Shell' },
-    { value: '18', label: 'MATLAB' },
-    { value: '19', label: 'HTML' }
+    { label: 'Java', value: '1' },
+    { label: 'Python', value: '2' },
+    { label: 'Go', value: '3' },
+    { label: 'C', value: '4' },
+    { label: 'C++', value: '5' },
+    { label: 'JavaScript', value: '6' },
+    { label: 'Vue', value: '7' },
+    { label: 'PHP', value: '8' },
+    { label: 'Swift', value: '9' },
+    { label: 'Kotlin', value: '10' },
+    { label: 'TypeScript', value: '11' },
+    { label: 'Rust', value: '12' },
+    { label: 'Scala', value: '13' },
+    { label: 'Perl', value: '14' },
+    { label: 'Lua', value: '15' },
+    { label: 'R', value: '16' },
+    { label: 'Shell', value: '17' },
+    { label: 'MATLAB', value: '18' },
+    { label: 'HTML', value: '19' }
   ];
 });
 
@@ -483,8 +475,8 @@ const data = reactive<PageData<ProjectForm, ProjectQuery>>({
     status: undefined,
     techStack: undefined,
     programmingLanguage: undefined,
-    params: {
-    }
+    createBy: undefined,
+    params: {}
   },
   rules: {
     projectName: [
@@ -545,8 +537,75 @@ const handleQuery = () => {
 /** 重置按钮操作 */
 const resetQuery = () => {
   queryFormRef.value?.resetFields();
+  queryParams.value.projectName = undefined;
+  queryParams.value.techStack = undefined;
+  queryParams.value.programmingLanguage = undefined;
+  queryParams.value.params = {
+    statusList: ['2', '3', '4']  // 默认显示进行中、已完成和已归档的项目
+  };
+  queryParams.value.status = undefined;
+  queryParams.value.createBy = undefined;
   handleQuery();
 }
+
+/** 处理我的创建按钮点击 */
+const handleMyProjects = async () => {
+  const userId = useUserStore().userId;
+  if (!userId) {
+    proxy?.$modal.msgError('获取用户信息失败');
+    return;
+  }
+
+  try {
+    // 弹出选择状态的对话框
+    const action = await proxy?.$confirm(
+      '请选择要查看的项目状态',
+      '我的创建',
+      {
+        confirmButtonText: '全部项目',
+        cancelButtonText: '草稿箱',
+        distinguishCancelAndClose: true,
+        showClose: true,
+        closeOnClickModal: false,
+        type: 'info',
+        center: true
+      }
+    );
+
+    // 用户点击"全部项目"
+    queryParams.value.createBy = userId;
+    queryParams.value.status = undefined;
+    queryParams.value.params = {
+      statusList: ['1', '2', '3', '4', '5']  // 待审核、进行中、已完成、已归档、已驳回
+    };
+    handleQuery();
+  } catch (action) {
+    if (action === 'cancel') {
+      // 用户点击"草稿箱"
+      queryParams.value.createBy = userId;
+      queryParams.value.status = '0';  // 草稿状态
+      queryParams.value.params = {};
+      handleQuery();
+      
+      // 检查是否有草稿
+      setTimeout(() => {
+        if (total.value === 0) {
+          proxy?.$modal.msgInfo('暂无草稿项目');
+          // 重置为默认显示（除草稿外的所有状态）
+          queryParams.value.createBy = userId;
+          queryParams.value.status = undefined;
+          queryParams.value.params = {
+            statusList: ['1', '2', '3', '4', '5']
+          };
+          handleQuery();
+        }
+      }, 300);
+    } else if (action === 'close') {
+      // 用户点击关闭按钮，显示所有状态
+      resetQuery();  // 重置为默认状态
+    }
+  }
+};
 
 /** 多选框选中数据 */
 const handleSelectionChange = (selection: ProjectVO[]) => {
@@ -677,44 +736,44 @@ const showProjectDetail = (row: ProjectVO) => {
   // 创建项目详情对话框
   ElMessageBox.alert(`
     <div style="text-align: left;">
-      <h3 style="margin-bottom: 20px; color: #409EFF;">${row.projectName}</h3>
+      <h3 style="margin-bottom: 20px; color: #333; text-align: center; background-color: #fdfde7; padding: 15px;">${row.projectName}</h3>
       
-      <div style="margin-bottom: 15px;">
-        <strong>项目描述：</strong>
+      <div style="margin-bottom: 2px; padding: 12px; background-color: white;">
+        <strong style="color: #333;">项目描述：</strong>
         <p style="margin: 5px 0; color: #666;">${row.description || '暂无描述'}</p>
       </div>
       
-      <div style="margin-bottom: 15px;">
-        <strong>技术栈：</strong>
-                 <p style="margin: 5px 0; color: #666;">${formatMultiSelect(row.techStack, techStackDict.value)}</p>
+      <div style="margin-bottom: 2px; padding: 12px; background-color: #f0f9f0;">
+        <strong style="color: #333;">技术栈：</strong>
+        <p style="margin: 5px 0; color: #666;">${formatMultiSelect(row.techStack, techStackDict.value)}</p>
       </div>
       
-      <div style="margin-bottom: 15px;">
-        <strong>编程语言：</strong>
-                         <p style="margin: 5px 0; color: #666;">${formatMultiSelect(row.programmingLanguage, programmingLanguageDict.value)}</p>
+      <div style="margin-bottom: 2px; padding: 12px; background-color: white;">
+        <strong style="color: #333;">编程语言：</strong>
+        <p style="margin: 5px 0; color: #666;">${formatMultiSelect(row.programmingLanguage, programmingLanguageDict.value)}</p>
       </div>
       
-      <div style="margin-bottom: 15px;">
-        <strong>代码仓库：</strong>
+      <div style="margin-bottom: 2px; padding: 12px; background-color: #f0f9f0;">
+        <strong style="color: #333;">代码仓库：</strong>
         <p style="margin: 5px 0;">
           <a href="${row.repositoryUrl}" target="_blank" style="color: #409EFF;">${row.repositoryUrl || '暂无仓库地址'}</a>
         </p>
       </div>
       
-      <div style="margin-bottom: 15px;">
-        <strong>项目网站：</strong>
+      <div style="margin-bottom: 2px; padding: 12px; background-color: white;">
+        <strong style="color: #333;">项目网站：</strong>
         <p style="margin: 5px 0;">
           <a href="${row.websiteUrl}" target="_blank" style="color: #409EFF;">${row.websiteUrl || '暂无网站地址'}</a>
         </p>
       </div>
       
-      <div style="margin-bottom: 15px;">
-        <strong>项目状态：</strong>
+      <div style="margin-bottom: 2px; padding: 12px; background-color: #f0f9f0;">
+        <strong style="color: #333;">项目状态：</strong>
         <p style="margin: 5px 0; color: #666;">${getDictLabelFromValue(osc_project_status.value, row.status) || '暂无状态信息'}</p>
       </div>
       
-      <div style="margin-bottom: 15px;">
-        <strong>备注：</strong>
+      <div style="margin-bottom: 2px; padding: 12px; background-color: white;">
+        <strong style="color: #333;">备注：</strong>
         <p style="margin: 5px 0; color: #666;">${row.remark || '暂无备注'}</p>
       </div>
     </div>
@@ -726,10 +785,55 @@ const showProjectDetail = (row: ProjectVO) => {
 };
 
 onMounted(() => {
-  getList();
+  // 从路由参数中获取查询条件
+  const route = useRoute();
+  
+  // 处理路由参数
+  if (route.query.status) {
+    // 设置状态
+    queryParams.value.status = route.query.status as string;
+    // 如果是草稿状态，清除状态列表
+    if (route.query.status === '0') {
+      queryParams.value.params = {};
+    }
+  } else {
+    // 默认显示进行中、已完成和已归档的项目
+    queryParams.value.params = {
+      statusList: ['2', '3', '4']
+    };
+  }
+  
+  // 处理创建者参数
+  if (route.query.createBy) {
+    queryParams.value.createBy = route.query.createBy as string;
+  }
+  
+  // 处理状态列表参数
+  if (route.query.params) {
+    try {
+      const params = JSON.parse(route.query.params as string);
+      if (params.statusList) {
+        queryParams.value.params = params;
+      }
+    } catch (error) {
+      console.error('解析params参数失败:', error);
+    }
+  }
+
+  // 如果是查看草稿箱，必须带上用户ID
+  if (route.query.status === '0') {
+    const userId = useUserStore().userId;
+    if (userId) {
+      queryParams.value.createBy = userId;
+    }
+  }
+
   // 初始化过滤列表
   filteredTechStack.value = techStackDict.value;
   filteredProgrammingLanguage.value = programmingLanguageDict.value;
+
+  // 获取列表数据
+  handleQuery();
 });
 </script>
 
@@ -837,25 +941,21 @@ onMounted(() => {
 /* 编程语言标签 */
 .programming-language {
   display: flex;
-  flex-wrap: nowrap;
-  justify-content: flex-start;
-  gap: 2px;
-  overflow-x: auto;
-  padding: 2px 0;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px;
   max-width: 100%;
 }
 
 .lang-tag {
-  margin: 1px;
-  border-radius: 10px;
-  font-size: 10px;
-  padding: 2px 6px;
-  min-width: 50px;
-  max-width: 80px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  margin: 2px;
+  border-radius: 12px;
+  font-size: 11px;
+  padding: 2px 8px;
+  min-width: 40px;
+  max-width: none;
   white-space: nowrap;
-  flex-shrink: 0;
 }
 
 
@@ -994,5 +1094,54 @@ onMounted(() => {
 .el-button--link:hover {
   background-color: #f0f9ff;
   transform: translateY(-1px);
+}
+
+/* 项目详情对话框样式 */
+:deep(.project-detail-dialog) {
+  .el-message-box__content {
+    padding: 0;
+  }
+  
+  .el-message-box__container {
+    margin: 0;
+  }
+  
+  .el-message-box__message {
+    padding: 0;
+  }
+  
+  .el-message-box {
+    padding: 0;
+    max-width: 600px;
+    width: 90%;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  h3 {
+    margin: 0;
+    padding: 20px;
+    background: #fdfde7;
+    border-bottom: 1px solid #f3f3e0;
+    font-size: 18px;
+    font-weight: 600;
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.05);
+  }
+  
+  strong {
+    display: inline-block;
+    width: 100px;
+  }
+  
+  p {
+    display: inline-block;
+    margin-left: 10px;
+  }
+  
+  .el-message-box__btns {
+    padding: 15px;
+    background: #f8fdfb;
+    border-top: 1px solid #eee;
+  }
 }
 </style>

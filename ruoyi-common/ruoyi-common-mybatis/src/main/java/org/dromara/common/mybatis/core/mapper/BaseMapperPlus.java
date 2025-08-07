@@ -308,14 +308,12 @@ public interface BaseMapperPlus<T, V> extends BaseMapper<T> {
      * @return 查询到的VO对象分页列表，经过转换为指定的VO类后返回
      */
     default <C, P extends IPage<C>> P selectVoPage(IPage<T> page, Wrapper<T> wrapper, Class<C> voClass) {
-        // 根据条件分页查询实体对象列表
-        List<T> list = this.selectList(page, wrapper);
-        // 创建一个新的VO对象分页列表，并设置分页信息
-        IPage<C> voPage = new Page<>(page.getCurrent(), page.getSize(), page.getTotal());
-        if (CollUtil.isEmpty(list)) {
+        IPage<T> pageData = this.selectPage(page, wrapper);
+        IPage<C> voPage = new Page<>(pageData.getCurrent(), pageData.getSize(), pageData.getTotal());
+        if (CollUtil.isEmpty(pageData.getRecords())) {
             return (P) voPage;
         }
-        voPage.setRecords(MapstructUtils.convert(list, voClass));
+        voPage.setRecords(MapstructUtils.convert(pageData.getRecords(), voClass));
         return (P) voPage;
     }
 

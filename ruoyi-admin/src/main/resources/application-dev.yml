@@ -106,32 +106,48 @@ spring.data:
     # redis 密码必须配置
     password: 666666
     # 连接超时时间
-    timeout: 10s
+    timeout: 30s
     # 是否开启ssl
     ssl.enabled: false
+    lettuce:
+      pool:
+        # 连接池最大连接数
+        max-active: 200
+        # 连接池最大阻塞等待时间（使用负值表示没有限制）
+        max-wait: -1ms
+        # 连接池中的最大空闲连接
+        max-idle: 20
+        # 连接池中的最小空闲连接
+        min-idle: 10
 
 # redisson 配置
 redisson:
   # redis key前缀
   keyPrefix:
   # 线程池数量
-  threads: 4
+  threads: 16
   # Netty线程池数量
-  nettyThreads: 8
+  nettyThreads: 32
   # 单节点配置
   singleServerConfig:
     # 客户端名称 不能用中文
     clientName: RuoYi-Vue-Plus
     # 最小空闲连接数
-    connectionMinimumIdleSize: 8
+    connectionMinimumIdleSize: 32
     # 连接池大小
-    connectionPoolSize: 32
+    connectionPoolSize: 64
     # 连接空闲超时，单位：毫秒
-    idleConnectionTimeout: 10000
+    idleConnectionTimeout: 30000
     # 命令等待超时，单位：毫秒
-    timeout: 3000
+    timeout: 10000
     # 发布和订阅连接池大小
     subscriptionConnectionPoolSize: 50
+    # 重试次数
+    retryAttempts: 5
+    # 重试间隔，单位：毫秒
+    retryInterval: 3000
+    # 连接超时，单位：毫秒
+    connectTimeout: 10000
 
 --- # mail 邮件发送
 mail:

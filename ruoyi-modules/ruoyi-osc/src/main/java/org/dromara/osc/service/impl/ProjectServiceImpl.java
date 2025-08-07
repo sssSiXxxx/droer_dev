@@ -56,9 +56,14 @@ public class ProjectServiceImpl implements IProjectService {
      */
     @Override
     public TableDataInfo<ProjectVo> queryPageList(ProjectBo bo, PageQuery pageQuery) {
-        LambdaQueryWrapper<Project> lqw = buildQueryWrapper(bo);
-        Page<ProjectVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
-        return TableDataInfo.build(result);
+        try {
+            LambdaQueryWrapper<Project> lqw = buildQueryWrapper(bo);
+            Page<ProjectVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
+            return new TableDataInfo<>(result.getRecords(), result.getTotal());
+        } catch (Exception e) {
+            log.error("查询项目列表失败", e);
+            return new TableDataInfo<>();
+        }
     }
 
     /**
@@ -76,11 +81,38 @@ public class ProjectServiceImpl implements IProjectService {
     private LambdaQueryWrapper<Project> buildQueryWrapper(ProjectBo bo) {
         Map<String, Object> params = bo.getParams();
         LambdaQueryWrapper<Project> lqw = Wrappers.lambdaQuery();
-        lqw.orderByAsc(Project::getProjectId);
+        lqw.orderByDesc(Project::getCreateTime);  // 按创建时间倒序排序
+        
+        // 处理基本查询条件
         lqw.like(StringUtils.isNotBlank(bo.getProjectName()), Project::getProjectName, bo.getProjectName());
-        lqw.eq(StringUtils.isNotBlank(bo.getStatus()), Project::getStatus, bo.getStatus());
         lqw.eq(StringUtils.isNotBlank(bo.getTechStack()), Project::getTechStack, bo.getTechStack());
         lqw.eq(StringUtils.isNotBlank(bo.getProgrammingLanguage()), Project::getProgrammingLanguage, bo.getProgrammingLanguage());
+        lqw.eq(bo.getCreateBy() != null, Project::getCreateBy, bo.getCreateBy());  // 添加创建者条件
+        
+        // 处理状态条件
+        log.info("查询参数: params={}, status={}", params, bo.getStatus());
+        
+        if (params != null && params.get("statusList") != null) {
+            // 如果有状态列表参数，使用in查询
+            try {
+                List<String> statusList = (List<String>) params.get("statusList");
+                log.info("状态列表: {}", statusList);
+                if (!statusList.isEmpty()) {
+                    lqw.in(Project::getStatus, statusList);
+                }
+            } catch (Exception e) {
+                log.error("处理状态列表参数失败", e);
+                // 如果状态列表处理失败，默认显示进行中的项目
+                lqw.in(Project::getStatus, List.of("2", "3", "4"));
+            }
+        } else if (StringUtils.isNotBlank(bo.getStatus())) {
+            // 如果没有状态列表但有单个状态，使用eq查询
+            lqw.eq(Project::getStatus, bo.getStatus());
+        } else {
+            // 如果没有任何状态条件，默认显示进行中、已完成和已归档的项目
+            lqw.in(Project::getStatus, List.of("2", "3", "4"));
+        }
+        
         return lqw;
     }
 

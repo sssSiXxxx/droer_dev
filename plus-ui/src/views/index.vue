@@ -1554,7 +1554,7 @@ onMounted(async () => {
   flex: 1;
   overflow-y: auto;
   padding: 6px 8px 16px 0;
-  max-height: 260px;
+  max-height: 220px;
 }
 
 /* 自定义滚动条样式 */

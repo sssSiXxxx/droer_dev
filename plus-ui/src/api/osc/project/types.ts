@@ -62,5 +62,6 @@ export interface ProjectQuery {
   status?: string;
   techStack?: string;
   programmingLanguage?: string;
+  createBy?: number | string;
   params?: any;
 }
