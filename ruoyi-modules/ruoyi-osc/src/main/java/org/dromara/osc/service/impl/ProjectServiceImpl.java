@@ -83,6 +83,9 @@ public class ProjectServiceImpl implements IProjectService {
         LambdaQueryWrapper<Project> lqw = Wrappers.lambdaQuery();
         lqw.orderByDesc(Project::getCreateTime);  // 按创建时间倒序排序
         
+        log.info("构建查询条件 - 项目名称: {}, 技术栈: {}, 编程语言: {}, 创建者: {}, 状态: {}", 
+                bo.getProjectName(), bo.getTechStack(), bo.getProgrammingLanguage(), bo.getCreateBy(), bo.getStatus());
+        
         // 处理基本查询条件
         lqw.like(StringUtils.isNotBlank(bo.getProjectName()), Project::getProjectName, bo.getProjectName());
         lqw.eq(StringUtils.isNotBlank(bo.getTechStack()), Project::getTechStack, bo.getTechStack());
@@ -99,20 +102,25 @@ public class ProjectServiceImpl implements IProjectService {
                 log.info("状态列表: {}", statusList);
                 if (!statusList.isEmpty()) {
                     lqw.in(Project::getStatus, statusList);
+                    log.info("使用状态列表查询: {}", statusList);
                 }
             } catch (Exception e) {
                 log.error("处理状态列表参数失败", e);
                 // 如果状态列表处理失败，默认显示进行中的项目
                 lqw.in(Project::getStatus, List.of("2", "3", "4"));
+                log.info("状态列表处理失败，使用默认状态: [2, 3, 4]");
             }
         } else if (StringUtils.isNotBlank(bo.getStatus())) {
             // 如果没有状态列表但有单个状态，使用eq查询
             lqw.eq(Project::getStatus, bo.getStatus());
+            log.info("使用单个状态查询: {}", bo.getStatus());
         } else {
             // 如果没有任何状态条件，默认显示进行中、已完成和已归档的项目
             lqw.in(Project::getStatus, List.of("2", "3", "4"));
+            log.info("无状态条件，使用默认状态: [2, 3, 4]");
         }
         
+        log.info("最终查询条件构建完成");
         return lqw;
     }
 

@@ -56,8 +56,11 @@
         </el-row>
       </template>
 
-             <el-table v-loading="loading" border :data="projectList" @selection-change="handleSelectionChange" class="responsive-table">
-         <el-table-column type="selection" width="50" align="center" />
+                   <el-table v-loading="loading" border :data="projectList" @selection-change="handleSelectionChange" class="responsive-table">
+        <template #empty>
+          <el-empty :description="loading ? '加载中...' : '暂无数据'" />
+        </template>
+        <el-table-column type="selection" width="50" align="center" />
          <el-table-column label="序号" align="center" width="60">
            <template #default="scope">
              {{ (queryParams.pageNum - 1) * queryParams.pageSize + scope.$index + 1 }}
@@ -507,10 +510,18 @@ const getDictLabel = (dictList: any[], value: string) => {
 /** 查询项目列表列表 */
 const getList = async () => {
   loading.value = true;
-  const res = await listProject(queryParams.value);
-  projectList.value = res.rows;
-  total.value = res.total;
-  loading.value = false;
+  try {
+    const res = await listProject(queryParams.value);
+    projectList.value = res.rows;
+    total.value = res.total;
+  } catch (error) {
+    console.error('获取项目列表失败:', error);
+    proxy?.$modal.msgError('获取项目列表失败，请稍后重试');
+    projectList.value = [];
+    total.value = 0;
+  } finally {
+    loading.value = false;
+  }
 }
 
 /** 取消按钮 */
@@ -582,13 +593,13 @@ const handleMyProjects = async () => {
   } catch (action) {
     if (action === 'cancel') {
       // 用户点击"草稿箱"
+      loading.value = true;
       queryParams.value.createBy = userId;
       queryParams.value.status = '0';  // 草稿状态
       queryParams.value.params = {};
-      handleQuery();
       
-      // 检查是否有草稿
-      setTimeout(() => {
+      try {
+        await listProject(queryParams.value);
         if (total.value === 0) {
           proxy?.$modal.msgInfo('暂无草稿项目');
           // 重置为默认显示（除草稿外的所有状态）
@@ -597,9 +608,11 @@ const handleMyProjects = async () => {
           queryParams.value.params = {
             statusList: ['1', '2', '3', '4', '5']
           };
-          handleQuery();
         }
-      }, 300);
+      } finally {
+        loading.value = false;
+        handleQuery();
+      }
     } else if (action === 'close') {
       // 用户点击关闭按钮，显示所有状态
       resetQuery();  // 重置为默认状态
