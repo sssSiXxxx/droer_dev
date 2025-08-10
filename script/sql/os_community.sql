@@ -256,3 +256,12 @@ CREATE TABLE `os_statistics` (
   INDEX `idx_stat_type` (`stat_type`),
   INDEX `idx_stat_time` (`stat_time`)
 ) COMMENT='统计数据表';
+
+-- 修改sys_oss表，添加项目关联和文档类型字段
+ALTER TABLE sys_oss
+ADD COLUMN size bigint DEFAULT NULL COMMENT '文件大小（字节）',
+ADD COLUMN file_type varchar(20) DEFAULT 'other' COMMENT '文档类型（logo: Logo图片, requirement: 需求文档, help: 帮助文档, design: 设计文档, api: 接口文档, other: 其他文档）';
+
+-- 添加外键约束
+ALTER TABLE sys_oss
+ADD CONSTRAINT fk_oss_project FOREIGN KEY (project_id) REFERENCES os_project (project_id) ON DELETE SET NULL;

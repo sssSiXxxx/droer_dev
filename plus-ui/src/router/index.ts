@@ -93,7 +93,54 @@ export const constantRoutes: RouteRecordRaw[] = [
 
 // 动态路由，基于用户权限动态去加载
 export const dynamicRoutes: RouteRecordRaw[] = [
-
+  {
+    path: '/system',
+    component: Layout,
+    name: 'System',
+    meta: { title: '系统管理', icon: 'system' },
+    children: [
+      {
+        path: 'oss',
+        component: () => import('@/views/system/oss/index.vue'),
+        name: 'Oss',
+        meta: { title: '文档管理', icon: 'upload' }
+      }
+    ]
+  },
+  {
+    path: '/osc',
+    component: Layout,
+    name: 'Osc',
+    meta: { title: '开源社区', icon: 'github' },
+    children: [
+      {
+        path: 'myProject',
+        component: () => import('@/views/osc/myProject/index.vue'),
+        name: 'MyProject',
+        meta: { title: '我的创建', icon: 'list' }
+      },
+      {
+        path: 'projectCreate',
+        component: () => import('@/views/osc/projectCreate/index.vue'),
+        name: 'ProjectCreate',
+        meta: { title: '创建项目', icon: 'edit' },
+        hidden: true
+      },
+      {
+        path: 'projectDraft',
+        component: () => import('@/views/osc/projectDraft/index.vue'),
+        name: 'ProjectDraft',
+        meta: { title: '草稿箱', icon: 'document' },
+        hidden: true
+      },
+      {
+        path: 'projectPhase',
+        component: () => import('@/views/osc/projectPhase/index.vue'),
+        name: 'ProjectPhase',
+        meta: { title: '进度追踪', icon: 'time' }
+      }
+    ]
+  }
 ];
 
 /**

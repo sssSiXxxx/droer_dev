@@ -189,7 +189,7 @@ public class SysOssServiceImpl implements ISysOssService, OssService {
      * @throws ServiceException 如果上传过程中发生异常，则抛出 ServiceException 异常
      */
     @Override
-    public SysOssVo upload(MultipartFile file) {
+    public SysOssVo upload(MultipartFile file, Long projectId, String fileType) {
         String originalfileName = file.getOriginalFilename();
         String suffix = StringUtils.substring(originalfileName, originalfileName.lastIndexOf("."), originalfileName.length());
         OssClient storage = OssFactory.instance();
@@ -200,7 +200,12 @@ public class SysOssServiceImpl implements ISysOssService, OssService {
             throw new ServiceException(e.getMessage());
         }
         // 保存文件信息
-        return buildResultEntity(originalfileName, suffix, storage.getConfigKey(), uploadResult);
+        return buildResultEntity(originalfileName, suffix, storage.getConfigKey(), uploadResult, projectId, fileType);
+    }
+
+    @Override
+    public SysOssVo upload(MultipartFile file) {
+        return upload(file, null, "other");
     }
 
     /**
@@ -220,13 +225,17 @@ public class SysOssServiceImpl implements ISysOssService, OssService {
     }
 
     @NotNull
-    private SysOssVo buildResultEntity(String originalfileName, String suffix, String configKey, UploadResult uploadResult) {
+    private SysOssVo buildResultEntity(String originalfileName, String suffix, String configKey, UploadResult uploadResult,
+                                     Long projectId, String fileType) {
         SysOss oss = new SysOss();
         oss.setUrl(uploadResult.getUrl());
         oss.setFileSuffix(suffix);
         oss.setFileName(uploadResult.getFilename());
         oss.setOriginalName(originalfileName);
         oss.setService(configKey);
+        oss.setProjectId(projectId);
+        oss.setFileType(fileType);
+        oss.setSize(uploadResult.getSize());
         baseMapper.insert(oss);
         SysOssVo sysOssVo = MapstructUtils.convert(oss, SysOssVo.class);
         return this.matchingUrl(sysOssVo);

@@ -1,22 +1,17 @@
 package org.dromara.system.domain.vo;
 
-import io.github.linpeilie.annotations.AutoMapper;
 import lombok.Data;
-import org.dromara.common.translation.annotation.Translation;
-import org.dromara.common.translation.constant.TransConstant;
-import org.dromara.system.domain.SysOss;
 
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Date;
 
 /**
- * OSS对象存储视图对象 sys_oss
+ * OSS对象存储视图对象
  *
- * @author Lion Li
+ * @author lmq
  */
 @Data
-@AutoMapper(target = SysOss.class)
 public class SysOssVo implements Serializable {
 
     @Serial
@@ -48,9 +43,34 @@ public class SysOssVo implements Serializable {
     private String url;
 
     /**
-     * 扩展字段
+     * 服务商
      */
-    private String ext1;
+    private String service;
+
+    /**
+     * 文件大小（字节）
+     */
+    private Long size;
+
+    /**
+     * 所属项目ID
+     */
+    private Long projectId;
+
+    /**
+     * 所属项目名称
+     */
+    private String projectName;
+
+    /**
+     * 文档类型（logo: Logo图片, requirement: 需求文档, help: 帮助文档, design: 设计文档, api: 接口文档, other: 其他文档）
+     */
+    private String fileType;
+
+    /**
+     * 创建者
+     */
+    private Long createBy;
 
     /**
      * 创建时间
@@ -58,20 +78,13 @@ public class SysOssVo implements Serializable {
     private Date createTime;
 
     /**
-     * 上传人
+     * 更新者
      */
-    private Long createBy;
+    private Long updateBy;
 
     /**
-     * 上传人名称
+     * 更新时间
      */
-    @Translation(type = TransConstant.USER_ID_TO_NAME, mapper = "createBy")
-    private String createByName;
-
-    /**
-     * 服务商
-     */
-    private String service;
-
+    private Date updateTime;
 
 }

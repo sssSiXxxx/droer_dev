@@ -47,10 +47,22 @@ public interface ISysOssService {
     /**
      * 上传 MultipartFile 到对象存储服务，并保存文件信息到数据库
      *
+     * @param file      要上传的 MultipartFile 对象
+     * @param projectId 所属项目ID
+     * @param fileType  文档类型
+     * @return 上传成功后的 SysOssVo 对象，包含文件信息
+     */
+    SysOssVo upload(MultipartFile file, Long projectId, String fileType);
+
+    /**
+     * 上传 MultipartFile 到对象存储服务，并保存文件信息到数据库
+     *
      * @param file 要上传的 MultipartFile 对象
      * @return 上传成功后的 SysOssVo 对象，包含文件信息
      */
-    SysOssVo upload(MultipartFile file);
+    default SysOssVo upload(MultipartFile file) {
+        return upload(file, null, "other");
+    }
 
     /**
      * 上传文件到对象存储服务，并保存文件信息到数据库

@@ -27,4 +27,9 @@ public class UploadResult {
      */
     private String eTag;
 
+    /**
+     * 文件大小（字节）
+     */
+    private Long size;
+
 }

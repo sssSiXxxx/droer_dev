@@ -1,130 +1,321 @@
 <template>
-  <div class="p-2">
-    <transition :enter-active-class="proxy?.animate.searchAnimate.enter" :leave-active-class="proxy?.animate.searchAnimate.leave">
-      <div v-show="showSearch" class="mb-[10px]">
-        <el-card shadow="hover">
-          <el-form ref="queryFormRef" :model="queryParams" :inline="true">
-            <el-form-item label="文件名" prop="fileName">
-              <el-input v-model="queryParams.fileName" placeholder="请输入文件名" clearable @keyup.enter="handleQuery" />
-            </el-form-item>
-            <el-form-item label="原名" prop="originalName">
-              <el-input v-model="queryParams.originalName" placeholder="请输入原名" clearable @keyup.enter="handleQuery" />
-            </el-form-item>
-            <el-form-item label="文件后缀" prop="fileSuffix">
-              <el-input v-model="queryParams.fileSuffix" placeholder="请输入文件后缀" clearable @keyup.enter="handleQuery" />
-            </el-form-item>
-            <el-form-item label="创建时间" style="width: 308px">
-              <el-date-picker
-                v-model="dateRangeCreateTime"
-                value-format="YYYY-MM-DD HH:mm:ss"
-                type="daterange"
-                range-separator="-"
-                start-placeholder="开始日期"
-                end-placeholder="结束日期"
-                :default-time="[new Date(2000, 1, 1, 0, 0, 0), new Date(2000, 1, 1, 23, 59, 59)]"
-              ></el-date-picker>
-            </el-form-item>
-            <el-form-item label="服务商" prop="service">
-              <el-input v-model="queryParams.service" placeholder="请输入服务商" clearable @keyup.enter="handleQuery" />
-            </el-form-item>
-            <el-form-item>
-              <el-button type="primary" icon="search" @click="handleQuery">搜索</el-button>
-              <el-button icon="Refresh" @click="resetQuery">重置</el-button>
-            </el-form-item>
-          </el-form>
-        </el-card>
-      </div>
-    </transition>
+  <div class="app-container">
+    <!-- 搜索工具栏 -->
+    <el-card class="mb-4">
+      <el-form :model="queryParams" ref="queryRef" :inline="true">
+        <el-form-item label="项目" prop="projectId">
+          <el-select
+            v-model="queryParams.projectId"
+            placeholder="请选择项目"
+            clearable
+            style="width: 240px"
+            @change="handleQuery"
+          >
+            <el-option
+              v-for="item in projectOptions"
+              :key="item.projectId"
+              :label="item.projectName"
+              :value="item.projectId"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="文档类型" prop="fileType">
+          <el-select
+            v-model="queryParams.fileType"
+            placeholder="请选择文档类型"
+            clearable
+            style="width: 200px"
+            @change="handleQuery"
+          >
+            <el-option
+              v-for="dict in fileTypeOptions"
+              :key="dict.value"
+              :label="dict.label"
+              :value="dict.value"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="文件名" prop="fileName">
+          <el-input
+            v-model="queryParams.fileName"
+            placeholder="请输入文件名"
+            clearable
+            style="width: 200px"
+            @keyup.enter="handleQuery"
+          />
+        </el-form-item>
+        <el-form-item label="上传时间">
+          <el-date-picker
+            v-model="dateRange"
+            type="daterange"
+            range-separator="-"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            value-format="YYYY-MM-DD"
+          />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
+          <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+        </el-form-item>
+      </el-form>
+    </el-card>
 
-    <el-card shadow="hover">
+    <!-- 文件列表卡片 -->
+    <el-card>
       <template #header>
-        <el-row :gutter="10" class="mb8">
-          <el-col :span="1.5">
-            <el-button v-hasPermi="['system:oss:upload']" type="primary" plain icon="Upload" @click="handleFile">上传文件</el-button>
-          </el-col>
-          <el-col :span="1.5">
-            <el-button v-hasPermi="['system:oss:upload']" type="primary" plain icon="Upload" @click="handleImage">上传图片</el-button>
-          </el-col>
-          <el-col :span="1.5">
-            <el-button v-hasPermi="['system:oss:remove']" type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete()">
+        <div class="card-header">
+          <span class="card-title">文档列表</span>
+          <div class="right-content">
+            <el-radio-group v-model="viewMode" size="small" class="mr-4">
+              <el-radio-button label="grid">
+                <el-icon><Grid /></el-icon>
+              </el-radio-button>
+              <el-radio-button label="table">
+                <el-icon><List /></el-icon>
+              </el-radio-button>
+            </el-radio-group>
+            <el-button
+              type="primary"
+              plain
+              icon="Upload"
+              @click="handleUpload"
+              v-hasPermi="['system:oss:upload']"
+            >
+              上传文档
+            </el-button>
+            <el-button
+              type="danger"
+              plain
+              icon="Delete"
+              :disabled="multiple"
+              @click="handleDelete"
+              v-hasPermi="['system:oss:remove']"
+            >
               删除
             </el-button>
-          </el-col>
-          <el-col :span="1.5">
-            <el-button
-              v-hasPermi="['system:oss:edit']"
-              :type="previewListResource ? 'danger' : 'warning'"
-              plain
-              @click="handlePreviewListResource(!previewListResource)"
-              >预览开关 : {{ previewListResource ? '禁用' : '启用' }}</el-button
+          </div>
+        </div>
+      </template>
+
+      <!-- 网格视图 -->
+      <template v-if="viewMode === 'grid'">
+        <el-row :gutter="20">
+          <el-col
+            :span="6"
+            v-for="item in fileList"
+            :key="item.ossId"
+            class="mb-4"
+          >
+            <el-card
+              :body-style="{ padding: '0px' }"
+              shadow="hover"
+              class="file-card"
+              :class="{ selected: selection.includes(item.ossId) }"
+              @click="toggleSelection(item)"
             >
+              <!-- 文件预览 -->
+              <div class="file-preview">
+                <template v-if="isImage(item.fileName)">
+                  <el-image
+                    :src="item.url"
+                    fit="cover"
+                    :preview-src-list="[item.url]"
+                  />
+                </template>
+                <template v-else>
+                  <div class="file-icon">
+                    <el-icon :size="40">
+                      <Document v-if="isDocument(item.fileName)" />
+                      <VideoPlay v-else-if="isVideo(item.fileName)" />
+                      <Headset v-else-if="isAudio(item.fileName)" />
+                      <Files v-else />
+                    </el-icon>
+                  </div>
+                </template>
+              </div>
+              <!-- 文件信息 -->
+              <div class="file-info">
+                <div class="file-name" :title="item.fileName">
+                  {{ item.fileName }}
+                </div>
+                <div class="file-meta">
+                  <span>{{ formatSize(item.size) }}</span>
+                  <span>{{ parseTime(item.createTime) }}</span>
+                </div>
+                <!-- 操作按钮 -->
+                <div class="file-actions">
+                  <el-button
+                    link
+                    type="primary"
+                    icon="Download"
+                    @click.stop="handleDownload(item)"
+                    v-hasPermi="['system:oss:download']"
+                  >
+                    下载
+                  </el-button>
+                  <el-button
+                    link
+                    type="danger"
+                    icon="Delete"
+                    @click.stop="handleDelete(item)"
+                    v-hasPermi="['system:oss:remove']"
+                  >
+                    删除
+                  </el-button>
+                </div>
+              </div>
+            </el-card>
           </el-col>
-          <el-col :span="1.5">
-            <el-button v-hasPermi="['system:ossConfig:list']" type="info" plain icon="Operation" @click="handleOssConfig">配置管理</el-button>
-          </el-col>
-          <right-toolbar v-model:show-search="showSearch" @query-table="getList"></right-toolbar>
         </el-row>
       </template>
 
-      <el-table
-        v-if="showTable"
-        v-loading="loading"
-        :data="ossList"
-        border
-        :header-cell-class-name="handleHeaderClass"
-        @selection-change="handleSelectionChange"
-        @header-click="handleHeaderCLick"
-      >
-        <el-table-column type="selection" width="55" align="center" />
-        <el-table-column v-if="false" label="对象存储主键" align="center" prop="ossId" />
-        <el-table-column label="文件名" align="center" prop="fileName" />
-        <el-table-column label="原名" align="center" prop="originalName" />
-        <el-table-column label="文件后缀" align="center" prop="fileSuffix" />
-        <el-table-column label="文件展示" align="center" prop="url">
-          <template #default="scope">
-            <ImagePreview
-              v-if="previewListResource && checkFileSuffix(scope.row.fileSuffix)"
-              :width="100"
-              :height="100"
-              :src="scope.row.url"
-              :preview-src-list="[scope.row.url]"
-            />
-            <span v-if="!checkFileSuffix(scope.row.fileSuffix) || !previewListResource" v-text="scope.row.url" />
-          </template>
-        </el-table-column>
-        <el-table-column label="创建时间" align="center" prop="createTime" width="180" sortable="custom">
-          <template #default="scope">
-            <span>{{ proxy.parseTime(scope.row.createTime, '{y}-{m}-{d}') }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="上传人" align="center" prop="createByName" />
-        <el-table-column label="服务商" align="center" prop="service" sortable="custom" />
-        <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
-          <template #default="scope">
-            <el-tooltip content="下载" placement="top">
-              <el-button v-hasPermi="['system:oss:download']" link type="primary" icon="Download" @click="handleDownload(scope.row)"></el-button>
-            </el-tooltip>
-            <el-tooltip content="删除" placement="top">
-              <el-button v-hasPermi="['system:oss:remove']" link type="primary" icon="Delete" @click="handleDelete(scope.row)"></el-button>
-            </el-tooltip>
-          </template>
-        </el-table-column>
-      </el-table>
+      <!-- 表格视图 -->
+      <template v-else>
+        <el-table
+          v-loading="loading"
+          :data="fileList"
+          @selection-change="handleSelectionChange"
+        >
+          <el-table-column type="selection" width="55" align="center" />
+          <el-table-column label="文件名" align="left" prop="fileName" min-width="200">
+            <template #default="{ row }">
+              <div class="file-name-cell">
+                <el-icon :size="20" class="mr-2">
+                  <Document v-if="isDocument(row.fileName)" />
+                  <VideoPlay v-else-if="isVideo(row.fileName)" />
+                  <Headset v-else-if="isAudio(row.fileName)" />
+                  <Files v-else />
+                </el-icon>
+                <span>{{ row.fileName }}</span>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="所属项目" align="center" prop="projectName" min-width="120" />
+          <el-table-column label="文档类型" align="center" prop="fileType" min-width="100">
+            <template #default="{ row }">
+              <dict-tag :options="fileTypeOptions" :value="row.fileType" />
+            </template>
+          </el-table-column>
+          <el-table-column label="文件大小" align="center" prop="size" min-width="100">
+            <template #default="{ row }">
+              {{ formatSize(row.size) }}
+            </template>
+          </el-table-column>
+          <el-table-column
+            label="上传时间"
+            align="center"
+            prop="createTime"
+            width="180"
+          >
+            <template #default="{ row }">
+              <span>{{ parseTime(row.createTime) }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column
+            label="操作"
+            align="center"
+            width="150"
+            class-name="small-padding fixed-width"
+          >
+            <template #default="{ row }">
+              <el-button
+                link
+                type="primary"
+                icon="Download"
+                @click="handleDownload(row)"
+                v-hasPermi="['system:oss:download']"
+              >
+                下载
+              </el-button>
+              <el-button
+                link
+                type="danger"
+                icon="Delete"
+                @click="handleDelete(row)"
+                v-hasPermi="['system:oss:remove']"
+              >
+                删除
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
 
-      <pagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
+        <pagination
+          v-show="total > 0"
+          :total="total"
+          v-model:page="queryParams.pageNum"
+          v-model:limit="queryParams.pageSize"
+          @pagination="getList"
+        />
+      </template>
     </el-card>
-    <!-- 添加或修改OSS对象存储对话框 -->
-    <el-dialog v-model="dialog.visible" :title="dialog.title" width="500px" append-to-body>
-      <el-form ref="ossFormRef" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="文件名">
-          <fileUpload v-if="type === 0" v-model="form.file" />
-          <imageUpload v-if="type === 1" v-model="form.file" />
+
+    <!-- 上传对话框 -->
+    <el-dialog :title="upload.title" v-model="upload.open" width="600px" append-to-body>
+      <el-form ref="uploadFormRef" :model="upload.form" :rules="upload.rules" label-width="100px">
+        <el-form-item label="所属项目" prop="projectId">
+          <el-select
+            v-model="upload.form.projectId"
+            placeholder="请选择项目"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="item in projectOptions"
+              :key="item.projectId"
+              :label="item.projectName"
+              :value="item.projectId"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="文档类型" prop="fileType">
+          <el-select
+            v-model="upload.form.fileType"
+            placeholder="请选择文档类型"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="dict in fileTypeOptions"
+              :key="dict.value"
+              :label="dict.label"
+              :value="dict.value"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="文件上传" prop="file">
+          <el-upload
+            ref="uploadRef"
+            :action="upload.url"
+            :headers="upload.headers"
+            :file-list="upload.fileList"
+            :data="upload.form"
+            :limit="upload.limit"
+            :on-progress="handleFileUploadProgress"
+            :on-success="handleFileSuccess"
+            :on-error="handleFileError"
+            :on-exceed="handleFileExceed"
+            :before-upload="handleBeforeUpload"
+            :on-remove="handleFileRemove"
+            multiple
+            :show-file-list="true"
+            drag
+          >
+            <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+            <div class="el-upload__text">
+              将文件拖到此处，或<em>点击上传</em>
+            </div>
+            <template #tip>
+              <div class="el-upload__tip text-center">
+                <span>支持任意类型文件，且不超过 {{ upload.fileSize }}MB</span>
+              </div>
+            </template>
+          </el-upload>
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button :loading="buttonLoading" type="primary" @click="submitForm">确 定</el-button>
-          <el-button @click="cancel">取 消</el-button>
+          <el-button type="primary" @click="submitUpload">确 定</el-button>
+          <el-button @click="upload.open = false">取 消</el-button>
         </div>
       </template>
     </el-dialog>
@@ -133,201 +324,388 @@
 
 <script setup name="Oss" lang="ts">
 import { listOss, delOss } from '@/api/system/oss';
-import ImagePreview from '@/components/ImagePreview/index.vue';
-import { OssForm, OssQuery, OssVO } from '@/api/system/oss/types';
+import { getToken } from '@/utils/auth';
+import { listProjects } from '@/api/osc/project';
+import { getCurrentInstance, ref, onMounted } from 'vue';
+import {
+  Document,
+  Grid,
+  List,
+  Upload,
+  UploadFilled,
+  VideoPlay,
+  Headset,
+  Files
+} from '@element-plus/icons-vue';
 
-const router = useRouter();
-const { proxy } = getCurrentInstance() as ComponentInternalInstance;
+const { proxy } = getCurrentInstance() as any;
 
-const ossList = ref<OssVO[]>([]);
-const showTable = ref(true);
-const buttonLoading = ref(false);
-const loading = ref(true);
-const showSearch = ref(true);
+// 遮罩层
+const loading = ref(false);
+// 选中数组
 const ids = ref<Array<string | number>>([]);
+// 非单个禁用
 const single = ref(true);
+// 非多个禁用
 const multiple = ref(true);
+// 总条数
 const total = ref(0);
-const type = ref(0);
-const previewListResource = ref(true);
-const dateRangeCreateTime = ref<[DateModelType, DateModelType]>(['', '']);
+// 查看模式：grid/table
+const viewMode = ref('grid');
+// 选中的文件ID
+const selection = ref<Array<string | number>>([]);
 
-const dialog = reactive<DialogOption>({
-  visible: false,
-  title: ''
+// 项目选项
+const projectOptions = ref([]);
+
+// 文档类型选项
+const fileTypeOptions = [
+  { label: 'Logo图片', value: 'logo' },
+  { label: '需求文档', value: 'requirement' },
+  { label: '帮助文档', value: 'help' },
+  { label: '设计文档', value: 'design' },
+  { label: '接口文档', value: 'api' },
+  { label: '其他文档', value: 'other' }
+];
+
+// 弹出层标题
+const title = ref('');
+// 是否显示弹出层
+const open = ref(false);
+// 日期范围
+const dateRange = ref<Array<string>>([]);
+// 文件列表
+const fileList = ref([]);
+
+// 查询参数
+const queryParams = ref({
+  pageNum: 1,
+  pageSize: 10,
+  fileName: undefined,
+  originalName: undefined,
+  projectId: undefined,
+  fileType: undefined
 });
 
-// 默认排序
-const defaultSort = ref({ prop: 'createTime', order: 'ascending' });
-
-const ossFormRef = ref<ElFormInstance>();
-const queryFormRef = ref<ElFormInstance>();
-
-const initFormData = {
-  file: undefined
-};
-const data = reactive<PageData<OssForm, OssQuery>>({
-  form: { ...initFormData },
-  // 查询参数
-  queryParams: {
-    pageNum: 1,
-    pageSize: 10,
-    fileName: '',
-    originalName: '',
-    fileSuffix: '',
-    createTime: '',
-    service: '',
-    orderByColumn: defaultSort.value.prop,
-    isAsc: defaultSort.value.order
+// 上传参数
+const upload = ref({
+  // 是否显示弹出层
+  open: false,
+  // 弹出层标题
+  title: '上传文件',
+  // 是否禁用上传
+  isUploading: false,
+  // 设置上传的请求头部
+  headers: { Authorization: 'Bearer ' + getToken() },
+  // 上传的地址
+      url: import.meta.env.VITE_APP_BASE_API + '/resource/oss/upload',
+  // 上传的文件列表
+  fileList: [],
+  // 上传文件大小限制
+  fileSize: 5,
+  // 限制上传数量
+  limit: 10,
+  // 表单参数
+  form: {
+    projectId: undefined,
+    fileType: undefined
   },
+  // 表单校验
   rules: {
-    file: [{ required: true, message: '文件不能为空', trigger: 'blur' }]
+    projectId: [
+      { required: true, message: '请选择所属项目', trigger: 'change' }
+    ],
+    fileType: [
+      { required: true, message: '请选择文档类型', trigger: 'change' }
+    ]
   }
 });
 
-const { queryParams, form, rules } = toRefs(data);
-
-/** 查询OSS对象存储列表 */
+/** 查询OSS列表 */
 const getList = async () => {
   loading.value = true;
-  const res = await proxy?.getConfigKey('sys.oss.previewListResource');
-  previewListResource.value = res?.data === undefined ? true : res.data === 'true';
-  const response = await listOss(proxy?.addDateRange(queryParams.value, dateRangeCreateTime.value, 'CreateTime'));
-  ossList.value = response.rows;
-  total.value = response.total;
-  loading.value = false;
-  showTable.value = true;
+  try {
+    const res = await listOss(proxy?.addDateRange(queryParams.value, dateRange.value));
+    fileList.value = res.rows;
+    total.value = res.total;
+  } finally {
+    loading.value = false;
+  }
 };
-function checkFileSuffix(fileSuffix: string | string[]) {
-  const arr = ['.png', '.jpg', '.jpeg'];
-  const suffixArray = Array.isArray(fileSuffix) ? fileSuffix : [fileSuffix];
-  return suffixArray.some((suffix) => arr.includes(suffix.toLowerCase()));
-}
-/** 取消按钮 */
-function cancel() {
-  dialog.visible = false;
-  reset();
-}
-/** 表单重置 */
-function reset() {
-  form.value = { ...initFormData };
-  ossFormRef.value?.resetFields();
-}
+
+/** 加载项目列表 */
+const loadProjects = async () => {
+  try {
+    const res = await listProjects();
+    projectOptions.value = res.rows;
+  } catch (error) {
+    console.error('获取项目列表失败:', error);
+  }
+};
+
 /** 搜索按钮操作 */
-function handleQuery() {
+const handleQuery = () => {
   queryParams.value.pageNum = 1;
   getList();
-}
+};
+
 /** 重置按钮操作 */
-function resetQuery() {
-  showTable.value = false;
-  dateRangeCreateTime.value = ['', ''];
-  queryFormRef.value?.resetFields();
-  queryParams.value.orderByColumn = defaultSort.value.prop;
-  queryParams.value.isAsc = defaultSort.value.order;
+const resetQuery = () => {
+  dateRange.value = [];
+  proxy?.resetForm('queryRef');
   handleQuery();
-}
-/** 选择条数  */
-function handleSelectionChange(selection: OssVO[]) {
-  ids.value = selection.map((item) => item.ossId);
-  single.value = selection.length != 1;
-  multiple.value = !selection.length;
-}
-/** 设置列的排序为我们自定义的排序 */
-const handleHeaderClass = ({ column }: any): any => {
-  column.order = column.multiOrder;
 };
-/** 点击表头进行排序 */
-const handleHeaderCLick = (column: any) => {
-  if (column.sortable !== 'custom') {
-    return;
-  }
-  switch (column.multiOrder) {
-    case 'descending':
-      column.multiOrder = 'ascending';
-      break;
-    case 'ascending':
-      column.multiOrder = '';
-      break;
-    default:
-      column.multiOrder = 'descending';
-      break;
-  }
-  handleOrderChange(column.property, column.multiOrder);
-};
-const handleOrderChange = (prop: string, order: string) => {
-  const orderByArr = queryParams.value.orderByColumn ? queryParams.value.orderByColumn.split(',') : [];
-  const isAscArr = queryParams.value.isAsc ? queryParams.value.isAsc.split(',') : [];
-  const propIndex = orderByArr.indexOf(prop);
-  if (propIndex !== -1) {
-    if (order) {
-      //排序里已存在 只修改排序
-      isAscArr[propIndex] = order;
-    } else {
-      //如果order为null 则删除排序字段和属性
-      isAscArr.splice(propIndex, 1); //删除排序
-      orderByArr.splice(propIndex, 1); //删除属性
-    }
-  } else {
-    //排序里不存在则新增排序
-    orderByArr.push(prop);
-    isAscArr.push(order);
-  }
-  //合并排序
-  queryParams.value.orderByColumn = orderByArr.join(',');
-  queryParams.value.isAsc = isAscArr.join(',');
-  getList();
-};
-/** 任务日志列表查询 */
-const handleOssConfig = () => {
-  router.push('/system/oss-config/index');
-};
-/** 文件按钮操作 */
-const handleFile = () => {
-  reset();
-  type.value = 0;
-  dialog.visible = true;
-  dialog.title = '上传文件';
-};
-/** 图片按钮操作 */
-const handleImage = () => {
-  reset();
-  type.value = 1;
-  dialog.visible = true;
-  dialog.title = '上传图片';
-};
-/** 提交按钮 */
-const submitForm = () => {
-  dialog.visible = false;
-  getList();
-};
-/** 下载按钮操作 */
-const handleDownload = (row: OssVO) => {
-  proxy?.$download.oss(row.ossId);
-};
-/** 预览开关按钮  */
-const handlePreviewListResource = async (preview: boolean) => {
-  const text = preview ? '启用' : '停用';
-  try {
-    await proxy?.$modal.confirm('确认要"' + text + '""预览列表图片"配置吗?');
-    await proxy?.updateConfigByKey('sys.oss.previewListResource', preview);
-    await getList();
-    proxy?.$modal.msgSuccess(text + '成功');
-  } catch {
-    return;
-  }
-};
+
 /** 删除按钮操作 */
-const handleDelete = async (row?: OssVO) => {
+const handleDelete = async (row?: any) => {
   const ossIds = row?.ossId || ids.value;
-  await proxy?.$modal.confirm('是否确认删除OSS对象存储编号为"' + ossIds + '"的数据项?');
-  loading.value = true;
-  await delOss(ossIds).finally(() => (loading.value = false));
-  await getList();
-  proxy?.$modal.msgSuccess('删除成功');
+  try {
+    await proxy?.$modal.confirm('是否确认删除OSS对象存储编号为"' + ossIds + '"的数据项？');
+    await delOss(ossIds);
+    await getList();
+    proxy?.$modal.msgSuccess('删除成功');
+  } catch (error) {
+    console.error('删除失败:', error);
+  }
+};
+
+/** 上传按钮操作 */
+const handleUpload = () => {
+  upload.value.open = true;
+  upload.value.fileList = [];
+};
+
+/** 提交上传文件 */
+const submitUpload = async () => {
+  proxy?.$refs['uploadRef'].submit();
+};
+
+/** 文件上传中处理 */
+const handleFileUploadProgress = (event: any, file: any) => {
+  upload.value.isUploading = true;
+};
+
+/** 文件上传成功处理 */
+const handleFileSuccess = (response: any, file: any) => {
+  upload.value.isUploading = false;
+  if (response.code === 200) {
+    proxy?.$modal.msgSuccess('上传成功');
+    upload.value.open = false;
+    getList();
+  } else {
+    proxy?.$modal.msgError('上传失败');
+  }
+};
+
+/** 文件上传失败处理 */
+const handleFileError = () => {
+  upload.value.isUploading = false;
+  proxy?.$modal.msgError('上传失败');
+};
+
+/** 文件删除处理 */
+const handleFileRemove = (file: any, fileList: any) => {
+  upload.value.fileList = fileList;
+};
+
+/** 文件上传超出数量限制处理 */
+const handleFileExceed = (files: any, fileList: any) => {
+  proxy?.$modal.msgError(`上传文件数量不能超过 ${upload.value.limit} 个!`);
+};
+
+/** 上传前处理 */
+const handleBeforeUpload = (file: any) => {
+  const isLt = file.size / 1024 / 1024 < upload.value.fileSize;
+  if (!isLt) {
+    proxy?.$modal.msgError(`文件大小不能超过 ${upload.value.fileSize} MB!`);
+    return false;
+  }
+  upload.value.fileList = [file];
+  return true;
+};
+
+/** 下载按钮操作 */
+const handleDownload = (row: any) => {
+  proxy?.download('/system/oss/download/' + row.ossId, {}, row.fileName);
+};
+
+/** 多选框选中数据 */
+const handleSelectionChange = (selection: any) => {
+  ids.value = selection.map((item: any) => item.ossId);
+  single.value = selection.length !== 1;
+  multiple.value = !selection.length;
+};
+
+/** 网格视图选中切换 */
+const toggleSelection = (item: any) => {
+  const index = selection.value.indexOf(item.ossId);
+  if (index === -1) {
+    selection.value.push(item.ossId);
+  } else {
+    selection.value.splice(index, 1);
+  }
+};
+
+/** 文件类型判断 */
+const isImage = (fileName: string) => {
+  return /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(fileName);
+};
+
+const isDocument = (fileName: string) => {
+  return /\.(doc|docx|xls|xlsx|ppt|pptx|pdf|txt|md)$/i.test(fileName);
+};
+
+const isVideo = (fileName: string) => {
+  return /\.(mp4|webm|ogg|mov|avi)$/i.test(fileName);
+};
+
+const isAudio = (fileName: string) => {
+  return /\.(mp3|wav|ogg|m4a)$/i.test(fileName);
+};
+
+/** 文件大小格式化 */
+const formatSize = (size: number) => {
+  if (size < 1024) {
+    return size + ' B';
+  } else if (size < 1024 * 1024) {
+    return (size / 1024).toFixed(2) + ' KB';
+  } else if (size < 1024 * 1024 * 1024) {
+    return (size / (1024 * 1024)).toFixed(2) + ' MB';
+  } else {
+    return (size / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+  }
 };
 
 onMounted(() => {
   getList();
+  loadProjects();
 });
 </script>
+
+<style lang="scss" scoped>
+.app-container {
+  padding: 20px;
+}
+
+.mb-4 {
+  margin-bottom: 16px;
+}
+
+.mr-4 {
+  margin-right: 16px;
+}
+
+.mr-2 {
+  margin-right: 8px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.right-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.file-card {
+  cursor: pointer;
+  transition: all 0.3s;
+
+  &.selected {
+    border-color: var(--el-color-primary);
+    box-shadow: 0 0 0 1px var(--el-color-primary);
+  }
+
+  .file-preview {
+    height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--el-fill-color-lighter);
+
+    .el-image {
+      width: 100%;
+      height: 100%;
+    }
+
+    .file-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--el-text-color-secondary);
+    }
+  }
+
+  .file-info {
+    padding: 12px;
+
+    .file-name {
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .file-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--el-text-color-secondary);
+      margin-bottom: 8px;
+    }
+
+    .file-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+  }
+}
+
+.file-name-cell {
+  display: flex;
+  align-items: center;
+}
+
+:deep(.el-upload-dragger) {
+  width: 100%;
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  .el-icon--upload {
+    font-size: 48px;
+    color: var(--el-color-primary);
+    margin-bottom: 16px;
+  }
+
+  .el-upload__text {
+    font-size: 16px;
+    color: var(--el-text-color-regular);
+
+    em {
+      color: var(--el-color-primary);
+      font-style: normal;
+    }
+  }
+}
+
+:deep(.el-upload__tip) {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+</style>

@@ -4,7 +4,7 @@
       <template #header>
         <div class="card-header">
           <span class="title">项目草稿箱</span>
-          <el-button type="primary" @click="$router.push('/osc/projectCreate')">
+          <el-button type="primary" @click="handleCreate">
             <el-icon><Plus /></el-icon>
             创建项目
           </el-button>
@@ -30,8 +30,18 @@
 
       <!-- 草稿列表 -->
       <el-table v-loading="loading" :data="draftList">
-        <el-table-column label="项目名称" align="center" prop="projectName" />
-        <el-table-column label="项目描述" align="center" prop="description" :show-overflow-tooltip="true" />
+        <el-table-column label="项目名称" align="center" prop="projectName" min-width="120" />
+        <el-table-column label="项目描述" align="center" prop="description" :show-overflow-tooltip="true" min-width="200" />
+        <el-table-column label="完成度" align="center" width="100">
+          <template #default="scope">
+            <el-progress :percentage="calculateCompletion(scope.row)" />
+          </template>
+        </el-table-column>
+        <el-table-column label="最后编辑时间" align="center" prop="updateTime" width="180">
+          <template #default="scope">
+            <span>{{ parseTime(scope.row.updateTime) }}</span>
+          </template>
+        </el-table-column>
         <el-table-column label="创建时间" align="center" prop="createTime" width="180">
           <template #default="scope">
             <span>{{ parseTime(scope.row.createTime) }}</span>
@@ -61,9 +71,55 @@
 import { listProject, delProject } from '@/api/osc/project';
 import { ProjectVO, ProjectQuery } from '@/api/osc/project/types';
 
-const { proxy } = getCurrentInstance() as ComponentInternalInstance;
+const { proxy } = getCurrentInstance() as any;
 
 const loading = ref(false);
+
+/** 计算项目完成度 */
+const calculateCompletion = (project: ProjectVO): number => {
+  const requiredFields = [
+    'projectName',
+    'description',
+    'repositoryUrl'
+  ];
+
+  const optionalFields = [
+    'websiteUrl',
+    'logoUrl',
+    'techStack',
+    'programmingLanguage',
+    'coreContributors',
+    'contactInfo',
+    'versionInfo'
+  ];
+
+  // 必填字段权重为2，选填字段权重为1
+  const requiredWeight = 2;
+  const optionalWeight = 1;
+
+  // 计算总权重
+  const totalWeight = requiredFields.length * requiredWeight + optionalFields.length * optionalWeight;
+
+  // 计算已填写字段的权重和
+  let completedWeight = 0;
+
+  // 检查必填字段
+  requiredFields.forEach(field => {
+    if (project[field]) {
+      completedWeight += requiredWeight;
+    }
+  });
+
+  // 检查选填字段
+  optionalFields.forEach(field => {
+    if (project[field]) {
+      completedWeight += optionalWeight;
+    }
+  });
+
+  // 计算完成度百分比
+  return Math.round((completedWeight / totalWeight) * 100);
+};
 const total = ref(0);
 const draftList = ref<ProjectVO[]>([]);
 
