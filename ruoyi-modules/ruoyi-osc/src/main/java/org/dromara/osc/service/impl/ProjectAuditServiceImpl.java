@@ -24,6 +24,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import org.dromara.osc.domain.bo.ProjectBo;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
 /**
  * 项目审核Service业务层处理
@@ -44,7 +45,8 @@ public class ProjectAuditServiceImpl extends ServiceImpl<ProjectAuditMapper, Pro
     @Override
     public TableDataInfo<ProjectAuditVo> queryPageList(ProjectAuditBo bo, PageQuery pageQuery) {
         LambdaQueryWrapper<ProjectAudit> lqw = buildQueryWrapper(bo);
-        return baseMapper.selectVoPage(pageQuery.build(), lqw, ProjectAuditVo.class);
+        Page<ProjectAuditVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw, ProjectAuditVo.class);
+        return TableDataInfo.build(result);
     }
 
     /**

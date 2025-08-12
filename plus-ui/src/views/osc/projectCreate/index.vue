@@ -247,7 +247,7 @@
 <script setup name="ProjectCreate" lang="ts">
 import { ProjectForm } from '@/api/osc/project/types';
 import { addProject, getProject, updateProject } from '@/api/osc/project';
-import { getCurrentInstance, ref, onMounted, onBeforeUnmount, toRefs } from 'vue';
+import { getCurrentInstance, ref, onMounted, onBeforeUnmount, toRefs, nextTick, watch } from 'vue';
 import { Plus, List, Document, InfoFilled, Monitor, Link, More, Check, DocumentAdd, Timer, Files } from '@element-plus/icons-vue';
 import TemplateSelect from './components/TemplateSelect.vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -255,6 +255,7 @@ import { useUserStore } from '@/store/modules/user';
 import type { FormInstance as ElFormInstance } from 'element-plus';
 
 const { proxy } = getCurrentInstance() as any;
+const userStore = useUserStore();
 
 // 模板相关
 const templateDialogVisible = ref(false);
@@ -273,8 +274,8 @@ const handleTemplateSelect = (template: any) => {
   proxy?.$modal.msgSuccess(`已成功应用"${template.name}"模板`);
   
   // 更新过滤后的数组，确保选项正确显示
-  filteredTechStack.value = osc_project_tech.value;
-  filteredProgrammingLanguage.value = prolanDict.value;
+  filteredTechStack.value = techStackDict.value;
+  filteredProgrammingLanguage.value = programmingLanguageDict.value;
 };
 
 // 自动保存相关
@@ -282,9 +283,49 @@ const autoSaveTimer = ref<ReturnType<typeof setInterval>>();
 const isAutoSaving = ref(false);
 const lastSaveTime = ref<string>('');
 
-// 分别加载两个字典
-const { osc_project_tech } = toRefs<any>(proxy?.useDict('osc_project_tech'));
-const prolanDict = ref([]);
+// 加载字典数据
+const { osc_project_tech, osc_project_prolan } = toRefs<any>(proxy?.useDict('osc_project_tech', 'osc_project_prolan'));
+
+// 技术栈字典数据（备用）
+const techStackDict = computed(() => {
+  if (osc_project_tech.value && osc_project_tech.value.length > 0) {
+    return osc_project_tech.value;
+  }
+  // 备用的技术栈列表
+  return [
+    { value: '1', label: 'Spring Boot' },
+    { value: '2', label: 'Spring Cloud' },
+    { value: '3', label: 'Docker' },
+    { value: '4', label: 'MyBatis-Plus' },
+    { value: '5', label: '微服务架构' },
+    { value: '6', label: 'Vue 3' },
+    { value: '7', label: 'React' },
+    { value: '8', label: 'TypeScript' },
+    { value: '9', label: 'Redis' },
+    { value: '10', label: 'MySQL' }
+  ];
+});
+
+// 编程语言字典数据（备用）
+const programmingLanguageDict = computed(() => {
+  if (osc_project_prolan.value && osc_project_prolan.value.length > 0) {
+    return osc_project_prolan.value;
+  }
+  // 备用的编程语言列表
+  return [
+    { label: 'Java', value: '1' },
+    { label: 'JavaScript', value: '2' },
+    { label: 'TypeScript', value: '3' },
+    { label: 'Python', value: '4' },
+    { label: 'Go', value: '5' },
+    { label: 'C++', value: '6' },
+    { label: 'PHP', value: '7' },
+    { label: 'Rust', value: '8' },
+    { label: 'Swift', value: '9' },
+    { label: 'Kotlin', value: '10' }
+  ];
+});
+
 const filteredProgrammingLanguage = ref<any[]>([]);
 const programmingLanguageSearchKeyword = ref('');
 const filteredTechStack = ref<any[]>([]);
@@ -293,90 +334,25 @@ const techStackSearchKeyword = ref('');
 // 过滤编程语言选项
 const filterProgrammingLanguage = (query: string) => {
   if (query) {
-    filteredProgrammingLanguage.value = prolanDict.value.filter(item => 
+    filteredProgrammingLanguage.value = programmingLanguageDict.value.filter(item => 
       item.label.toLowerCase().includes(query.toLowerCase())
     );
   } else {
-    filteredProgrammingLanguage.value = prolanDict.value;
+    filteredProgrammingLanguage.value = programmingLanguageDict.value;
   }
 };
 
 // 过滤技术栈选项
 const filterTechStack = (query: string) => {
   if (query) {
-    filteredTechStack.value = osc_project_tech.value.filter(item => 
+    filteredTechStack.value = techStackDict.value.filter(item => 
       item.label.toLowerCase().includes(query.toLowerCase())
     );
   } else {
-    filteredTechStack.value = osc_project_tech.value;
+    filteredTechStack.value = techStackDict.value;
   }
 };
 
-// 手动获取编程语言字典数据
-const loadProlanDict = async () => {
-  try {
-    const res = await proxy?.$http.get('/system/dict/data/type/osc_project_prolan');
-    console.log('编程语言字典数据响应:', res);
-    if (res?.data && res.data.length > 0) {
-      prolanDict.value = res.data;
-    } else {
-      // 备用的编程语言列表
-      prolanDict.value = [
-        { label: 'Java', value: '1' },
-        { label: 'Python', value: '2' },
-        { label: 'Go', value: '3' },
-        { label: 'C', value: '4' },
-        { label: 'C++', value: '5' },
-        { label: 'JavaScript', value: '6' },
-        { label: 'Vue', value: '7' },
-        { label: 'PHP', value: '8' },
-        { label: 'Swift', value: '9' },
-        { label: 'Kotlin', value: '10' },
-        { label: 'TypeScript', value: '11' },
-        { label: 'Rust', value: '12' },
-        { label: 'Scala', value: '13' },
-        { label: 'Perl', value: '14' },
-        { label: 'Lua', value: '15' },
-        { label: 'R', value: '16' },
-        { label: 'Shell', value: '17' },
-        { label: 'MATLAB', value: '18' },
-        { label: 'HTML', value: '19' }
-      ];
-      console.log('使用备用编程语言列表');
-    }
-  } catch (error) {
-    console.error('获取编程语言字典数据失败:', error);
-    // 出错时也使用备用列表
-    prolanDict.value = [
-      { label: 'Java', value: 'Java' },
-      { label: 'JavaScript', value: 'JavaScript' },
-      { label: 'TypeScript', value: 'TypeScript' },
-      { label: 'Python', value: 'Python' },
-      { label: 'Go', value: 'Go' },
-      { label: 'C++', value: 'C++' },
-      { label: 'C#', value: 'C#' },
-      { label: 'PHP', value: 'PHP' },
-      { label: 'Ruby', value: 'Ruby' },
-      { label: 'Swift', value: 'Swift' },
-      { label: 'Kotlin', value: 'Kotlin' },
-      { label: 'Rust', value: 'Rust' },
-      { label: 'Scala', value: 'Scala' },
-      { label: 'Dart', value: 'Dart' },
-      { label: 'HTML/CSS', value: 'HTML/CSS' },
-      { label: 'Shell', value: 'Shell' },
-      { label: 'SQL', value: 'SQL' },
-      { label: 'R', value: 'R' },
-      { label: 'Lua', value: 'Lua' },
-      { label: 'Perl', value: 'Perl' },
-      { label: 'Groovy', value: 'Groovy' },
-      { label: 'Objective-C', value: 'Objective-C' },
-      { label: 'Haskell', value: 'Haskell' },
-      { label: 'Clojure', value: 'Clojure' },
-      { label: 'Elixir', value: 'Elixir' }
-    ];
-    console.log('使用备用编程语言列表');
-  }
-};
 
 const formRef = ref<ElFormInstance>();
 const form = ref<ProjectForm>({
@@ -427,7 +403,7 @@ const rules = ref<any>(submitRules);
 const autoSave = async () => {
   if (isAutoSaving.value) return;
 
-  const userId = proxy?.useUserStore().userId;
+  const userId = userStore.userId;
   if (!userId) return;
 
   isAutoSaving.value = true;
@@ -475,7 +451,7 @@ const stopAutoSave = () => {
 /** 提交按钮 */
 const submitForm = async (isSubmitAudit: boolean) => {
   // 获取当前用户ID
-  const userId = proxy?.useUserStore().userId;
+  const userId = userStore.userId;
   if (!userId) {
     proxy?.$modal.msgError('获取用户信息失败');
     return;
@@ -538,64 +514,32 @@ const cancel = () => {
 
 /** 跳转到草稿箱 */
 const goDraftBox = () => {
-  const userId = proxy?.useUserStore().userId;
+  const userId = userStore.userId;
   if (!userId) {
     proxy?.$modal.msgError('获取用户信息失败');
     return;
   }
   
   // 如果表单已修改，提示保存
-  if (formRef.value?.isModified) {
-    proxy?.$modal.confirm('表单已修改，是否保存草稿？').then(() => {
-      submitForm(false).then(() => {
-        proxy?.$router.push({
-          path: '/osc/projectDraft',
-          query: { createBy: userId }
-        });
-      });
-    }).catch(() => {
-      proxy?.$router.push({
-        path: '/osc/projectDraft',
-        query: { createBy: userId }
-      });
-    });
-  } else {
-    proxy?.$router.push({
-      path: '/osc/projectDraft',
-      query: { createBy: userId }
-    });
-  }
+  proxy?.$router.push({
+    path: '/osc/projectDraft',
+    query: { createBy: userId }
+  });
 };
 
 /** 跳转到我的创建 */
 const goMyProjects = () => {
-  const userId = proxy?.useUserStore().userId;
+  const userId = userStore.userId;
   if (!userId) {
     proxy?.$modal.msgError('获取用户信息失败');
     return;
   }
   
   // 如果表单已修改，提示保存
-  if (formRef.value?.isModified) {
-    proxy?.$modal.confirm('表单已修改，是否保存草稿？').then(() => {
-      submitForm(false).then(() => {
-        proxy?.$router.push({
-          path: '/osc/myProject',
-          query: { createBy: userId }
-        });
-      });
-    }).catch(() => {
-      proxy?.$router.push({
-        path: '/osc/myProject',
-        query: { createBy: userId }
-      });
-    });
-  } else {
-    proxy?.$router.push({
-      path: '/osc/myProject',
-      query: { createBy: userId }
-    });
-  }
+  proxy?.$router.push({
+    path: '/osc/myProject',
+    query: { createBy: userId }
+  });
 };
 
 /** 获取项目信息 */
@@ -621,11 +565,27 @@ const openUrl = (url?: string) => {
 
 // 如果是编辑模式，获取项目信息
 const route = useRoute();
+
+// 监听字典数据变化，确保过滤数组正确初始化
+watch([techStackDict, programmingLanguageDict], ([techStack, programmingLanguage]) => {
+  if (techStack && techStack.length > 0) {
+    filteredTechStack.value = [...techStack];
+  }
+  if (programmingLanguage && programmingLanguage.length > 0) {
+    filteredProgrammingLanguage.value = [...programmingLanguage];
+  }
+}, { immediate: true });
+
 onMounted(async () => {
-  await loadProlanDict();
+  // 等待一下确保computed属性已经计算完成
+  await nextTick();
+  
   // 初始化过滤后的数组
-  filteredProgrammingLanguage.value = prolanDict.value;
-  filteredTechStack.value = osc_project_tech.value;
+  filteredProgrammingLanguage.value = [...programmingLanguageDict.value];
+  filteredTechStack.value = [...techStackDict.value];
+  
+  console.log('技术栈选项:', filteredTechStack.value);
+  console.log('编程语言选项:', filteredProgrammingLanguage.value);
   
   const projectId = route.query.projectId;
   if (projectId) {

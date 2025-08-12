@@ -110,34 +110,46 @@ export const dynamicRoutes: RouteRecordRaw[] = [
   {
     path: '/osc',
     component: Layout,
-    name: 'Osc',
+    name: 'OscClient',
     meta: { title: '开源社区', icon: 'github' },
+    permissions: ['osc:projectCreate:list'],
     children: [
       {
         path: 'myProject',
         component: () => import('@/views/osc/myProject/index.vue'),
-        name: 'MyProject',
-        meta: { title: '我的创建', icon: 'list' }
+        name: 'MyProjectClient',
+        meta: { title: '我的创建', icon: 'list' },
+        permissions: ['osc:projectCreate:list']
       },
       {
         path: 'projectCreate',
         component: () => import('@/views/osc/projectCreate/index.vue'),
-        name: 'ProjectCreate',
+        name: 'ProjectCreateClient',
         meta: { title: '创建项目', icon: 'edit' },
-        hidden: true
+        hidden: true,
+        permissions: ['osc:projectCreate:list']
       },
       {
         path: 'projectDraft',
         component: () => import('@/views/osc/projectDraft/index.vue'),
-        name: 'ProjectDraft',
+        name: 'ProjectDraftClient',
         meta: { title: '草稿箱', icon: 'document' },
-        hidden: true
+        hidden: true,
+        permissions: ['osc:projectCreate:list']
       },
       {
         path: 'projectPhase',
         component: () => import('@/views/osc/projectPhase/index.vue'),
-        name: 'ProjectPhase',
-        meta: { title: '进度追踪', icon: 'time' }
+        name: 'ProjectPhaseClient',
+        meta: { title: '进度追踪', icon: 'time' },
+        permissions: ['osc:projectPhase:list']
+      },
+      {
+        path: 'projectAudit',
+        component: () => import('@/views/osc/projectAudit/index.vue'),
+        name: 'ProjectAuditClient',
+        meta: { title: '项目审核', icon: 'check' },
+        permissions: ['osc:projectAudit:list']
       }
     ]
   }

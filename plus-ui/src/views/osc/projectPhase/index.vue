@@ -164,7 +164,7 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="操作" align="center" width="200">
+          <el-table-column label="操作" align="center" width="300">
             <template #default="scope">
               <el-button type="primary" link icon="Edit" @click="handleUpdate(scope.row)">
                 修改
@@ -177,6 +177,24 @@
                 @click="handleComplete(scope.row)"
               >
                 完成
+              </el-button>
+              <el-button 
+                type="warning" 
+                link 
+                icon="VideoPause"
+                v-if="scope.row.status === '1'"
+                @click="handlePause(scope.row)"
+              >
+                暂停
+              </el-button>
+              <el-button 
+                type="info" 
+                link 
+                icon="VideoPlay"
+                v-if="scope.row.status === '3'"
+                @click="handleResume(scope.row)"
+              >
+                恢复
               </el-button>
               <el-button type="danger" link icon="Delete" @click="handleDelete(scope.row)">
                 删除
@@ -266,9 +284,11 @@ import {
   Delete,
   Check,
   Search,
-  Refresh
+  Refresh,
+  VideoPause,
+  VideoPlay
 } from '@element-plus/icons-vue';
-import { listProjectPhase, getProjectPhase, addProjectPhase, updateProjectPhase, delProjectPhase, getPhaseStatistics } from '@/api/osc/projectPhase';
+import { listProjectPhase, getProjectPhase, addProjectPhase, updateProjectPhase, delProjectPhase, getPhaseStatistics, completeProjectPhase, pauseProjectPhase, resumeProjectPhase } from '@/api/osc/projectPhase';
 import { listProject } from '@/api/osc/project';
 import type { FormInstance } from 'element-plus';
 import GanttChart from './components/GanttChart.vue';
@@ -475,15 +495,41 @@ const handleDelete = async (row: any) => {
 const handleComplete = async (row: any) => {
   try {
     await proxy?.$modal.confirm('是否确认完成该阶段？');
-    await updateProjectPhase({
-      ...row,
-      status: '2'
-    });
+    await completeProjectPhase(row.phaseId);
     await getList();
     await loadStatistics();
-    proxy?.$modal.msgSuccess('操作成功');
+    proxy?.$modal.msgSuccess('阶段已标记为完成');
   } catch (error) {
-    console.error('操作失败:', error);
+    console.error('完成阶段失败:', error);
+    proxy?.$modal.msgError('操作失败');
+  }
+};
+
+/** 暂停按钮操作 */
+const handlePause = async (row: any) => {
+  try {
+    await proxy?.$modal.confirm('是否确认暂停该阶段？');
+    await pauseProjectPhase(row.phaseId);
+    await getList();
+    await loadStatistics();
+    proxy?.$modal.msgSuccess('阶段已暂停');
+  } catch (error) {
+    console.error('暂停阶段失败:', error);
+    proxy?.$modal.msgError('操作失败');
+  }
+};
+
+/** 恢复按钮操作 */
+const handleResume = async (row: any) => {
+  try {
+    await proxy?.$modal.confirm('是否确认恢复该阶段？');
+    await resumeProjectPhase(row.phaseId);
+    await getList();
+    await loadStatistics();
+    proxy?.$modal.msgSuccess('阶段已恢复');
+  } catch (error) {
+    console.error('恢复阶段失败:', error);
+    proxy?.$modal.msgError('操作失败');
   }
 };
 
@@ -531,7 +577,8 @@ const getStatusLabel = (status: string) => {
     '0': '未开始',
     '1': '进行中',
     '2': '已完成',
-    '3': '已延期'
+    '3': '已暂停',
+    '4': '已延期'
   };
   return labelMap[status] || status;
 };

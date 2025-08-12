@@ -52,7 +52,7 @@
         <el-table-column label="技术栈" align="center" prop="techStack" :show-overflow-tooltip="true" min-width="150">
           <template #default="scope">
             <el-tag
-              v-for="tech in (scope.row.techStack || '').split(',')"
+              v-for="tech in getTechStackLabels(scope.row.techStack)"
               :key="tech"
               class="mx-1"
               size="small"
@@ -64,7 +64,7 @@
         <el-table-column label="编程语言" align="center" prop="programmingLanguage" :show-overflow-tooltip="true" min-width="150">
           <template #default="scope">
             <el-tag
-              v-for="lang in (scope.row.programmingLanguage || '').split(',')"
+              v-for="lang in getProgrammingLanguageLabels(scope.row.programmingLanguage)"
               :key="lang"
               class="mx-1"
               type="success"
@@ -102,85 +102,143 @@
         @pagination="getList"
       />
     </el-card>
-
-    <!-- 查看对话框 -->
-    <el-dialog title="项目详情" v-model="viewDialogVisible" width="800px" append-to-body>
-      <el-descriptions :column="2" border>
-        <el-descriptions-item label="项目名称">{{ viewForm.projectName }}</el-descriptions-item>
-        <el-descriptions-item label="项目状态">
-          <el-tag :type="getStatusType(viewForm.status)">
-            {{ getStatusLabel(viewForm.status) }}
-          </el-tag>
-        </el-descriptions-item>
-        <el-descriptions-item label="项目描述" :span="2">{{ viewForm.description }}</el-descriptions-item>
-        <el-descriptions-item label="技术栈" :span="2">
-          <el-tag
-            v-for="tech in (viewForm.techStack || '').split(',')"
-            :key="tech"
-            class="mx-1"
-          >
-            {{ tech }}
-          </el-tag>
-        </el-descriptions-item>
-        <el-descriptions-item label="编程语言" :span="2">
-          <el-tag
-            v-for="lang in (viewForm.programmingLanguage || '').split(',')"
-            :key="lang"
-            class="mx-1"
-            type="success"
-          >
-            {{ lang }}
-          </el-tag>
-        </el-descriptions-item>
-        <el-descriptions-item label="代码仓库" :span="2">
-          <el-link type="primary" :href="viewForm.repositoryUrl" target="_blank">
-            {{ viewForm.repositoryUrl }}
-          </el-link>
-        </el-descriptions-item>
-        <el-descriptions-item label="项目网站" :span="2">
-          <el-link type="primary" :href="viewForm.websiteUrl" target="_blank">
-            {{ viewForm.websiteUrl }}
-          </el-link>
-        </el-descriptions-item>
-        <el-descriptions-item label="联系方式">{{ viewForm.contactInfo }}</el-descriptions-item>
-        <el-descriptions-item label="版本信息">{{ viewForm.versionInfo }}</el-descriptions-item>
-        <el-descriptions-item label="项目Logo" :span="2">
-          <el-image
-            v-if="viewForm.logoUrl"
-            :src="viewForm.logoUrl"
-            :preview-src-list="[viewForm.logoUrl]"
-            fit="contain"
-            style="max-height: 100px"
-          />
-          <span v-else>暂无Logo</span>
-        </el-descriptions-item>
-        <el-descriptions-item label="备注" :span="2">{{ viewForm.remark }}</el-descriptions-item>
-        <el-descriptions-item label="创建时间">{{ parseTime(viewForm.createTime) }}</el-descriptions-item>
-        <el-descriptions-item label="最后更新时间">{{ parseTime(viewForm.updateTime) }}</el-descriptions-item>
-      </el-descriptions>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="viewDialogVisible = false">关闭</el-button>
-        </div>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
 <script setup name="MyProject" lang="ts">
 import { listProject, getProject } from '@/api/osc/project';
 import { ProjectVO, ProjectQuery } from '@/api/osc/project/types';
-import { getCurrentInstance, ref } from 'vue';
+import { getCurrentInstance, ref, watch, onMounted, toRefs, computed } from 'vue';
 import { useRouter } from 'vue-router';
+import { useUserStore } from '@/store/modules/user';
+import { parseTime } from '@/utils/ruoyi';
+import { ElMessageBox } from 'element-plus';
 
 const { proxy } = getCurrentInstance() as any;
 const router = useRouter();
+const userStore = useUserStore();
 
 const loading = ref(false);
 const total = ref(0);
 const projectList = ref<ProjectVO[]>([]);
-const viewDialogVisible = ref(false);
-const viewForm = ref<ProjectVO>({});
+
+// 使用系统字典数据
+const { osc_project_tech, osc_project_prolan } = toRefs<any>(proxy?.useDict('osc_project_tech', 'osc_project_prolan'));
+
+// 技术栈字典数据（带备用方案）
+const techStackDict = computed(() => {
+  if (osc_project_tech.value && osc_project_tech.value.length > 0) {
+    // 合并系统字典和补充数据，确保所有值都有对应标签
+    const systemDict = osc_project_tech.value;
+    const supplementDict = [
+      { label: 'Dubbo', value: '26' },
+      { label: 'Nacos', value: '27' },
+      { label: 'Seata', value: '28' },
+      { label: 'Sentinel', value: '29' },
+      { label: 'Spring Security', value: '30' },
+      { label: 'Sa-Token', value: '31' },
+      { label: 'MySQL', value: '32' },
+      { label: 'PostgreSQL', value: '33' },
+      { label: 'MongoDB', value: '34' },
+      { label: 'RocketMQ', value: '35' },
+      { label: 'Kubernetes', value: '36' },
+      { label: 'Vue 3', value: '37' },
+      { label: 'React', value: '38' },
+      { label: 'TypeScript', value: '39' },
+      { label: 'SkyWalking', value: '40' },
+      { label: 'Maven', value: '41' },
+      { label: 'Jenkins', value: '42' },
+      { label: 'OAuth 2.0', value: '43' },
+      { label: 'JWT', value: '44' },
+      { label: 'JUnit 5', value: '45' }
+    ];
+    
+    // 检查系统字典中是否已包含这些值
+    const missingValues = supplementDict.filter(supp => 
+      !systemDict.find(sys => sys.value === supp.value)
+    );
+    
+    return [...systemDict, ...missingValues];
+  }
+  
+  // 如果为空，返回完整的技术栈列表（使用与系统字典一致的结构）
+  return [
+    { label: 'Spring Boot', value: '1' },
+    { label: 'Spring Cloud', value: '2' },
+    { label: 'Docker', value: '3' },
+    { label: 'MyBatis-Plus', value: '4' },
+    { label: 'Microservices', value: '5' },
+    { label: 'DevOps', value: '6' },
+    { label: 'Cloud Native', value: '7' },
+    { label: 'Cloud Computing', value: '8' },
+    { label: 'Distributed Systems', value: '9' },
+    { label: 'Database', value: '10' },
+    { label: 'NoSQL', value: '11' },
+    { label: 'Elasticsearch', value: '12' },
+    { label: 'Apache Kafka', value: '13' },
+    { label: 'Redis', value: '14' },
+    { label: 'Nginx', value: '15' },
+    { label: 'Apache Mesos', value: '16' },
+    { label: 'RabbitMQ', value: '17' },
+    { label: 'Prometheus', value: '18' },
+    { label: 'Grafana', value: '19' },
+    { label: 'Netty', value: '20' },
+    { label: 'gRPC', value: '21' },
+    { label: 'Zookeeper', value: '22' },
+    { label: 'Machine Learning', value: '23' },
+    { label: 'Big Data', value: '24' },
+    { label: 'Hadoop', value: '25' },
+    { label: 'Dubbo', value: '26' },
+    { label: 'Nacos', value: '27' },
+    { label: 'Seata', value: '28' },
+    { label: 'Sentinel', value: '29' },
+    { label: 'Spring Security', value: '30' },
+    { label: 'Sa-Token', value: '31' },
+    { label: 'MySQL', value: '32' },
+    { label: 'PostgreSQL', value: '33' },
+    { label: 'MongoDB', value: '34' },
+    { label: 'RocketMQ', value: '35' },
+    { label: 'Kubernetes', value: '36' },
+    { label: 'Vue 3', value: '37' },
+    { label: 'React', value: '38' },
+    { label: 'TypeScript', value: '39' },
+    { label: 'SkyWalking', value: '40' },
+    { label: 'Maven', value: '41' },
+    { label: 'Jenkins', value: '42' },
+    { label: 'OAuth 2.0', value: '43' },
+    { label: 'JWT', value: '44' },
+    { label: 'JUnit 5', value: '45' }
+  ];
+});
+
+// 编程语言字典数据（带备用方案）
+const programmingLanguageDict = computed(() => {
+  if (osc_project_prolan.value && osc_project_prolan.value.length > 0) {
+    return osc_project_prolan.value;
+  }
+  // 如果为空，返回完整的编程语言列表（使用与系统字典一致的结构）
+  return [
+    { label: 'Java', value: '1' },
+    { label: 'Python', value: '2' },
+    { label: 'Go', value: '3' },
+    { label: 'C', value: '4' },
+    { label: 'C++', value: '5' },
+    { label: 'JavaScript', value: '6' },
+    { label: 'Vue', value: '7' },
+    { label: 'PHP', value: '8' },
+    { label: 'Swift', value: '9' },
+    { label: 'Kotlin', value: '10' },
+    { label: 'TypeScript', value: '11' },
+    { label: 'Rust', value: '12' },
+    { label: 'Scala', value: '13' },
+    { label: 'Perl', value: '14' },
+    { label: 'Lua', value: '15' },
+    { label: 'R', value: '16' },
+    { label: 'Shell', value: '17' },
+    { label: 'MATLAB', value: '18' },
+    { label: 'HTML', value: '19' }
+  ];
+});
 
 // 项目状态选项
 const projectStatusOptions = [
@@ -195,16 +253,60 @@ const queryParams = ref<ProjectQuery>({
   pageSize: 10,
   projectName: undefined,
   status: undefined,
-  createBy: proxy?.useUserStore().userId,
+  createBy: userStore.userId,
   params: {
     statusList: ['2', '3', '5'] // 排除草稿和待审核状态
   }
 });
 
+// 保证切换用户时 createBy 始终为最新
+watch(() => userStore.userId, (newUserId) => {
+  queryParams.value.createBy = newUserId;
+});
+
+
+
+
+
+/** 获取技术栈标签 */
+const getTechStackLabels = (techStack: string) => {
+  if (!techStack) return [];
+  const values = techStack.split(',');
+  return values.map(value => {
+    const trimmedValue = value.trim();
+    // 先尝试按value查找
+    let dict = techStackDict.value.find((item: any) => item.value === trimmedValue);
+    // 如果没找到，再尝试按label查找（处理一些特殊值）
+    if (!dict) {
+      dict = techStackDict.value.find((item: any) => item.label === trimmedValue);
+    }
+    return dict ? dict.label : value;
+  });
+};
+
+/** 获取编程语言标签 */
+const getProgrammingLanguageLabels = (programmingLanguage: string) => {
+  if (!programmingLanguage) return [];
+  const values = programmingLanguage.split(',');
+  return values.map(value => {
+    const trimmedValue = value.trim();
+    // 先尝试按value查找
+    let dict = programmingLanguageDict.value.find((item: any) => item.value === trimmedValue);
+    // 如果没找到，再尝试按label查找（处理一些特殊值）
+    if (!dict) {
+      dict = programmingLanguageDict.value.find((item: any) => item.label === trimmedValue);
+    }
+    return dict ? dict.label : value;
+  });
+};
+
 /** 查询项目列表 */
 const getList = async () => {
   loading.value = true;
   try {
+    if (!queryParams.value.createBy) {
+      queryParams.value.createBy = userStore.userId;
+    }
     const res = await listProject(queryParams.value);
     projectList.value = res.rows;
     total.value = res.total;
@@ -228,9 +330,82 @@ const resetQuery = () => {
 /** 查看按钮操作 */
 const handleView = async (row: ProjectVO) => {
   try {
+    console.log('查看项目:', row);
     const res = await getProject(row.projectId);
-    viewForm.value = res.data;
-    viewDialogVisible.value = true;
+    const projectData = res.data;
+    console.log('项目数据:', projectData);
+    
+    // 获取字典标签的辅助函数
+    const getDictLabelFromValue = (dictList: any[], value: string) => {
+      // 先尝试按value查找
+      let dict = dictList.find(item => item.value === value);
+      // 如果没找到，再尝试按label查找（处理一些特殊值）
+      if (!dict) {
+        dict = dictList.find(item => item.label === value);
+      }
+      return dict ? dict.label : value;
+    };
+    
+    // 处理多选字段的显示
+    const formatMultiSelect = (value: string, dictList: any[]) => {
+      if (!value) return '暂无信息';
+      return value.split(',').map(item => getDictLabelFromValue(dictList, item.trim())).join('、');
+    };
+    
+
+    
+    // 提前计算标签文本
+    const techStackText = formatMultiSelect(projectData.techStack, techStackDict.value);
+    const programmingLanguageText = formatMultiSelect(projectData.programmingLanguage, programmingLanguageDict.value);
+    
+    // 创建项目详情对话框（与项目列表页面一致）
+    ElMessageBox.alert(`
+      <div style="text-align: left;">
+        <h3 style="margin-bottom: 20px; color: #333; text-align: center; background-color: #fdfde7; padding: 15px;">${projectData.projectName}</h3>
+        
+        <div style="margin-bottom: 2px; padding: 12px; background-color: white;">
+          <strong style="color: #333;">项目描述：</strong>
+          <p style="margin: 5px 0; color: #666;">${projectData.description || '暂无描述'}</p>
+        </div>
+        
+        <div style="margin-bottom: 2px; padding: 12px; background-color: #f0f9f0;">
+          <strong style="color: #333;">技术栈：</strong>
+          <p style="margin: 5px 0; color: #666;">${techStackText}</p>
+        </div>
+        
+        <div style="margin-bottom: 2px; padding: 12px; background-color: white;">
+          <strong style="color: #333;">编程语言：</strong>
+          <p style="margin: 5px 0; color: #666;">${programmingLanguageText}</p>
+        </div>
+        
+        <div style="margin-bottom: 2px; padding: 12px; background-color: #f0f9f0;">
+          <strong style="color: #333;">代码仓库：</strong>
+          <p style="margin: 5px 0;">
+            <a href="${projectData.repositoryUrl}" target="_blank" style="color: #409EFF;">${projectData.repositoryUrl || '暂无仓库地址'}</a>
+          </p>
+        </div>
+        
+        <div style="margin-bottom: 2px; padding: 12px; background-color: white;">
+          <strong style="color: #333;">项目网站：</strong>
+          <p style="margin: 5px 0;">
+            <a href="${projectData.websiteUrl}" target="_blank" style="color: #409EFF;">${projectData.websiteUrl || '暂无网站地址'}</a>
+          </p>
+        </div>
+        
+        <div style="margin-bottom: 2px; padding: 12px; background-color: #f0f9f0;">
+          <strong style="color: #333;">项目状态：</strong>
+          <p style="margin: 5px 0; color: #666;">${getStatusLabel(projectData.status) || '暂无状态信息'}</p>
+        </div>
+        
+        <div style="margin-bottom: 2px; padding: 12px; background-color: white;">
+          <strong style="color: #333;">备注：</strong>
+          <p style="margin: 5px 0; color: #666;">${projectData.remark || '暂无备注'}</p>
+        </div>
+      </div>
+    `, '项目详情', {
+      dangerouslyUseHTMLString: true,
+      confirmButtonText: '确定'
+    });
   } catch (error) {
     console.error('获取项目详情失败:', error);
   }
@@ -247,24 +422,33 @@ const handleEdit = (row: ProjectVO) => {
 /** 获取状态标签 */
 const getStatusLabel = (status: string) => {
   const statusMap = {
+    '0': '草稿',
+    '1': '待审核',
     '2': '进行中',
     '3': '已完成',
+    '4': '已暂停',
     '5': '已驳回'
-  };
+  } as Record<string, string>;
   return statusMap[status] || status;
 };
 
 /** 获取状态类型 */
 const getStatusType = (status: string) => {
   const typeMap = {
+    '0': 'info',
+    '1': 'warning',
     '2': 'primary',
     '3': 'success',
+    '4': 'warning',
     '5': 'danger'
-  };
-  return typeMap[status] || '';
+  } as Record<string, 'success' | 'warning' | 'info' | 'primary' | 'danger'>;
+  return (typeMap[status] || 'info') as 'success' | 'warning' | 'info' | 'primary' | 'danger';
 };
 
 onMounted(() => {
+  if (!queryParams.value.createBy) {
+    queryParams.value.createBy = userStore.userId;
+  }
   getList();
 });
 </script>
@@ -283,13 +467,5 @@ onMounted(() => {
 
 .mx-1 {
   margin: 0 4px;
-}
-
-:deep(.el-descriptions__label) {
-  font-weight: bold;
-}
-
-.dialog-footer {
-  text-align: right;
 }
 </style>

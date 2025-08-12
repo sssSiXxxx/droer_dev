@@ -60,15 +60,11 @@ public class ProjectServiceImpl implements IProjectService {
             LambdaQueryWrapper<Project> lqw = buildQueryWrapper(bo);
             Page<ProjectVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
             
-            TableDataInfo<ProjectVo> tableDataInfo = new TableDataInfo<>();
-            tableDataInfo.setRows(result.getRecords());
-            tableDataInfo.setTotal(result.getTotal());
-            tableDataInfo.setMsg("查询成功");
-            tableDataInfo.setCode(200);
-            
-            return tableDataInfo;
+            // 使用 TableDataInfo.build() 静态方法，避免类型转换错误
+            return TableDataInfo.build(result);
         } catch (Exception e) {
             log.error("查询项目列表失败", e);
+            // 使用静态方法构建错误响应
             TableDataInfo<ProjectVo> errorResult = new TableDataInfo<>();
             errorResult.setMsg("查询失败：" + e.getMessage());
             errorResult.setCode(500);

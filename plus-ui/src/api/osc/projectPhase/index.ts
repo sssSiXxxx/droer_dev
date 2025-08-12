@@ -62,3 +62,27 @@ export function exportProjectPhase(query?: ProjectPhaseQuery) {
     responseType: 'blob'
   });
 }
+
+// 完成项目阶段
+export function completeProjectPhase(phaseId: string | number) {
+  return request({
+    url: `/osc/projectPhase/complete/${phaseId}`,
+    method: 'put'
+  });
+}
+
+// 暂停项目阶段
+export function pauseProjectPhase(phaseId: string | number) {
+  return request({
+    url: `/osc/projectPhase/pause/${phaseId}`,
+    method: 'put'
+  });
+}
+
+// 恢复项目阶段
+export function resumeProjectPhase(phaseId: string | number) {
+  return request({
+    url: `/osc/projectPhase/resume/${phaseId}`,
+    method: 'put'
+  });
+}

@@ -220,8 +220,8 @@ public class SysOssServiceImpl implements ISysOssService, OssService {
         String suffix = StringUtils.substring(originalfileName, originalfileName.lastIndexOf("."), originalfileName.length());
         OssClient storage = OssFactory.instance();
         UploadResult uploadResult = storage.uploadSuffix(file, suffix);
-        // 保存文件信息
-        return buildResultEntity(originalfileName, suffix, storage.getConfigKey(), uploadResult);
+        // 保存文件信息，使用默认的 projectId 和 fileType
+        return buildResultEntity(originalfileName, suffix, storage.getConfigKey(), uploadResult, null, "other");
     }
 
     @NotNull
@@ -235,7 +235,8 @@ public class SysOssServiceImpl implements ISysOssService, OssService {
         oss.setService(configKey);
         oss.setProjectId(projectId);
         oss.setFileType(fileType);
-        oss.setSize(uploadResult.getSize());
+        // 设置文件大小，如果 uploadResult 没有 size 则设为 null
+        oss.setSize(uploadResult.getSize() != null ? uploadResult.getSize() : null);
         baseMapper.insert(oss);
         SysOssVo sysOssVo = MapstructUtils.convert(oss, SysOssVo.class);
         return this.matchingUrl(sysOssVo);
