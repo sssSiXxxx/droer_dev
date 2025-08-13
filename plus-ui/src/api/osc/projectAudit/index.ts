@@ -8,7 +8,7 @@ import { ProjectAuditVO, ProjectAuditForm, ProjectAuditQuery } from '@/api/osc/p
  * @returns {*}
  */
 
-export const listProjectAudit = (query?: ProjectAuditQuery): AxiosPromise<ProjectAuditVO[]> => {
+export const listProjectAudit = (query?: ProjectAuditQuery): AxiosPromise<any> => {
   return request({
     url: '/osc/projectAudit/list',
     method: 'get',
@@ -59,5 +59,17 @@ export const delProjectAudit = (auditId: string | number | Array<string | number
   return request({
     url: '/osc/projectAudit/' + auditId,
     method: 'delete'
+  });
+};
+
+/**
+ * 审核项目
+ * @param data
+ */
+export const auditProject = (data: ProjectAuditForm) => {
+  return request({
+    url: '/osc/projectAudit/audit',
+    method: 'post',
+    data: data
   });
 };

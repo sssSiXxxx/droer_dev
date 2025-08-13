@@ -42,13 +42,16 @@ public class ProjectAuditBo extends BaseEntity {
     /**
      * 审核人
      */
-    @NotNull(message = "审核人不能为空", groups = { AddGroup.class, EditGroup.class })
     private Long auditUser;
 
     /**
      * 审核意见
      */
-    @NotBlank(message = "审核意见不能为空", groups = { AddGroup.class, EditGroup.class })
     private String auditOpinion;
+
+    /**
+     * 项目名称（用于查询）
+     */
+    private String projectName;
 
 }

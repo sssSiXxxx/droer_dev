@@ -67,6 +67,13 @@ CREATE TABLE `os_project_audit` (
   INDEX `idx_audit_user` (`audit_user`)
 ) COMMENT='项目审核表';
 
+
+ALTER TABLE os_project_audit 
+ADD COLUMN create_dept bigint DEFAULT NULL COMMENT '创建部门',
+ADD COLUMN create_by bigint DEFAULT NULL COMMENT '创建者',
+ADD COLUMN update_by bigint DEFAULT NULL COMMENT '更新者';
+
+
 -- 孵化阶段表
 CREATE TABLE `os_project_phase` (
   `phase_id` bigint NOT NULL AUTO_INCREMENT COMMENT '阶段ID',

@@ -4,4 +4,70 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.dromara.osc.mapper.ProjectAuditMapper">
 
+    <!-- 查询项目审核列表（关联项目信息） -->
+    <select id="selectVoPage" resultType="org.dromara.osc.domain.vo.ProjectAuditVo">
+        SELECT 
+            pa.audit_id,
+            pa.project_id,
+            pa.audit_status,
+            pa.audit_user,
+            pa.audit_time,
+            pa.audit_opinion,
+            pa.create_time,
+            pa.update_time,
+            p.project_name,
+            p.project_code,
+            p.description,
+            p.repository_url,
+            p.tech_stack,
+            p.contact_info
+        FROM os_project_audit pa
+        LEFT JOIN os_project p ON pa.project_id = p.project_id
+        ${ew.customSqlSegment}
+    </select>
+
+    <!-- 查询项目审核列表（关联项目信息） -->
+    <select id="selectVoList" resultType="org.dromara.osc.domain.vo.ProjectAuditVo">
+        SELECT 
+            pa.audit_id,
+            pa.project_id,
+            pa.audit_status,
+            pa.audit_user,
+            pa.audit_time,
+            pa.audit_opinion,
+            pa.create_time,
+            pa.update_time,
+            p.project_name,
+            p.project_code,
+            p.description,
+            p.repository_url,
+            p.tech_stack,
+            p.contact_info
+        FROM os_project_audit pa
+        LEFT JOIN os_project p ON pa.project_id = p.project_id
+        ${ew.customSqlSegment}
+    </select>
+
+    <!-- 根据ID查询项目审核详情（关联项目信息） -->
+    <select id="selectVoById" resultType="org.dromara.osc.domain.vo.ProjectAuditVo">
+        SELECT 
+            pa.audit_id,
+            pa.project_id,
+            pa.audit_status,
+            pa.audit_user,
+            pa.audit_time,
+            pa.audit_opinion,
+            pa.create_time,
+            pa.update_time,
+            p.project_name,
+            p.project_code,
+            p.description,
+            p.repository_url,
+            p.tech_stack,
+            p.contact_info
+        FROM os_project_audit pa
+        LEFT JOIN os_project p ON pa.project_id = p.project_id
+        WHERE pa.audit_id = #{auditId}
+    </select>
+
 </mapper>

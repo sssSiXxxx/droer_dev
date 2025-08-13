@@ -102,4 +102,14 @@ public class ProjectAuditController extends BaseController {
                           @PathVariable Long[] auditIds) {
         return toAjax(projectAuditService.deleteWithValidByIds(List.of(auditIds), true));
     }
+
+    /**
+     * 审核项目
+     */
+    @SaCheckPermission("osc:projectAudit:audit")
+    @Log(title = "项目审核", businessType = BusinessType.UPDATE)
+    @PostMapping("/audit")
+    public R<Void> audit(@RequestBody ProjectAuditBo bo) {
+        return toAjax(projectAuditService.audit(bo));
+    }
 }

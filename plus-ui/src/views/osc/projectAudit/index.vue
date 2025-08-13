@@ -7,12 +7,15 @@
             <el-form-item label="项目名称" prop="projectName">
               <el-input v-model="queryParams.projectName" placeholder="请输入项目名称" clearable @keyup.enter="handleQuery" />
             </el-form-item>
-            <el-form-item label="审核状态" prop="auditStatus">
-              <el-select v-model="queryParams.auditStatus" placeholder="请选择审核状态" clearable>
-                <el-option v-for="dict in osc_project_audit_status" :key="dict.value" :label="dict.label"
-                  :value="dict.value" />
-              </el-select>
-            </el-form-item>
+                         <el-form-item label="项目状态" prop="status">
+               <el-select v-model="queryParams.status" placeholder="请选择项目状态" clearable>
+                 <el-option label="待审核" value="1" />
+                 <el-option label="进行中" value="2" />
+                 <el-option label="已完成" value="3" />
+                 <el-option label="已暂停" value="4" />
+                 <el-option label="已驳回" value="5" />
+               </el-select>
+             </el-form-item>
             <el-form-item>
               <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
               <el-button icon="Refresh" @click="resetQuery">重置</el-button>
@@ -30,9 +33,11 @@
           <template #header>
             <div class="flex justify-between items-center">
               <span class="font-bold">{{ item.projectName }}</span>
-              <div>
-                <dict-tag :options="osc_project_audit_status" :value="item.auditStatus" />
-              </div>
+                             <div>
+                 <el-tag :type="getStatusType(item.status)">
+                   {{ getStatusLabel(item.status) }}
+                 </el-tag>
+               </div>
             </div>
           </template>
           <!-- 项目信息，使用交替背景色 -->
@@ -59,8 +64,8 @@
             <span>{{ item.contactInfo }}</span>
           </div>
           
-          <!-- 审核操作区域 -->
-          <div class="mt-4 flex justify-end" v-if="item.auditStatus === '0'">
+                     <!-- 审核操作区域 -->
+           <div class="mt-4 flex justify-end" v-if="item.status === '1'">
             <el-button type="success" @click="handleQuickAudit(item.projectId, '1')">通过</el-button>
             <el-button type="danger" @click="openRejectDialog(item)">驳回</el-button>
             <el-button type="warning" @click="openAuditDialog(item)">详细审核</el-button>
@@ -112,23 +117,24 @@
 </template>
 
 <script setup name="ProjectAudit" lang="ts">
-import { listProjectAudit, getProjectAudit, updateProjectAudit } from '@/api/osc/projectAudit';
-import { ProjectAuditVO, ProjectAuditForm, ProjectAuditQuery } from '@/api/osc/projectAudit/types';
+import { listProject } from '@/api/osc/project';
+import { auditProject } from '@/api/osc/projectAudit';
+import { ProjectVO, ProjectQuery } from '@/api/osc/project/types';
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 const { osc_project_audit_status } = toRefs<any>(proxy?.useDict('osc_project_audit_status'));
 
-const projectAuditList = ref<ProjectAuditVO[]>([]);
+const projectAuditList = ref<ProjectVO[]>([]);
 const loading = ref(true);
 const showSearch = ref(true);
 const total = ref(0);
 
 // 查询参数
-const queryParams = ref<ProjectAuditQuery>({
+const queryParams = ref<ProjectQuery>({
   pageNum: 1,
   pageSize: 10,
   projectName: undefined,
-  auditStatus: undefined, // 先不限制状态，看看有没有数据
+  status: '1', // 只查询待审核状态的项目
 });
 
 // 驳回对话框
@@ -153,7 +159,7 @@ const auditDialog = reactive({
   visible: false
 });
 
-const auditForm = ref<ProjectAuditForm>({
+const auditForm = ref<any>({
   projectId: undefined,
   auditStatus: undefined,
   auditOpinion: undefined
@@ -173,14 +179,14 @@ const getList = async () => {
   loading.value = true;
   try {
     console.log('查询参数:', queryParams.value);
-    const res = await listProjectAudit(queryParams.value);
+    const res = await listProject(queryParams.value);
     console.log('查询结果:', res);
     projectAuditList.value = res.rows;
     total.value = res.total;
     
     // 如果没有数据，显示提示信息
     if (!projectAuditList.value || projectAuditList.value.length === 0) {
-      proxy?.$modal.msgInfo('暂无待审核项目');
+      proxy?.$modal.msgWarning('暂无待审核项目');
     }
   } catch (error) {
     console.error('查询失败:', error);
@@ -204,7 +210,7 @@ const resetQuery = () => {
 /** 一键审核操作 */
 const handleQuickAudit = async (projectId: number, status: string) => {
   try {
-    await updateProjectAudit({
+    await auditProject({
       projectId,
       auditStatus: status,
       auditOpinion: status === '1' ? '审核通过' : '审核不通过'
@@ -247,12 +253,38 @@ const openAuditDialog = (row: any) => {
 const submitAudit = () => {
   proxy?.$refs['auditFormRef'].validate(async (valid: boolean) => {
     if (valid) {
-      await updateProjectAudit(auditForm.value);
+      await auditProject(auditForm.value);
       proxy?.$modal.msgSuccess('审核成功');
       auditDialog.visible = false;
       await getList();
     }
   });
+};
+
+/** 获取状态标签 */
+const getStatusLabel = (status: string) => {
+  const statusMap = {
+    '0': '草稿',
+    '1': '待审核',
+    '2': '进行中',
+    '3': '已完成',
+    '4': '已暂停',
+    '5': '已驳回'
+  } as Record<string, string>;
+  return statusMap[status] || status;
+};
+
+/** 获取状态类型 */
+const getStatusType = (status: string) => {
+  const typeMap = {
+    '0': 'info',
+    '1': 'warning',
+    '2': 'primary',
+    '3': 'success',
+    '4': 'warning',
+    '5': 'danger'
+  } as Record<string, 'success' | 'warning' | 'info' | 'primary' | 'danger'>;
+  return (typeMap[status] || 'info') as 'success' | 'warning' | 'info' | 'primary' | 'danger';
 };
 
 onMounted(() => {

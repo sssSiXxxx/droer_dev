@@ -247,6 +247,7 @@
 <script setup name="ProjectCreate" lang="ts">
 import { ProjectForm } from '@/api/osc/project/types';
 import { addProject, getProject, updateProject } from '@/api/osc/project';
+
 import { getCurrentInstance, ref, onMounted, onBeforeUnmount, toRefs, nextTick, watch } from 'vue';
 import { Plus, List, Document, InfoFilled, Monitor, Link, More, Check, DocumentAdd, Timer, Files } from '@element-plus/icons-vue';
 import TemplateSelect from './components/TemplateSelect.vue';
@@ -282,6 +283,9 @@ const handleTemplateSelect = (template: any) => {
 const autoSaveTimer = ref<ReturnType<typeof setInterval>>();
 const isAutoSaving = ref(false);
 const lastSaveTime = ref<string>('');
+
+// 提交状态
+const isSubmitting = ref(false);
 
 // 加载字典数据
 const { osc_project_tech, osc_project_prolan } = toRefs<any>(proxy?.useDict('osc_project_tech', 'osc_project_prolan'));
@@ -417,13 +421,18 @@ const autoSave = async () => {
       createBy: userId
     };
 
-    await addProject(submitData);
+    const projectId = route.query.projectId;
+    if (projectId) {
+      // 编辑模式：更新现有项目
+      submitData.projectId = projectId;
+      await updateProject(submitData);
+    } else {
+      // 新建模式：创建新项目
+      await addProject(submitData);
+    }
+    
     lastSaveTime.value = new Date().toLocaleTimeString();
-    proxy?.$message({
-      type: 'success',
-      message: `草稿已自动保存 (${lastSaveTime.value})`,
-      duration: 2000
-    });
+    proxy?.$modal.msgSuccess(`草稿已自动保存 (${lastSaveTime.value})`);
   } catch (error) {
     console.error('自动保存失败:', error);
   } finally {
@@ -450,6 +459,11 @@ const stopAutoSave = () => {
 
 /** 提交按钮 */
 const submitForm = async (isSubmitAudit: boolean) => {
+  // 防止重复提交
+  if (isSubmitting.value) {
+    return;
+  }
+  
   // 获取当前用户ID
   const userId = userStore.userId;
   if (!userId) {
@@ -457,9 +471,15 @@ const submitForm = async (isSubmitAudit: boolean) => {
     return;
   }
 
+  // 如果提交审核，先停止自动保存
+  if (isSubmitAudit) {
+    stopAutoSave();
+  }
+
   // 根据操作类型设置验证规则
   rules.value = isSubmitAudit ? submitRules : draftRules;
 
+  isSubmitting.value = true;
   try {
     // 进行表单验证
     await formRef.value?.validate();
@@ -473,27 +493,42 @@ const submitForm = async (isSubmitAudit: boolean) => {
       createBy: userId
     };
 
-    await addProject(submitData);
+    console.log('提交数据:', submitData);
+    console.log('是否提交审核:', isSubmitAudit);
+    console.log('项目状态:', submitData.status);
+
+    let result;
+    const projectId = route.query.projectId;
+    
+    if (projectId) {
+      // 编辑模式：更新现有项目
+      submitData.projectId = projectId;
+      console.log('编辑模式，更新项目ID:', projectId);
+      result = await updateProject(submitData);
+      console.log('更新结果:', result);
+    } else {
+      // 新建模式：创建新项目
+      console.log('新建模式，创建新项目');
+      result = await addProject(submitData);
+      console.log('创建结果:', result);
+    }
 
     if (isSubmitAudit) {
+      // 提交审核成功
       proxy?.$modal.msgSuccess('提交成功，等待审核');
-      // 跳转到待审核列表
+      
+      // 跳转到项目列表（待审核状态）
       proxy?.$router.push({
         path: '/osc/project',
         query: {
-          status: '1',
-          createBy: userId
+          status: '1'
         }
       });
     } else {
       proxy?.$modal.msgSuccess('草稿保存成功');
       // 跳转到草稿箱
       proxy?.$router.push({
-        path: '/osc/project',
-        query: {
-          status: '0',
-          createBy: userId
-        }
+        path: '/osc/projectDraft'
       });
     }
   } catch (error) {
@@ -504,6 +539,8 @@ const submitForm = async (isSubmitAudit: boolean) => {
   } finally {
     // 恢复为默认的验证规则
     rules.value = submitRules;
+    // 重置提交状态
+    isSubmitting.value = false;
   }
 };
 

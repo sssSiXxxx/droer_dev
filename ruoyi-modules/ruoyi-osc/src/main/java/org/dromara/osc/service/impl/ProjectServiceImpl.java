@@ -187,9 +187,16 @@ public class ProjectServiceImpl implements IProjectService {
      */
     @Override
     public Boolean updateByBo(ProjectBo bo) {
+        log.info("开始更新项目：projectId={}, projectName={}, status={}", 
+                bo.getProjectId(), bo.getProjectName(), bo.getStatus());
+        
         Project update = MapstructUtils.convert(bo, Project.class);
         validEntityBeforeSave(update);
-        return baseMapper.updateById(update) > 0;
+        
+        boolean result = baseMapper.updateById(update) > 0;
+        log.info("项目更新结果：{}", result);
+        
+        return result;
     }
 
     /**
