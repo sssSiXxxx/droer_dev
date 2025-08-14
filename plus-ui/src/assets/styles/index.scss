@@ -209,3 +209,32 @@ aside {
     margin-bottom: 10px;
   }
 }
+
+// 项目详情对话框样式
+.project-detail-dialog {
+  .el-message-box {
+    width: 90% !important;
+    max-width: 1000px !important;
+    min-width: 700px !important;
+  }
+  
+  .el-message-box__content {
+    padding: 0 !important;
+    max-height: 75vh !important;
+    overflow-y: auto !important;
+  }
+  
+  .el-message-box__message {
+    max-height: 75vh !important;
+    overflow-y: auto !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  .el-message-box__message > div {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}

@@ -6,6 +6,7 @@ import org.dromara.common.mybatis.core.page.TableDataInfo;
 import org.dromara.common.mybatis.core.page.PageQuery;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,9 +17,8 @@ import org.dromara.osc.domain.ProjectPhase;
 import org.dromara.osc.mapper.ProjectPhaseMapper;
 import org.dromara.osc.service.IProjectPhaseService;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Collection;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 进度追踪Service业务层处理
@@ -73,8 +73,8 @@ public class ProjectPhaseServiceImpl implements IProjectPhaseService {
     private LambdaQueryWrapper<ProjectPhase> buildQueryWrapper(ProjectPhaseBo bo) {
         Map<String, Object> params = bo.getParams();
         LambdaQueryWrapper<ProjectPhase> lqw = Wrappers.lambdaQuery();
-        lqw.orderByAsc(ProjectPhase::getPhaseId);
-        lqw.like(bo.getProjectId() != null, ProjectPhase::getProjectId, bo.getProjectId());
+        lqw.orderByAsc(ProjectPhase::getStartTime);
+        lqw.eq(bo.getProjectId() != null, ProjectPhase::getProjectId, bo.getProjectId());
         lqw.like(StringUtils.isNotBlank(bo.getPhaseName()), ProjectPhase::getPhaseName, bo.getPhaseName());
         lqw.eq(StringUtils.isNotBlank(bo.getStatus()), ProjectPhase::getStatus, bo.getStatus());
         return lqw;
@@ -90,6 +90,13 @@ public class ProjectPhaseServiceImpl implements IProjectPhaseService {
     public Boolean insertByBo(ProjectPhaseBo bo) {
         ProjectPhase add = MapstructUtils.convert(bo, ProjectPhase.class);
         validEntityBeforeSave(add);
+        // 设置默认值
+        if (add.getStatus() == null) {
+            add.setStatus("0"); // 默认未开始
+        }
+        if (add.getProgress() == null) {
+            add.setProgress(0); // 默认进度为0
+        }
         boolean flag = baseMapper.insert(add) > 0;
         if (flag) {
             bo.setPhaseId(add.getPhaseId());
@@ -114,7 +121,19 @@ public class ProjectPhaseServiceImpl implements IProjectPhaseService {
      * 保存前的数据校验
      */
     private void validEntityBeforeSave(ProjectPhase entity){
-        //TODO 做一些数据校验,如唯一约束
+        // 数据校验：开始时间不能晚于结束时间
+        if (entity.getStartTime() != null && entity.getEndTime() != null) {
+            if (entity.getStartTime().after(entity.getEndTime())) {
+                throw new IllegalArgumentException("开始时间不能晚于结束时间");
+            }
+        }
+        
+        // 进度值校验
+        if (entity.getProgress() != null) {
+            if (entity.getProgress() < 0 || entity.getProgress() > 100) {
+                throw new IllegalArgumentException("进度值必须在0-100之间");
+            }
+        }
     }
 
     /**
@@ -127,8 +146,186 @@ public class ProjectPhaseServiceImpl implements IProjectPhaseService {
     @Override
     public Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid) {
         if(isValid){
-            //TODO 做一些业务上的校验,判断是否需要校验
+            // 检查是否有正在进行的阶段
+            long inProgressCount = baseMapper.selectCount(
+                Wrappers.<ProjectPhase>lambdaQuery()
+                    .in(ProjectPhase::getPhaseId, ids)
+                    .eq(ProjectPhase::getStatus, "1")
+            );
+            if (inProgressCount > 0) {
+                throw new IllegalStateException("无法删除正在进行的阶段");
+            }
         }
         return baseMapper.deleteByIds(ids) > 0;
+    }
+
+    /**
+     * 获取项目阶段统计数据
+     *
+     * @param projectId 项目ID
+     * @return 统计数据
+     */
+    @Override
+    public Map<String, Object> getPhaseStatistics(Long projectId) {
+        List<ProjectPhase> phases = baseMapper.selectList(
+            Wrappers.<ProjectPhase>lambdaQuery()
+                .eq(ProjectPhase::getProjectId, projectId)
+        );
+
+        Map<String, Object> statistics = new HashMap<>();
+        
+        // 总阶段数
+        int totalPhases = phases.size();
+        statistics.put("totalPhases", totalPhases);
+        
+        if (totalPhases == 0) {
+            // 如果没有阶段，返回默认值
+            statistics.put("completedPhases", 0);
+            statistics.put("inProgressPhases", 0);
+            statistics.put("delayedPhases", 0);
+            statistics.put("upcomingPhases", 0);
+            statistics.put("completionRate", 0);
+            statistics.put("averageDelay", 0);
+            return statistics;
+        }
+
+        Date now = new Date();
+        
+        // 按状态分组统计
+        Map<String, List<ProjectPhase>> groupedByStatus = phases.stream()
+            .collect(Collectors.groupingBy(ProjectPhase::getStatus));
+
+        int completedPhases = groupedByStatus.getOrDefault("2", Collections.emptyList()).size();
+        int inProgressPhases = groupedByStatus.getOrDefault("1", Collections.emptyList()).size();
+        int pausedPhases = groupedByStatus.getOrDefault("3", Collections.emptyList()).size();
+
+        // 计算延期阶段数（结束时间已过但未完成的）
+        long delayedPhases = phases.stream()
+            .filter(p -> !"2".equals(p.getStatus()) && p.getEndTime() != null && p.getEndTime().before(now))
+            .count();
+
+        // 计算即将开始的阶段数（未来7天内开始的）
+        Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.DAY_OF_MONTH, 7);
+        Date nextWeek = cal.getTime();
+        
+        long upcomingPhases = phases.stream()
+            .filter(p -> "0".equals(p.getStatus()) && p.getStartTime() != null && 
+                    p.getStartTime().after(now) && p.getStartTime().before(nextWeek))
+            .count();
+
+        // 计算完成率
+        int completionRate = totalPhases > 0 ? (completedPhases * 100 / totalPhases) : 0;
+
+        // 计算平均延期天数
+        List<ProjectPhase> delayedPhasesList = phases.stream()
+            .filter(p -> !"2".equals(p.getStatus()) && p.getEndTime() != null && p.getEndTime().before(now))
+            .collect(Collectors.toList());
+            
+        int averageDelay = 0;
+        if (!delayedPhasesList.isEmpty()) {
+            long totalDelayDays = delayedPhasesList.stream()
+                .mapToLong(p -> {
+                    long diffInMillies = now.getTime() - p.getEndTime().getTime();
+                    return diffInMillies / (24 * 60 * 60 * 1000);
+                })
+                .sum();
+            averageDelay = (int) (totalDelayDays / delayedPhasesList.size());
+        }
+
+        statistics.put("completedPhases", completedPhases);
+        statistics.put("inProgressPhases", inProgressPhases + pausedPhases);
+        statistics.put("delayedPhases", (int) delayedPhases);
+        statistics.put("upcomingPhases", (int) upcomingPhases);
+        statistics.put("completionRate", completionRate);
+        statistics.put("averageDelay", averageDelay);
+
+        return statistics;
+    }
+
+    /**
+     * 完成阶段
+     *
+     * @param phaseId 阶段ID
+     * @return 是否成功
+     */
+    @Override
+    public Boolean completePhase(Long phaseId) {
+        return baseMapper.update(null,
+            Wrappers.<ProjectPhase>lambdaUpdate()
+                .set(ProjectPhase::getStatus, "2")
+                .set(ProjectPhase::getProgress, 100)
+                .set(ProjectPhase::getActualEndTime, new Date())
+                .eq(ProjectPhase::getPhaseId, phaseId)
+        ) > 0;
+    }
+
+    /**
+     * 暂停阶段
+     *
+     * @param phaseId 阶段ID
+     * @return 是否成功
+     */
+    @Override
+    public Boolean pausePhase(Long phaseId) {
+        return baseMapper.update(null,
+            Wrappers.<ProjectPhase>lambdaUpdate()
+                .set(ProjectPhase::getStatus, "3")
+                .eq(ProjectPhase::getPhaseId, phaseId)
+                .eq(ProjectPhase::getStatus, "1") // 只能暂停进行中的阶段
+        ) > 0;
+    }
+
+    /**
+     * 恢复阶段
+     *
+     * @param phaseId 阶段ID
+     * @return 是否成功
+     */
+    @Override
+    public Boolean resumePhase(Long phaseId) {
+        return baseMapper.update(null,
+            Wrappers.<ProjectPhase>lambdaUpdate()
+                .set(ProjectPhase::getStatus, "1")
+                .eq(ProjectPhase::getPhaseId, phaseId)
+                .eq(ProjectPhase::getStatus, "3") // 只能恢复暂停的阶段
+        ) > 0;
+    }
+
+    /**
+     * 更新阶段进度
+     *
+     * @param phaseId  阶段ID
+     * @param progress 进度百分比
+     * @return 是否成功
+     */
+    @Override
+    public Boolean updateProgress(Long phaseId, Integer progress) {
+        if (progress < 0 || progress > 100) {
+            throw new IllegalArgumentException("进度值必须在0-100之间");
+        }
+
+        LambdaUpdateWrapper<ProjectPhase> updateWrapper = Wrappers.<ProjectPhase>lambdaUpdate()
+            .set(ProjectPhase::getProgress, progress)
+            .eq(ProjectPhase::getPhaseId, phaseId);
+
+        // 如果进度为100%，自动设置为已完成状态
+        if (progress == 100) {
+            updateWrapper.set(ProjectPhase::getStatus, "2")
+                .set(ProjectPhase::getActualEndTime, new Date());
+        } 
+        // 如果进度大于0且状态为未开始，自动设置为进行中
+        else if (progress > 0) {
+            ProjectPhase phase = baseMapper.selectOne(
+                Wrappers.<ProjectPhase>lambdaQuery()
+                    .eq(ProjectPhase::getPhaseId, phaseId)
+            );
+            if (phase != null && "0".equals(phase.getStatus())) {
+                updateWrapper.set(ProjectPhase::getStatus, "1")
+                    .set(ProjectPhase::getActualStartTime, new Date());
+            }
+        }
+
+        return baseMapper.update(null, updateWrapper) > 0;
     }
 }

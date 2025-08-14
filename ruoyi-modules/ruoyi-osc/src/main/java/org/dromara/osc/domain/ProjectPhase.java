@@ -60,9 +60,32 @@ public class ProjectPhase extends BaseEntity {
     private Date endTime;
 
     /**
-     * 状态（0进行中 1已完成 2已取消）
+     * 状态（0未开始 1进行中 2已完成 3已暂停 4已延期）
      */
     private String status;
 
+    /**
+     * 进度百分比（0-100）
+     */
+    private Integer progress;
 
+    /**
+     * 实际开始时间
+     */
+    private Date actualStartTime;
+
+    /**
+     * 实际结束时间
+     */
+    private Date actualEndTime;
+
+    /**
+     * 负责人ID
+     */
+    private Long ownerId;
+
+    /**
+     * 优先级（1低 2中 3高）
+     */
+    private Integer priority;
 }

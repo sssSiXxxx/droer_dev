@@ -22,24 +22,14 @@
           </el-button>
         </el-button-group>
       </div>
-      
+
       <!-- 模板选择对话框 -->
-      <template-select
-        v-model="templateDialogVisible"
-        @select="handleTemplateSelect"
-      />
+      <template-select v-model="templateDialogVisible" @select="handleTemplateSelect" />
     </div>
 
     <!-- 主要内容区 -->
     <div class="main-content">
-      <el-form
-        ref="formRef"
-        :model="form"
-        :rules="rules"
-        label-width="100px"
-        class="project-form"
-        :hide-required-asterisk="false"
-      >
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px" class="project-form" :hide-required-asterisk="false">
         <!-- 基本信息卡片 -->
         <el-card class="form-card mb-4">
           <template #header>
@@ -48,14 +38,9 @@
               <span>基本信息</span>
             </div>
           </template>
-          
+
           <el-form-item label="项目名称" prop="projectName" class="mb-4">
-            <el-input 
-              v-model="form.projectName" 
-              placeholder="请输入项目名称"
-              :maxlength="50"
-              show-word-limit
-            />
+            <el-input v-model="form.projectName" placeholder="请输入项目名称" :maxlength="50" show-word-limit />
           </el-form-item>
 
           <el-form-item label="项目描述" prop="description">
@@ -92,12 +77,7 @@
                   class="w-full"
                   :filter-method="filterTechStack"
                 >
-                  <el-option
-                    v-for="dict in filteredTechStack"
-                    :key="dict.value"
-                    :label="dict.label"
-                    :value="dict.value"
-                  />
+                  <el-option v-for="dict in filteredTechStack" :key="dict.value" :label="dict.label" :value="dict.value" />
                 </el-select>
               </el-form-item>
             </el-col>
@@ -113,12 +93,7 @@
                   class="w-full"
                   :filter-method="filterProgrammingLanguage"
                 >
-                  <el-option
-                    v-for="dict in filteredProgrammingLanguage"
-                    :key="dict.value"
-                    :label="dict.label"
-                    :value="dict.value"
-                  />
+                  <el-option v-for="dict in filteredProgrammingLanguage" :key="dict.value" :label="dict.label" :value="dict.value" />
                 </el-select>
               </el-form-item>
             </el-col>
@@ -137,11 +112,7 @@
           <el-row :gutter="20">
             <el-col :span="12">
               <el-form-item label="代码仓库" prop="repositoryUrl">
-                <el-input 
-                  v-model="form.repositoryUrl" 
-                  placeholder="请输入代码仓库地址"
-                  class="url-input"
-                >
+                <el-input v-model="form.repositoryUrl" placeholder="请输入代码仓库地址" class="url-input">
                   <template #append>
                     <el-button @click="() => openUrl(form.repositoryUrl)">
                       <el-icon><Link /></el-icon>
@@ -152,11 +123,7 @@
             </el-col>
             <el-col :span="12">
               <el-form-item label="项目网站" prop="websiteUrl">
-                <el-input 
-                  v-model="form.websiteUrl" 
-                  placeholder="请输入项目网站地址"
-                  class="url-input"
-                >
+                <el-input v-model="form.websiteUrl" placeholder="请输入项目网站地址" class="url-input">
                   <template #append>
                     <el-button @click="() => openUrl(form.websiteUrl)">
                       <el-icon><Link /></el-icon>
@@ -180,44 +147,22 @@
           <el-row :gutter="20" class="mb-4">
             <el-col :span="12">
               <el-form-item label="联系方式" prop="contactInfo">
-                <el-input 
-                  v-model="form.contactInfo" 
-                  placeholder="请输入联系方式"
-                  :maxlength="100"
-                  show-word-limit
-                />
+                <el-input v-model="form.contactInfo" placeholder="请输入联系方式" :maxlength="100" show-word-limit />
               </el-form-item>
             </el-col>
             <el-col :span="12">
               <el-form-item label="版本信息" prop="versionInfo">
-                <el-input 
-                  v-model="form.versionInfo" 
-                  placeholder="请输入版本信息"
-                  :maxlength="50"
-                  show-word-limit
-                />
+                <el-input v-model="form.versionInfo" placeholder="请输入版本信息" :maxlength="50" show-word-limit />
               </el-form-item>
             </el-col>
           </el-row>
 
           <el-form-item label="项目Logo" prop="logoUrl">
-            <image-upload 
-              v-model="form.logoUrl" 
-              :limit="1"
-              class="logo-uploader"
-              tip="建议上传正方形图片，大小不超过2MB"
-            />
+            <image-upload v-model="form.logoUrl" :limit="1" class="logo-uploader" tip="建议上传正方形图片，大小不超过2MB" />
           </el-form-item>
 
           <el-form-item label="备注" prop="remark">
-            <el-input 
-              v-model="form.remark" 
-              type="textarea" 
-              placeholder="请输入备注信息"
-              :rows="3"
-              :maxlength="200"
-              show-word-limit
-            />
+            <el-input v-model="form.remark" type="textarea" placeholder="请输入备注信息" :rows="3" :maxlength="200" show-word-limit />
           </el-form-item>
         </el-card>
 
@@ -273,7 +218,7 @@ const handleTemplateSelect = (template: any) => {
     programmingLanguage: template.config.programmingLanguage
   };
   proxy?.$modal.msgSuccess(`已成功应用"${template.name}"模板`);
-  
+
   // 更新过滤后的数组，确保选项正确显示
   filteredTechStack.value = techStackDict.value;
   filteredProgrammingLanguage.value = programmingLanguageDict.value;
@@ -338,9 +283,7 @@ const techStackSearchKeyword = ref('');
 // 过滤编程语言选项
 const filterProgrammingLanguage = (query: string) => {
   if (query) {
-    filteredProgrammingLanguage.value = programmingLanguageDict.value.filter(item => 
-      item.label.toLowerCase().includes(query.toLowerCase())
-    );
+    filteredProgrammingLanguage.value = programmingLanguageDict.value.filter((item) => item.label.toLowerCase().includes(query.toLowerCase()));
   } else {
     filteredProgrammingLanguage.value = programmingLanguageDict.value;
   }
@@ -349,14 +292,11 @@ const filterProgrammingLanguage = (query: string) => {
 // 过滤技术栈选项
 const filterTechStack = (query: string) => {
   if (query) {
-    filteredTechStack.value = techStackDict.value.filter(item => 
-      item.label.toLowerCase().includes(query.toLowerCase())
-    );
+    filteredTechStack.value = techStackDict.value.filter((item) => item.label.toLowerCase().includes(query.toLowerCase()));
   } else {
     filteredTechStack.value = techStackDict.value;
   }
 };
-
 
 const formRef = ref<ElFormInstance>();
 const form = ref<ProjectForm>({
@@ -375,29 +315,19 @@ const form = ref<ProjectForm>({
 
 // 提交审核时的验证规则
 const submitRules = {
-  projectName: [
-    { required: true, message: '项目名称不能为空', trigger: 'blur' }
-  ],
-  description: [
-    { required: true, message: '项目描述不能为空', trigger: 'blur' }
-  ],
+  projectName: [{ required: true, message: '项目名称不能为空', trigger: 'blur' }],
+  description: [{ required: true, message: '项目描述不能为空', trigger: 'blur' }],
   repositoryUrl: [
     { required: true, message: '代码仓库不能为空', trigger: 'blur' },
     { type: 'url', message: '请输入有效的URL地址', trigger: 'blur' }
   ],
-  websiteUrl: [
-    { type: 'url', message: '请输入有效的URL地址', trigger: 'blur' }
-  ]
+  websiteUrl: [{ type: 'url', message: '请输入有效的URL地址', trigger: 'blur' }]
 };
 
 // 保存草稿时的验证规则（只验证URL格式）
 const draftRules = {
-  repositoryUrl: [
-    { type: 'url', message: '请输入有效的URL地址', trigger: 'blur' }
-  ],
-  websiteUrl: [
-    { type: 'url', message: '请输入有效的URL地址', trigger: 'blur' }
-  ]
+  repositoryUrl: [{ type: 'url', message: '请输入有效的URL地址', trigger: 'blur' }],
+  websiteUrl: [{ type: 'url', message: '请输入有效的URL地址', trigger: 'blur' }]
 };
 
 // 根据操作类型动态设置验证规则
@@ -430,7 +360,7 @@ const autoSave = async () => {
       // 新建模式：创建新项目
       await addProject(submitData);
     }
-    
+
     lastSaveTime.value = new Date().toLocaleTimeString();
     proxy?.$modal.msgSuccess(`草稿已自动保存 (${lastSaveTime.value})`);
   } catch (error) {
@@ -463,7 +393,7 @@ const submitForm = async (isSubmitAudit: boolean) => {
   if (isSubmitting.value) {
     return;
   }
-  
+
   // 获取当前用户ID
   const userId = userStore.userId;
   if (!userId) {
@@ -499,7 +429,7 @@ const submitForm = async (isSubmitAudit: boolean) => {
 
     let result;
     const projectId = route.query.projectId;
-    
+
     if (projectId) {
       // 编辑模式：更新现有项目
       submitData.projectId = projectId;
@@ -516,7 +446,7 @@ const submitForm = async (isSubmitAudit: boolean) => {
     if (isSubmitAudit) {
       // 提交审核成功
       proxy?.$modal.msgSuccess('提交成功，等待审核');
-      
+
       // 跳转到项目列表（待审核状态）
       proxy?.$router.push({
         path: '/osc/project',
@@ -556,7 +486,7 @@ const goDraftBox = () => {
     proxy?.$modal.msgError('获取用户信息失败');
     return;
   }
-  
+
   // 如果表单已修改，提示保存
   proxy?.$router.push({
     path: '/osc/projectDraft',
@@ -571,7 +501,7 @@ const goMyProjects = () => {
     proxy?.$modal.msgError('获取用户信息失败');
     return;
   }
-  
+
   // 如果表单已修改，提示保存
   proxy?.$router.push({
     path: '/osc/myProject',
@@ -604,26 +534,30 @@ const openUrl = (url?: string) => {
 const route = useRoute();
 
 // 监听字典数据变化，确保过滤数组正确初始化
-watch([techStackDict, programmingLanguageDict], ([techStack, programmingLanguage]) => {
-  if (techStack && techStack.length > 0) {
-    filteredTechStack.value = [...techStack];
-  }
-  if (programmingLanguage && programmingLanguage.length > 0) {
-    filteredProgrammingLanguage.value = [...programmingLanguage];
-  }
-}, { immediate: true });
+watch(
+  [techStackDict, programmingLanguageDict],
+  ([techStack, programmingLanguage]) => {
+    if (techStack && techStack.length > 0) {
+      filteredTechStack.value = [...techStack];
+    }
+    if (programmingLanguage && programmingLanguage.length > 0) {
+      filteredProgrammingLanguage.value = [...programmingLanguage];
+    }
+  },
+  { immediate: true }
+);
 
 onMounted(async () => {
   // 等待一下确保computed属性已经计算完成
   await nextTick();
-  
+
   // 初始化过滤后的数组
   filteredProgrammingLanguage.value = [...programmingLanguageDict.value];
   filteredTechStack.value = [...techStackDict.value];
-  
+
   console.log('技术栈选项:', filteredTechStack.value);
   console.log('编程语言选项:', filteredProgrammingLanguage.value);
-  
+
   const projectId = route.query.projectId;
   if (projectId) {
     getInfo(projectId as string);
@@ -713,7 +647,7 @@ onBeforeUnmount(() => {
 .url-input {
   :deep(.el-input-group__append) {
     padding: 0;
-    
+
     .el-button {
       margin: 0;
       border: none;
@@ -756,7 +690,7 @@ onBeforeUnmount(() => {
 
     .el-button {
       padding: 12px 24px;
-      
+
       .el-icon {
         margin-right: 4px;
       }

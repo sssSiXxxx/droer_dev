@@ -19,15 +19,15 @@
       <div class="floating-element element-7 cat-shape"></div>
 
       <!-- 粒子效果 -->
-      <div class="particle" style="left: 10%; animation-duration: 8s;"></div>
-      <div class="particle" style="left: 20%; animation-duration: 12s;"></div>
-      <div class="particle" style="left: 30%; animation-duration: 10s;"></div>
-      <div class="particle" style="left: 40%; animation-duration: 14s;"></div>
-      <div class="particle" style="left: 50%; animation-duration: 9s;"></div>
-      <div class="particle" style="left: 60%; animation-duration: 11s;"></div>
-      <div class="particle" style="left: 70%; animation-duration: 13s;"></div>
-      <div class="particle" style="left: 80%; animation-duration: 15s;"></div>
-      <div class="particle" style="left: 90%; animation-duration: 7s;"></div>
+      <div class="particle" style="left: 10%; animation-duration: 8s"></div>
+      <div class="particle" style="left: 20%; animation-duration: 12s"></div>
+      <div class="particle" style="left: 30%; animation-duration: 10s"></div>
+      <div class="particle" style="left: 40%; animation-duration: 14s"></div>
+      <div class="particle" style="left: 50%; animation-duration: 9s"></div>
+      <div class="particle" style="left: 60%; animation-duration: 11s"></div>
+      <div class="particle" style="left: 70%; animation-duration: 13s"></div>
+      <div class="particle" style="left: 80%; animation-duration: 15s"></div>
+      <div class="particle" style="left: 90%; animation-duration: 7s"></div>
 
       <!-- 主Logo区域 -->
       <div class="logo-area">
@@ -269,7 +269,7 @@ onMounted(() => {
   initTenantList();
   getLoginData();
   // 拉取注册开关
-  getConfigKey('sys.account.registerUser').then(res => {
+  getConfigKey('sys.account.registerUser').then((res) => {
     register.value = res.data === 'true';
   });
 });
@@ -282,7 +282,7 @@ onMounted(() => {
   align-items: center;
   height: 100vh;
   overflow: hidden;
-  background: linear-gradient(135deg, #87CEEB 0%, #4A90E2 25%, #6B8FC1 75%, #5A7BA8 100%);
+  background: linear-gradient(135deg, #87ceeb 0%, #4a90e2 25%, #6b8fc1 75%, #5a7ba8 100%);
   position: relative;
   font-family: 'Arial', sans-serif;
 }
@@ -306,12 +306,12 @@ onMounted(() => {
 
 .circle {
   border-radius: 50%;
-  background: linear-gradient(45deg, #FFD700, #FFA500);
+  background: linear-gradient(45deg, #ffd700, #ffa500);
 }
 
 .ring {
   border-radius: 50%;
-  border: 4px solid #FFD700;
+  border: 4px solid #ffd700;
   background: transparent;
 }
 
@@ -405,8 +405,7 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
   background-size: 50px 50px;
   opacity: 0.6;
   animation: gridMove 20s linear infinite;
@@ -439,7 +438,7 @@ onMounted(() => {
   position: absolute;
   width: 4px;
   height: 4px;
-  background: #FFD700;
+  background: #ffd700;
   border-radius: 50%;
   opacity: 0.8;
   animation: particle 10s linear infinite;
@@ -593,18 +592,34 @@ onMounted(() => {
 
 /* 动画定义 */
 @keyframes float {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-20px) rotate(180deg); }
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-20px) rotate(180deg);
+  }
 }
 
 @keyframes pulse {
-  0%, 100% { transform: scale(1); opacity: 0.2; }
-  50% { transform: scale(1.1); opacity: 0.3; }
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.2;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.3;
+  }
 }
 
 @keyframes gridMove {
-  0% { transform: translate(0, 0); }
-  100% { transform: translate(50px, 50px); }
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(50px, 50px);
+  }
 }
 
 @keyframes particle {
@@ -612,8 +627,12 @@ onMounted(() => {
     transform: translateY(100vh) translateX(0px);
     opacity: 0;
   }
-  10% { opacity: 0.8; }
-  90% { opacity: 0.8; }
+  10% {
+    opacity: 0.8;
+  }
+  90% {
+    opacity: 0.8;
+  }
   100% {
     transform: translateY(-100px) translateX(100px);
     opacity: 0;
@@ -621,13 +640,22 @@ onMounted(() => {
 }
 
 @keyframes logoFloat {
-  0%, 100% { transform: translate(-50%, -50%) translateY(0px); }
-  50% { transform: translate(-50%, -50%) translateY(-10px); }
+  0%,
+  100% {
+    transform: translate(-50%, -50%) translateY(0px);
+  }
+  50% {
+    transform: translate(-50%, -50%) translateY(-10px);
+  }
 }
 
 @keyframes ringRotate {
-  0% { transform: translate(-50%, -50%) rotate(0deg); }
-  100% { transform: translate(-50%, -50%) rotate(360deg); }
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
 }
 
 /* 响应式设计 */

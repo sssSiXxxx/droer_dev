@@ -29,7 +29,7 @@ export default defineConfig(({ mode, command }) => {
           changeOrigin: true,
           ws: true,
           rewrite: (path) => path.replace(new RegExp('^' + env.VITE_APP_BASE_API), '')
-        },
+        }
         // 已改用直接请求Gitee API，不再需要代理
         // '/gitee-api': {
         //   target: 'https://gitee.com/api/v5',

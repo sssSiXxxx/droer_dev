@@ -20,21 +20,22 @@
       </div>
     </header>
 
-    <!-- 统计区域 -->
+    <!-- 统计区域 - 使用实时统计组件 -->
     <div class="stats-container">
-      <div class="stats-section">
-        <div class="stat-item" v-for="(stat, index) in statsData" :key="index">
-          <div class="stat-icon" :style="{ color: stat.color, backgroundColor: stat.bg }">
-            <el-icon><component :is="stat.icon" /></el-icon>
-          </div>
-          <div class="stat-content">
-            <div class="stat-value">{{ stat.value }}</div>
-            <div class="stat-title">{{ stat.title }}</div>
-            <div class="stat-change" :class="stat.change.includes('+') ? 'positive' : 'negative'">
-              {{ stat.change }}
-            </div>
-          </div>
-        </div>
+      <RealtimeStats :compact="true" :show-header="false" />
+    </div>
+
+    <!-- 项目搜索功能 -->
+    <div class="search-container">
+      <div class="search-section">
+        <h2>探索项目</h2>
+        <p>搜索和发现 Dromara 社区的优秀开源项目</p>
+        <ProjectSearchCombo 
+          placeholder="搜索项目名称或描述..."
+          :max-results="20"
+          @search="handleProjectSearch"
+          @select="handleProjectSelect"
+        />
       </div>
     </div>
 
@@ -50,7 +51,7 @@
                   <h3>社区活跃度趋势</h3>
                   <p>最近一周的活动统计</p>
                 </div>
-                <el-select v-model="selectedTimeRange" size="small" style="width: 120px;">
+                <el-select v-model="selectedTimeRange" size="small" style="width: 120px">
                   <el-option label="最近7天" value="7" />
                   <el-option label="最近30天" value="30" />
                   <el-option label="最近90天" value="90" />
@@ -61,7 +62,7 @@
               </div>
             </div>
           </div>
-          
+
           <div class="chart-sidebar">
             <!-- 日活跃用户 -->
             <div class="sidebar-card">
@@ -77,7 +78,7 @@
                 </div>
               </div>
             </div>
-            
+
             <!-- 待办事项 -->
             <div class="sidebar-card">
               <div class="card-header">
@@ -145,11 +146,7 @@
                   {{ index + 1 }}
                 </div>
                 <div class="contributor-avatar">
-                  <img 
-                    :src="contributor.avatar_url" 
-                    :alt="contributor.name"
-                    @error="handleAvatarError"
-                  />
+                  <img :src="contributor.avatar_url" :alt="contributor.name" @error="handleAvatarError" />
                 </div>
                 <div class="contributor-info">
                   <div class="contributor-name">{{ contributor.name }}</div>
@@ -229,76 +226,80 @@
           </div>
         </div>
 
-        <!-- 访客分布 -->
-        <div class="grid-card">
-          <div class="card-header">
-            <h3>访客分布</h3>
-            <p>地理位置统计</p>
-          </div>
-          <div class="card-content">
-            <div class="visitor-stats">
-              <div class="visitor-total">125.7k 访问量来自 69 个国家</div>
-              <div class="visitor-list">
-                <div class="visitor-item" v-for="(location, index) in visitorLocations" :key="index">
-                  <span class="visitor-country">{{ location.countryName }}</span>
-                  <div class="visitor-info">
-                    <span class="visitor-count">{{ location.count }}</span>
-                    <span class="visitor-percentage">{{ location.percentage }}%</span>
-                  </div>
-                </div>
-              </div>
-              <div class="visitor-map">
-                <el-icon class="map-icon"><Globe /></el-icon>
-              </div>
-            </div>
-          </div>
+        <!-- 访客分布 - 使用世界地图组件 -->
+        <div class="grid-card world-map-card">
+          <WorldMap 
+            :show-title="true"
+            :show-stats="true"
+            map-height="320px"
+            :auto-refresh="false"
+          />
         </div>
       </div>
-
-
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-import { use } from 'echarts/core'
-import { CanvasRenderer } from 'echarts/renderers'
-import { LineChart, PieChart } from 'echarts/charts'
+import { ref, onMounted, computed } from 'vue';
+import { use } from 'echarts/core';
+import { CanvasRenderer } from 'echarts/renderers';
+import { LineChart, PieChart } from 'echarts/charts';
+import { TitleComponent, TooltipComponent, LegendComponent, GridComponent } from 'echarts/components';
+import VChart from 'vue-echarts';
 import {
-  TitleComponent,
-  TooltipComponent,
-  LegendComponent,
-  GridComponent
-} from 'echarts/components'
-import VChart from 'vue-echarts'
-import { Star, Share, Link, Trophy, Document, Setting, User, Monitor, Calendar, Bell, Connection, Refresh, Download, Warning } from '@element-plus/icons-vue'
-import { getHotProjects, getWeeklyContributors, getCommunityStats, type ProjectInfo, type ContributorInfo } from '@/api/community'
+  Star,
+  Share,
+  Link,
+  Trophy,
+  Document,
+  Setting,
+  User,
+  Monitor,
+  Calendar,
+  Bell,
+  Connection,
+  Refresh,
+  Download,
+  Warning
+} from '@element-plus/icons-vue';
+import { 
+  getDashboardData, 
+  refreshAllData, 
+  getTrendingData, 
+  type ProjectInfo, 
+  type ContributorInfo, 
+  type DashboardData 
+} from '@/api/community-enhanced';
+import RealtimeStats from '@/components/RealtimeStats.vue';
+import ProjectSearchCombo from '@/components/ProjectSearchCombo.vue';
 
 // 注册 ECharts 组件
-use([
-  CanvasRenderer,
-  LineChart,
-  PieChart,
-  TitleComponent,
-  TooltipComponent,
-  LegendComponent,
-  GridComponent
-])
+use([CanvasRenderer, LineChart, PieChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent]);
 
 // 响应式数据
-const hotProjects = ref<ProjectInfo[]>([])
-const weeklyContributors = ref<ContributorInfo[]>([])
-const projectsLoading = ref(false)
-const contributorsLoading = ref(false)
+const hotProjects = ref<ProjectInfo[]>([]);
+const weeklyContributors = ref<ContributorInfo[]>([]);
+const dashboardData = ref<DashboardData | null>(null);
+const projectsLoading = ref(false);
+const contributorsLoading = ref(false);
+const dataLoading = ref(false);
 
 // 统计数据
-const totalProjects = ref(0)
-const totalStars = ref(0)
-const totalContributors = ref(0)
+const totalProjects = ref(0);
+const totalStars = ref(0);
+const totalContributors = ref(0);
+
+// 趋势数据
+const trendingData = ref({
+  dates: [] as string[],
+  stars: [] as number[],
+  projects: [] as number[],
+  contributions: [] as number[]
+});
 
 // 错误信息
-const errorMessage = ref('')
+const errorMessage = ref('');
 
 // 社区公告数据
 const announcements = ref([
@@ -317,7 +318,7 @@ const announcements = ref([
     title: '新项目加入公告',
     content: '热烈欢迎"FastRequest"项目正式加入Dromara开源社区，这是一款高效的API调试工具。'
   }
-])
+]);
 
 // 技术栈数据
 const techStack = ref([
@@ -326,7 +327,7 @@ const techStack = ref([
   { name: 'Go', value: 15, color: '#3B82F6' },
   { name: 'Python', value: 10, color: '#8B5CF6' },
   { name: 'Others', value: 5, color: '#EF4444' }
-])
+]);
 
 // 项目版本数据
 const appVersions = ref([
@@ -336,9 +337,7 @@ const appVersions = ref([
   { name: 'TLog v1.5.0', usage: 45, users: '5.1k' },
   { name: 'Dynamic-Tp v1.1.6', usage: 32, users: '3.8k' },
   { name: 'Jpom v2.10.42', usage: 28, users: '2.9k' }
-])
-
-
+]);
 
 // 顶级贡献者数据
 const topContributors = ref([
@@ -347,31 +346,31 @@ const topContributors = ref([
   { name: 'bryan31 (Forest)', progress: 72 },
   { name: 'yanhom (Dynamic-Tp)', progress: 58 },
   { name: 'xiaoymin (Knife4j)', progress: 45 }
-])
+]);
 
 // 最新动态数据
 const recentActivities = ref([
   {
-    title: "Sa-Token发布新版本v1.37.0",
-    description: "修复了多个安全漏洞，增强了JWT支持，优化了性能表现。",
-    time: "2小时前"
+    title: 'Sa-Token发布新版本v1.37.0',
+    description: '修复了多个安全漏洞，增强了JWT支持，优化了性能表现。',
+    time: '2小时前'
   },
   {
-    title: "Hutool工具类库获得新贡献",
-    description: "社区成员提交了新的工具方法，用于处理日期和时间格式化。",
-    time: "4小时前"
+    title: 'Hutool工具类库获得新贡献',
+    description: '社区成员提交了新的工具方法，用于处理日期和时间格式化。',
+    time: '4小时前'
   },
   {
-    title: "Forest HTTP客户端框架性能优化",
-    description: "通过连接池优化和缓存机制改进，网络请求性能提升30%。",
-    time: "6小时前"
+    title: 'Forest HTTP客户端框架性能优化',
+    description: '通过连接池优化和缓存机制改进，网络请求性能提升30%。',
+    time: '6小时前'
   },
   {
-    title: "TLog分布式日志追踪系统更新",
-    description: "新增了链路追踪功能，支持更细粒度的性能监控。",
-    time: "8小时前"
+    title: 'TLog分布式日志追踪系统更新',
+    description: '新增了链路追踪功能，支持更细粒度的性能监控。',
+    time: '8小时前'
   }
-])
+]);
 
 // 访客位置数据
 const visitorLocations = ref([
@@ -381,7 +380,7 @@ const visitorLocations = ref([
   { country: 'Germany', countryName: '德国', percentage: 8, count: '11.2k' },
   { country: 'South Korea', countryName: '韩国', percentage: 7, count: '10.4k' },
   { country: 'Others', countryName: '其他', percentage: 20, count: '29.8k' }
-])
+]);
 
 // 待办事项数据
 const todoItems = ref([
@@ -393,59 +392,59 @@ const todoItems = ref([
   { task: '回复用户反馈邮件', completed: true },
   { task: '更新技术文档', completed: false },
   { task: '准备下周会议议程', completed: false }
-])
+]);
 
 // 统计数据
 const statsData = ref([
-  { 
-    title: '项目总数', 
-    value: '45', 
-    change: '+3 From last Week', 
-    icon: 'Connection', 
-    color: '#2563EB', 
-    bg: '#EFF6FF' 
+  {
+    title: '项目总数',
+    value: '45',
+    change: '+3 From last Week',
+    icon: 'Connection',
+    color: '#2563EB',
+    bg: '#EFF6FF'
   },
-  { 
-    title: '活跃贡献者', 
-    value: '1,235', 
-    change: '+8% From last Week', 
-    icon: 'User', 
-    color: '#16A34A', 
-    bg: '#F0FDF4' 
+  {
+    title: '活跃贡献者',
+    value: '1,235',
+    change: '+8% From last Week',
+    icon: 'User',
+    color: '#16A34A',
+    bg: '#F0FDF4'
   },
-  { 
-    title: 'Star总数', 
-    value: '25,840', 
-    change: '+12% From last Week', 
-    icon: 'Star', 
-    color: '#CA8A04', 
-    bg: '#FFFBEB' 
+  {
+    title: 'Star总数',
+    value: '25,840',
+    change: '+12% From last Week',
+    icon: 'Star',
+    color: '#CA8A04',
+    bg: '#FFFBEB'
   },
-  { 
-    title: 'PR合并数', 
-    value: '4,567', 
-    change: '+15% From last Week', 
-    icon: 'Refresh', 
-    color: '#9333EA', 
-    bg: '#FAF5FF' 
+  {
+    title: 'PR合并数',
+    value: '4,567',
+    change: '+15% From last Week',
+    icon: 'Refresh',
+    color: '#9333EA',
+    bg: '#FAF5FF'
   },
-  { 
-    title: '下载量', 
-    value: '2,315K', 
-    change: '+5% From last Week', 
-    icon: 'Download', 
-    color: '#4F46E5', 
-    bg: '#EEF2FF' 
+  {
+    title: '下载量',
+    value: '2,315K',
+    change: '+5% From last Week',
+    icon: 'Download',
+    color: '#4F46E5',
+    bg: '#EEF2FF'
   },
-  { 
-    title: 'Issue处理', 
-    value: '1,845', 
-    change: '+2% From last Week', 
-    icon: 'Warning', 
-    color: '#DC2626', 
-    bg: '#FEF2F2' 
+  {
+    title: 'Issue处理',
+    value: '1,845',
+    change: '+2% From last Week',
+    icon: 'Warning',
+    color: '#DC2626',
+    bg: '#FEF2F2'
   }
-])
+]);
 
 // 快速入口
 const quickEntries = ref([
@@ -455,20 +454,38 @@ const quickEntries = ref([
   { title: '系统监控', icon: 'Monitor', link: '/monitor/server' },
   { title: '日程安排', icon: 'Calendar', link: '#' },
   { title: '消息通知', icon: 'Bell', link: '#' }
-])
+]);
 
 // 时间范围选择
-const selectedTimeRange = ref('7')
+const selectedTimeRange = ref('7');
 
-// 社区活跃度数据
-const communityActivity = ref([
-  { name: 'Dec 01', commits: 120, issues: 45, prs: 38 },
-  { name: 'Dec 02', commits: 150, issues: 52, prs: 41 },
-  { name: 'Dec 03', commits: 180, issues: 38, prs: 45 },
-  { name: 'Dec 04', commits: 165, issues: 62, prs: 52 },
-  { name: 'Dec 05', commits: 195, issues: 48, prs: 38 },
-  { name: 'Dec 06', commits: 210, issues: 55, prs: 48 }
-])
+// 社区活跃度数据 - 使用实时趋势数据
+const communityActivity = computed(() => {
+  if (!trendingData.value.dates.length) {
+    // 默认数据
+    return [
+      { name: 'Dec 01', commits: 120, issues: 45, prs: 38 },
+      { name: 'Dec 02', commits: 150, issues: 52, prs: 41 },
+      { name: 'Dec 03', commits: 180, issues: 38, prs: 45 },
+      { name: 'Dec 04', commits: 165, issues: 62, prs: 52 },
+      { name: 'Dec 05', commits: 195, issues: 48, prs: 38 },
+      { name: 'Dec 06', commits: 210, issues: 55, prs: 48 }
+    ];
+  }
+  
+  return trendingData.value.dates.map((date, index) => ({
+    name: formatDateLabel(date),
+    commits: trendingData.value.contributions[index] || 0,
+    issues: Math.floor((trendingData.value.contributions[index] || 0) * 0.3),
+    prs: Math.floor((trendingData.value.contributions[index] || 0) * 0.2)
+  }));
+});
+
+// 格式化日期标签
+const formatDateLabel = (dateStr: string): string => {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('zh-CN', { month: 'short', day: '2-digit' });
+};
 
 // 技术栈饼图配置
 const techChartOption = computed(() => ({
@@ -508,7 +525,7 @@ const techChartOption = computed(() => ({
       labelLine: {
         show: false
       },
-      data: techStack.value.map(item => ({
+      data: techStack.value.map((item) => ({
         value: item.value,
         name: item.name,
         itemStyle: {
@@ -517,7 +534,7 @@ const techChartOption = computed(() => ({
       }))
     }
   ]
-}))
+}));
 
 // 社区活跃度图表配置
 const chartOption = computed(() => ({
@@ -529,12 +546,12 @@ const chartOption = computed(() => ({
     textStyle: {
       color: '#374151'
     },
-    formatter: function(params: any) {
-      let result = params[0].name + '<br/>'
+    formatter: function (params: any) {
+      let result = params[0].name + '<br/>';
       params.forEach((param: any) => {
-        result += param.marker + param.seriesName + ': ' + param.value + '<br/>'
-      })
-      return result
+        result += param.marker + param.seriesName + ': ' + param.value + '<br/>';
+      });
+      return result;
     }
   },
   legend: {
@@ -553,7 +570,7 @@ const chartOption = computed(() => ({
   xAxis: {
     type: 'category',
     boundaryGap: false,
-    data: communityActivity.value.map(item => item.name),
+    data: communityActivity.value.map((item) => item.name),
     axisLine: {
       lineStyle: {
         color: '#E5E7EB'
@@ -604,7 +621,7 @@ const chartOption = computed(() => ({
       itemStyle: {
         color: '#10B981'
       },
-      data: communityActivity.value.map(item => item.commits),
+      data: communityActivity.value.map((item) => item.commits),
       smooth: true
     },
     {
@@ -631,7 +648,7 @@ const chartOption = computed(() => ({
       itemStyle: {
         color: '#3B82F6'
       },
-      data: communityActivity.value.map(item => item.issues),
+      data: communityActivity.value.map((item) => item.issues),
       smooth: true
     },
     {
@@ -658,73 +675,84 @@ const chartOption = computed(() => ({
       itemStyle: {
         color: '#8B5CF6'
       },
-      data: communityActivity.value.map(item => item.prs),
+      data: communityActivity.value.map((item) => item.prs),
       smooth: true
     }
   ]
-}))
+}));
 
-// 获取热门项目
-const fetchHotProjects = async () => {
-  projectsLoading.value = true
-  errorMessage.value = ''
+// 获取完整仪表盘数据
+const fetchDashboardData = async () => {
+  dataLoading.value = true;
+  errorMessage.value = '';
   try {
-    const projects = await getHotProjects(1, 20)
-    hotProjects.value = projects
-    if (projects.length > 0) {
-      console.log('✅ 成功获取热门项目:', projects.length, '个')
-    }
+    console.log('🚀 正在加载仪表盘数据...');
+    
+    const data = await getDashboardData();
+    dashboardData.value = data;
+    
+    // 更新各个数据项
+    hotProjects.value = data.hotProjects;
+    weeklyContributors.value = data.weeklyContributors;
+    trendingData.value = data.trendingData;
+    
+    // 更新统计数据
+    totalProjects.value = data.stats.totalProjects;
+    totalStars.value = data.stats.totalStars;
+    totalContributors.value = data.stats.totalContributors;
+    
+    console.log('✅ 仪表盘数据加载完成');
   } catch (error) {
-    console.error('❌ 获取热门项目失败:', error)
-    errorMessage.value = '获取热门项目失败，请检查网络连接'
+    console.error('❌ 加载仪表盘数据失败:', error);
+    errorMessage.value = '获取数据失败，请稍后重试';
   } finally {
-    projectsLoading.value = false
+    dataLoading.value = false;
   }
-}
+};
 
-// 获取贡献榜
-const fetchWeeklyContributors = async () => {
-  contributorsLoading.value = true
+// 刷新所有数据
+const refreshAllDataAndUI = async () => {
   try {
-    const contributors = await getWeeklyContributors()
-    weeklyContributors.value = contributors
-    if (contributors.length > 0) {
-      console.log('✅ 成功获取贡献榜:', contributors.length, '个贡献者')
-    }
+    console.log('🔄 正在强制刷新所有数据...');
+    const data = await refreshAllData();
+    dashboardData.value = data;
+    
+    hotProjects.value = data.hotProjects;
+    weeklyContributors.value = data.weeklyContributors;
+    trendingData.value = data.trendingData;
+    
+    totalProjects.value = data.stats.totalProjects;
+    totalStars.value = data.stats.totalStars;
+    totalContributors.value = data.stats.totalContributors;
+    
+    console.log('✅ 数据刷新完成');
   } catch (error) {
-    console.error('❌ 获取贡献榜失败:', error)
-  } finally {
-    contributorsLoading.value = false
+    console.error('❌ 刷新数据失败:', error);
   }
-}
+};
 
-// 获取社区统计数据
-const fetchCommunityStats = async () => {
-  try {
-    const stats = await getCommunityStats()
-    totalProjects.value = stats.totalProjects
-    totalStars.value = stats.totalStars
-    totalContributors.value = stats.totalContributors
-    console.log('✅ 社区统计:', stats)
-  } catch (e) {
-    totalProjects.value = 0
-    totalStars.value = 0
-    totalContributors.value = 0
-  }
-}
+// 项目搜索处理
+const handleProjectSearch = (results: ProjectInfo[], query: string) => {
+  console.log(`🔍 搜索结果: "${query}" 找到 ${results.length} 个项目`);
+};
+
+// 项目选择处理
+const handleProjectSelect = (project: ProjectInfo) => {
+  console.log('📂 选择项目:', project.name);
+};
 
 // 打开链接
 const openLink = (url: string) => {
-  window.open(url, '_blank')
-}
+  window.open(url, '_blank');
+};
 
 // 格式化数字
 const formatNumber = (num: number): string => {
   if (num >= 1000) {
-    return (num / 1000).toFixed(1) + 'k'
+    return (num / 1000).toFixed(1) + 'k';
   }
-  return num.toString()
-}
+  return num.toString();
+};
 
 // 获取编程语言颜色
 const getLanguageColor = (language: string): string => {
@@ -739,17 +767,17 @@ const getLanguageColor = (language: string): string => {
     'PHP': '#4F5D95',
     'Vue': '#4FC08D',
     'React': '#61DAFB'
-  }
-  return colors[language] || '#666'
-}
+  };
+  return colors[language] || '#666';
+};
 
 // 获取排名样式
 const getRankClass = (index: number): string => {
-  if (index === 0) return 'gold'
-  if (index === 1) return 'silver'
-  if (index === 2) return 'bronze'
-  return ''
-}
+  if (index === 0) return 'gold';
+  if (index === 1) return 'silver';
+  if (index === 2) return 'bronze';
+  return '';
+};
 
 // 处理头像加载失败
 const handleAvatarError = (event: Event) => {
@@ -760,13 +788,9 @@ const handleAvatarError = (event: Event) => {
 // 页面加载时获取数据
 onMounted(async () => {
   // 并行加载所有数据以提高性能
-  await Promise.all([
-    fetchHotProjects(),
-    fetchWeeklyContributors(),
-    fetchCommunityStats()
-  ])
-  console.log('首页数据加载完成')
-})
+  await Promise.all([fetchHotProjects(), fetchWeeklyContributors(), fetchCommunityStats()]);
+  console.log('首页数据加载完成');
+});
 </script>
 
 <style scoped>
@@ -774,8 +798,8 @@ onMounted(async () => {
 
 /* 方案1：浅灰绿色渐变（当前使用） */
 .community-header {
-  background: linear-gradient(135deg, #B4E4D9 0%, #8FD3C7 100%);
-  color: #2A3F54;
+  background: linear-gradient(135deg, #b4e4d9 0%, #8fd3c7 100%);
+  color: #2a3f54;
   padding: 60px 0;
   position: relative;
   overflow: hidden;
@@ -874,14 +898,14 @@ onMounted(async () => {
   margin: 0 0 12px 0;
   font-size: 36px;
   font-weight: 700;
-  color: #2A3F54;
+  color: #2a3f54;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .slogan {
   margin: 0 0 8px 0;
   font-size: 18px;
-  color: #4A6B7F;
+  color: #4a6b7f;
   font-weight: 500;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
@@ -889,7 +913,7 @@ onMounted(async () => {
 .desc {
   margin: 0 0 25px 0;
   font-size: 16px;
-  color: #5A7A8F;
+  color: #5a7a8f;
   line-height: 1.6;
   max-width: 600px;
 }
@@ -985,13 +1009,13 @@ onMounted(async () => {
 .stat-value {
   font-size: 22px;
   font-weight: 700;
-  color: #2A3F54;
+  color: #2a3f54;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .stat-title {
   font-size: 11px;
-  color: #4A6B7F;
+  color: #4a6b7f;
   font-weight: 500;
 }
 
@@ -1001,11 +1025,11 @@ onMounted(async () => {
 }
 
 .stat-change.positive {
-  color: #16A34A;
+  color: #16a34a;
 }
 
 .stat-change.negative {
-  color: #DC2626;
+  color: #dc2626;
 }
 
 .main-content {
@@ -1026,7 +1050,7 @@ onMounted(async () => {
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #F1F5F9;
+  border: 1px solid #f1f5f9;
   transition: all 0.3s ease;
 }
 
@@ -1047,7 +1071,7 @@ onMounted(async () => {
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #F1F5F9;
+  border: 1px solid #f1f5f9;
   transition: all 0.3s ease;
 }
 
@@ -1105,7 +1129,7 @@ onMounted(async () => {
 .project-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-  border-color: #B4E4D9;
+  border-color: #b4e4d9;
 }
 
 .project-header {
@@ -1128,7 +1152,7 @@ onMounted(async () => {
   transform: translateY(-50%);
   width: 4px;
   height: 16px;
-  background: #B4E4D9;
+  background: #b4e4d9;
   border-radius: 2px;
 }
 
@@ -1263,7 +1287,7 @@ onMounted(async () => {
 .quick-entry-icon {
   font-size: 24px;
   margin-bottom: 8px;
-  color: #B4E4D9;
+  color: #b4e4d9;
 }
 
 .quick-entry-title {
@@ -1363,7 +1387,7 @@ onMounted(async () => {
   align-items: center;
   gap: 5px;
   font-size: 12px;
-  color: #B4E4D9;
+  color: #b4e4d9;
   font-weight: 500;
 }
 
@@ -1396,67 +1420,67 @@ onMounted(async () => {
     gap: 30px;
     text-align: center;
   }
-  
+
   .logo-section {
     flex-direction: column;
     gap: 20px;
   }
-  
+
   .stats-container {
     padding: 30px 0;
   }
-  
+
   .stats-section {
     justify-content: center;
     gap: 15px;
   }
-  
+
   .stat-item {
     min-width: 160px;
     padding: 14px 16px;
   }
-  
+
   .stat-value {
     font-size: 22px;
   }
-  
+
   .stat-title {
     font-size: 11px;
   }
-  
+
   .stat-change {
     font-size: 9px;
   }
-  
+
   .quick-links {
     justify-content: center;
   }
-  
+
   .community-info h1 {
     font-size: 28px;
   }
-  
+
   .slogan {
     font-size: 16px;
   }
-  
+
   .desc {
     font-size: 14px;
   }
-  
+
   .project-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .main-content {
     padding: 0 10px;
   }
-  
+
   .content-grid {
     grid-template-columns: 1fr;
     gap: 16px;
   }
-  
+
   .section-card {
     padding: 15px;
   }
@@ -1490,7 +1514,7 @@ onMounted(async () => {
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #F1F5F9;
+  border: 1px solid #f1f5f9;
   transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
@@ -1544,8 +1568,6 @@ onMounted(async () => {
   letter-spacing: -0.025em;
 }
 
-
-
 /* 侧边栏待办事项样式优化 */
 .sidebar-card .todo-list {
   display: flex;
@@ -1568,7 +1590,7 @@ onMounted(async () => {
 }
 
 .sidebar-card .todo-list::-webkit-scrollbar-thumb {
-  background: #10B981;
+  background: #10b981;
   border-radius: 3px;
 }
 
@@ -1582,23 +1604,23 @@ onMounted(async () => {
   gap: 8px;
   padding: 6px 10px;
   border-radius: 8px;
-  background: #F9FAFB;
+  background: #f9fafb;
   transition: all 0.3s ease;
-  border: 1px solid #E2E8F0;
+  border: 1px solid #e2e8f0;
   min-height: 28px;
 }
 
 .sidebar-card .todo-item:hover {
-  background: #F3F4F6;
+  background: #f3f4f6;
   transform: translateX(4px);
-  border-color: #10B981;
+  border-color: #10b981;
   box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
 }
 
 .sidebar-card .todo-checkbox {
   width: 16px;
   height: 16px;
-  border: 2px solid #D1D5DB;
+  border: 2px solid #d1d5db;
   border-radius: 4px;
   display: flex;
   align-items: center;
@@ -1608,8 +1630,8 @@ onMounted(async () => {
 }
 
 .sidebar-card .todo-checkbox.completed {
-  background: #10B981;
-  border-color: #10B981;
+  background: #10b981;
+  border-color: #10b981;
   box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
 }
 
@@ -1631,7 +1653,7 @@ onMounted(async () => {
 }
 
 .sidebar-card .todo-text.completed {
-  color: #9CA3AF;
+  color: #9ca3af;
   text-decoration: line-through;
 }
 
@@ -1640,7 +1662,7 @@ onMounted(async () => {
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #F1F5F9;
+  border: 1px solid #f1f5f9;
   transition: all 0.3s ease;
 }
 
@@ -1659,13 +1681,13 @@ onMounted(async () => {
   margin: 0 0 4px 0;
   font-size: 18px;
   font-weight: 600;
-  color: #1F2937;
+  color: #1f2937;
 }
 
 .chart-title p {
   margin: 0;
   font-size: 14px;
-  color: #6B7280;
+  color: #6b7280;
 }
 
 .chart-container {
@@ -1691,7 +1713,7 @@ onMounted(async () => {
   border-radius: 20px;
   padding: 24px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #F1F5F9;
+  border: 1px solid #f1f5f9;
   transition: all 0.3s ease;
   height: 420px;
   display: flex;
@@ -1707,7 +1729,7 @@ onMounted(async () => {
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #10B981, #3B82F6, #8B5CF6);
+  background: linear-gradient(90deg, #10b981, #3b82f6, #8b5cf6);
   border-radius: 20px 20px 0 0;
 }
 
@@ -1726,14 +1748,14 @@ onMounted(async () => {
   margin: 0 0 6px 0;
   font-size: 18px;
   font-weight: 700;
-  color: #1F2937;
+  color: #1f2937;
   letter-spacing: -0.025em;
 }
 
 .card-header p {
   margin: 0;
   font-size: 13px;
-  color: #6B7280;
+  color: #6b7280;
   font-weight: 500;
 }
 
@@ -1758,16 +1780,16 @@ onMounted(async () => {
   gap: 16px;
   padding: 16px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   transition: all 0.3s ease;
   cursor: pointer;
-  border: 1px solid #E2E8F0;
+  border: 1px solid #e2e8f0;
 }
 
 .project-item:hover {
-  background: linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 100%);
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
   transform: translateX(6px);
-  border-color: #10B981;
+  border-color: #10b981;
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
 }
 
@@ -1775,7 +1797,7 @@ onMounted(async () => {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #10B981, #059669);
+  background: linear-gradient(135deg, #10b981, #059669);
   color: white;
   display: flex;
   align-items: center;
@@ -1794,7 +1816,7 @@ onMounted(async () => {
 .project-name {
   font-size: 15px;
   font-weight: 700;
-  color: #1F2937;
+  color: #1f2937;
   margin-bottom: 6px;
   white-space: nowrap;
   overflow: hidden;
@@ -1804,7 +1826,7 @@ onMounted(async () => {
 
 .project-desc {
   font-size: 13px;
-  color: #6B7280;
+  color: #6b7280;
   line-height: 1.5;
   margin-bottom: 10px;
   display: -webkit-box;
@@ -1825,7 +1847,7 @@ onMounted(async () => {
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  color: #6B7280;
+  color: #6b7280;
   font-weight: 500;
 }
 
@@ -1839,7 +1861,7 @@ onMounted(async () => {
 
 .language {
   font-size: 12px;
-  color: #6B7280;
+  color: #6b7280;
   font-weight: 500;
 }
 
@@ -1859,16 +1881,16 @@ onMounted(async () => {
   gap: 16px;
   padding: 16px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   transition: all 0.3s ease;
   cursor: pointer;
-  border: 1px solid #E2E8F0;
+  border: 1px solid #e2e8f0;
 }
 
 .contributor-item:hover {
-  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
   transform: translateX(6px);
-  border-color: #F59E0B;
+  border-color: #f59e0b;
   box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
 }
 
@@ -1887,15 +1909,15 @@ onMounted(async () => {
 }
 
 .contributor-rank.gold {
-  background: linear-gradient(135deg, #F59E0B, #D97706);
+  background: linear-gradient(135deg, #f59e0b, #d97706);
 }
 
 .contributor-rank.silver {
-  background: linear-gradient(135deg, #6B7280, #4B5563);
+  background: linear-gradient(135deg, #6b7280, #4b5563);
 }
 
 .contributor-rank.bronze {
-  background: linear-gradient(135deg, #D97706, #B45309);
+  background: linear-gradient(135deg, #d97706, #b45309);
 }
 
 .contributor-avatar {
@@ -1904,8 +1926,8 @@ onMounted(async () => {
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
-  border: 3px solid #E5E7EB;
-  background: #F3F4F6;
+  border: 3px solid #e5e7eb;
+  background: #f3f4f6;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1931,7 +1953,7 @@ onMounted(async () => {
 .contributor-name {
   font-size: 15px;
   font-weight: 700;
-  color: #1F2937;
+  color: #1f2937;
   margin-bottom: 4px;
   white-space: nowrap;
   overflow: hidden;
@@ -1941,7 +1963,7 @@ onMounted(async () => {
 
 .contributor-project {
   font-size: 12px;
-  color: #6B7280;
+  color: #6b7280;
   margin-bottom: 6px;
   font-weight: 500;
 }
@@ -1951,7 +1973,7 @@ onMounted(async () => {
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  color: #10B981;
+  color: #10b981;
   font-weight: 600;
 }
 
@@ -1979,12 +2001,12 @@ onMounted(async () => {
   font-size: 13px;
   padding: 8px 12px;
   border-radius: 8px;
-  background: #F9FAFB;
+  background: #f9fafb;
   transition: all 0.3s ease;
 }
 
 .tech-legend-item:hover {
-  background: #F3F4F6;
+  background: #f3f4f6;
   transform: translateX(4px);
 }
 
@@ -2003,7 +2025,7 @@ onMounted(async () => {
 }
 
 .legend-value {
-  color: #6B7280;
+  color: #6b7280;
   font-weight: 600;
 }
 
@@ -2034,13 +2056,13 @@ onMounted(async () => {
 
 .version-users {
   font-size: 12px;
-  color: #6B7280;
+  color: #6b7280;
   font-weight: 500;
 }
 
 .version-percentage {
   font-size: 12px;
-  color: #6B7280;
+  color: #6b7280;
   text-align: right;
   font-weight: 600;
 }
@@ -2067,7 +2089,7 @@ onMounted(async () => {
 /* 社区完善度样式 */
 .community-progress {
   padding-top: 20px;
-  border-top: 1px solid #E5E7EB;
+  border-top: 1px solid #e5e7eb;
 }
 
 .progress-header {
@@ -2085,12 +2107,12 @@ onMounted(async () => {
 
 .progress-value {
   font-size: 12px;
-  color: #6B7280;
+  color: #6b7280;
 }
 
 .progress-label {
   font-size: 11px;
-  color: #10B981;
+  color: #10b981;
   margin-top: 4px;
 }
 
@@ -2128,22 +2150,22 @@ onMounted(async () => {
   gap: 16px;
   padding: 16px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   transition: all 0.3s ease;
-  border: 1px solid #E2E8F0;
+  border: 1px solid #e2e8f0;
 }
 
 .activity-item:hover {
-  background: linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 100%);
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
   transform: translateX(6px);
-  border-color: #10B981;
+  border-color: #10b981;
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
 }
 
 .activity-dot {
   width: 10px;
   height: 10px;
-  background: #10B981;
+  background: #10b981;
   border-radius: 50%;
   margin-top: 8px;
   flex-shrink: 0;
@@ -2158,20 +2180,20 @@ onMounted(async () => {
   margin: 0 0 8px 0;
   font-size: 15px;
   font-weight: 700;
-  color: #1F2937;
+  color: #1f2937;
   letter-spacing: -0.025em;
 }
 
 .activity-content p {
   margin: 0 0 10px 0;
   font-size: 13px;
-  color: #6B7280;
+  color: #6b7280;
   line-height: 1.5;
 }
 
 .activity-time {
   font-size: 12px;
-  color: #9CA3AF;
+  color: #9ca3af;
   font-weight: 500;
 }
 
@@ -2186,7 +2208,7 @@ onMounted(async () => {
   text-align: center;
   font-size: 16px;
   font-weight: 700;
-  color: #1F2937;
+  color: #1f2937;
   margin-bottom: 20px;
   letter-spacing: -0.025em;
 }
@@ -2204,15 +2226,15 @@ onMounted(async () => {
   font-size: 13px;
   padding: 12px 16px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   transition: all 0.3s ease;
-  border: 1px solid #E2E8F0;
+  border: 1px solid #e2e8f0;
 }
 
 .visitor-item:hover {
-  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
   transform: translateX(4px);
-  border-color: #F59E0B;
+  border-color: #f59e0b;
   box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
 }
 
@@ -2227,30 +2249,30 @@ onMounted(async () => {
 }
 
 .visitor-count {
-  color: #6B7280;
+  color: #6b7280;
   font-weight: 500;
 }
 
 .visitor-percentage {
-  color: #9CA3AF;
+  color: #9ca3af;
   font-weight: 600;
 }
 
 .visitor-map {
   height: 100px;
-  background: linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 100%);
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-top: 20px;
-  border: 1px solid #D1FAE5;
+  border: 1px solid #d1fae5;
   box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
 }
 
 .map-icon {
   font-size: 36px;
-  color: #10B981;
+  color: #10b981;
 }
 
 /* 待办事项样式 */
@@ -2266,22 +2288,22 @@ onMounted(async () => {
   gap: 16px;
   padding: 16px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   transition: all 0.3s ease;
-  border: 1px solid #E2E8F0;
+  border: 1px solid #e2e8f0;
 }
 
 .todo-item:hover {
-  background: linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 100%);
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
   transform: translateX(6px);
-  border-color: #10B981;
+  border-color: #10b981;
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
 }
 
 .todo-checkbox {
   width: 20px;
   height: 20px;
-  border: 2px solid #D1D5DB;
+  border: 2px solid #d1d5db;
   border-radius: 6px;
   display: flex;
   align-items: center;
@@ -2291,8 +2313,8 @@ onMounted(async () => {
 }
 
 .todo-checkbox.completed {
-  background: linear-gradient(135deg, #10B981, #059669);
-  border-color: #10B981;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-color: #10b981;
   box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
 }
 
@@ -2311,7 +2333,7 @@ onMounted(async () => {
 }
 
 .todo-text.completed {
-  color: #9CA3AF;
+  color: #9ca3af;
   text-decoration: line-through;
 }
 
@@ -2324,14 +2346,14 @@ onMounted(async () => {
 .users-number {
   font-size: 36px;
   font-weight: 800;
-  color: #1F2937;
+  color: #1f2937;
   margin-bottom: 12px;
   letter-spacing: -0.025em;
 }
 
 .users-label {
   font-size: 14px;
-  color: #6B7280;
+  color: #6b7280;
   margin-bottom: 24px;
   font-weight: 500;
 }
@@ -2339,26 +2361,26 @@ onMounted(async () => {
 .users-icon {
   width: 80px;
   height: 80px;
-  background: linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 100%);
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto;
-  border: 3px solid #D1FAE5;
+  border: 3px solid #d1fae5;
   box-shadow: 0 4px 16px rgba(16, 185, 129, 0.2);
 }
 
 .users-icon .el-icon {
   font-size: 36px;
-  color: #10B981;
+  color: #10b981;
 }
 
 /* 进度条样式优化 */
 .progress-bar {
   width: 100%;
   height: 8px;
-  background: #E5E7EB;
+  background: #e5e7eb;
   border-radius: 4px;
   overflow: hidden;
   position: relative;
@@ -2366,7 +2388,7 @@ onMounted(async () => {
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #10B981, #059669);
+  background: linear-gradient(90deg, #10b981, #059669);
   border-radius: 4px;
   transition: width 0.3s ease;
   position: relative;
@@ -2384,8 +2406,12 @@ onMounted(async () => {
 }
 
 @keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 @media (max-width: 768px) {
@@ -2393,40 +2419,40 @@ onMounted(async () => {
     flex-direction: column;
     gap: 16px;
   }
-  
+
   .chart-sidebar {
     width: 100%;
     flex-direction: row;
     gap: 16px;
     height: auto;
   }
-  
+
   .sidebar-card {
     flex: 1;
     padding: 16px;
     height: auto;
     min-height: 180px;
   }
-  
+
   .chart-container {
     height: 200px;
   }
-  
+
   .charts-row {
     grid-template-columns: 1fr;
     gap: 16px;
   }
-  
+
   .chart-card-small {
     height: 350px;
     padding: 16px;
   }
-  
+
   .bottom-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 16px;
   }
-  
+
   .grid-card {
     padding: 16px;
   }

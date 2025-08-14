@@ -43,7 +43,6 @@
           </div>
         </el-tooltip>
 
-
         <el-tooltip :content="proxy.$t('navbar.full')" effect="dark" placement="bottom">
           <screenfull id="screenfull" class="right-menu-item hover-effect" />
         </el-tooltip>

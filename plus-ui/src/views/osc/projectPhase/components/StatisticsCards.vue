@@ -13,8 +13,8 @@
             </div>
           </div>
           <div class="stat-progress">
-            <el-progress 
-              :percentage="statistics.completionRate" 
+            <el-progress
+              :percentage="statistics.completionRate"
               :format="(val) => val + '%完成'"
               :status="getProgressStatus(statistics.completionRate)"
             />
@@ -32,9 +32,7 @@
               <div class="stat-label">进行中</div>
             </div>
           </div>
-          <div class="stat-extra">
-            {{ statistics.completedPhases }} 已完成
-          </div>
+          <div class="stat-extra">{{ statistics.completedPhases }} 已完成</div>
         </el-card>
       </el-col>
       <el-col :span="6">
@@ -48,9 +46,7 @@
               <div class="stat-label">已延期</div>
             </div>
           </div>
-          <div class="stat-extra" v-if="statistics.averageDelay">
-            平均延期 {{ statistics.averageDelay }} 天
-          </div>
+          <div class="stat-extra" v-if="statistics.averageDelay">平均延期 {{ statistics.averageDelay }} 天</div>
         </el-card>
       </el-col>
       <el-col :span="6">
@@ -64,9 +60,7 @@
               <div class="stat-label">即将开始</div>
             </div>
           </div>
-          <div class="stat-extra">
-            未来7天内
-          </div>
+          <div class="stat-extra">未来7天内</div>
         </el-card>
       </el-col>
     </el-row>
@@ -74,18 +68,18 @@
 </template>
 
 <script setup lang="ts">
-import { Histogram, Loading, Warning, Calendar } from '@element-plus/icons-vue'
-import { PhaseStatistics } from '@/api/osc/projectPhase/types'
+import { Histogram, Loading, Warning, Calendar } from '@element-plus/icons-vue';
+import { PhaseStatistics } from '@/api/osc/projectPhase/types';
 
 const props = defineProps<{
-  statistics: PhaseStatistics
-}>()
+  statistics: PhaseStatistics;
+}>();
 
 const getProgressStatus = (percentage: number): '' | 'success' | 'exception' | 'warning' => {
-  if (percentage >= 90) return 'success'
-  if (percentage >= 60) return ''
-  return 'exception'
-}
+  if (percentage >= 90) return 'success';
+  if (percentage >= 60) return '';
+  return 'exception';
+};
 </script>
 
 <style scoped>
@@ -96,7 +90,7 @@ const getProgressStatus = (percentage: number): '' | 'success' | 'exception' | '
 .stat-card {
   background: var(--el-bg-color);
   border-radius: 8px;
-  
+
   :deep(.el-card__body) {
     padding: 20px;
   }

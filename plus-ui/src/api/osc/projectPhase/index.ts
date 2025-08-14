@@ -86,3 +86,29 @@ export function resumeProjectPhase(phaseId: string | number) {
     method: 'put'
   });
 }
+
+// 更新阶段进度
+export function updatePhaseProgress(phaseId: string | number, progress: number) {
+  return request({
+    url: `/osc/projectPhase/progress/${phaseId}`,
+    method: 'put',
+    params: { progress }
+  });
+}
+
+// 批量更新阶段状态
+export function batchUpdatePhaseStatus(phaseIds: (string | number)[], status: string) {
+  return request({
+    url: '/osc/projectPhase/batch/status',
+    method: 'put',
+    data: { phaseIds, status }
+  });
+}
+
+// 获取项目的甘特图数据
+export function getProjectGanttData(projectId: string | number) {
+  return request({
+    url: `/osc/projectPhase/gantt/${projectId}`,
+    method: 'get'
+  });
+}

@@ -51,6 +51,14 @@ public class ProjectController extends BaseController {
     }
 
     /**
+     * 查询项目列表（用于OSS文件上传，无需权限）
+     */
+    @GetMapping("/oss/list")
+    public TableDataInfo<ProjectVo> listForOss(ProjectBo bo, PageQuery pageQuery) {
+        return projectService.queryPageList(bo, pageQuery);
+    }
+
+    /**
      * 导出项目列表列表
      */
     @SaCheckPermission("osc:project:export")

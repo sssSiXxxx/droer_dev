@@ -93,7 +93,6 @@ export interface ProjectCreateVO {
    * API文档链接
    */
   apiDocUrl: string;
-
 }
 
 export interface ProjectCreateForm extends BaseEntity {
@@ -201,11 +200,9 @@ export interface ProjectCreateForm extends BaseEntity {
    * API文档链接
    */
   apiDocUrl?: string;
-
 }
 
 export interface ProjectCreateQuery extends PageQuery {
-
   /**
    * 项目名称
    */
@@ -231,11 +228,8 @@ export interface ProjectCreateQuery extends PageQuery {
    */
   programmingLanguage?: string;
 
-    /**
-     * 日期范围参数
-     */
-    params?: any;
+  /**
+   * 日期范围参数
+   */
+  params?: any;
 }
-
-
-

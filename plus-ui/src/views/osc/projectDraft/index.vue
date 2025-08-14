@@ -8,22 +8,14 @@
             <span class="title">项目草稿箱</span>
             <el-tag type="info" size="small">{{ total }} 个草稿</el-tag>
           </div>
-          <el-button type="primary" @click="() => proxy?.$router.push('/osc/projectCreate')" :icon="Plus">
-            创建项目
-          </el-button>
+          <el-button type="primary" @click="() => proxy?.$router.push('/osc/projectCreate')" :icon="Plus"> 创建项目 </el-button>
         </div>
       </template>
 
       <!-- 搜索区域 -->
       <el-form :model="queryParams" ref="queryRef" :inline="true" class="search-form">
         <el-form-item label="项目名称" prop="projectName">
-          <el-input
-            v-model="queryParams.projectName"
-            placeholder="请输入项目名称"
-            clearable
-            style="width: 250px"
-            @keyup.enter="handleQuery"
-          />
+          <el-input v-model="queryParams.projectName" placeholder="请输入项目名称" clearable style="width: 250px" @keyup.enter="handleQuery" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
@@ -32,13 +24,7 @@
       </el-form>
 
       <!-- 草稿列表 -->
-      <el-table 
-        v-loading="loading" 
-        :data="draftList" 
-        stripe
-        border
-        class="draft-table"
-      >
+      <el-table v-loading="loading" :data="draftList" stripe border class="draft-table">
         <el-table-column label="项目名称" align="center" prop="projectName" min-width="180">
           <template #default="scope">
             <div class="project-name">
@@ -47,7 +33,7 @@
             </div>
           </template>
         </el-table-column>
-        
+
         <el-table-column label="项目描述" align="center" prop="description" min-width="250">
           <template #default="scope">
             <div class="description-cell">
@@ -55,63 +41,36 @@
             </div>
           </template>
         </el-table-column>
-        
+
         <el-table-column label="完成度" align="center" min-width="120">
           <template #default="scope">
-            <el-progress 
-              :percentage="calculateCompletion(scope.row)" 
-              color="#67c23a"
-              :stroke-width="8"
-              :format="(percentage) => percentage + '%'"
-            />
+            <el-progress :percentage="calculateCompletion(scope.row)" color="#67c23a" :stroke-width="8" :format="(percentage) => percentage + '%'" />
           </template>
         </el-table-column>
-        
+
         <el-table-column label="最后编辑时间" align="center" prop="updateTime" min-width="160">
           <template #default="scope">
             <span>{{ scope.row.updateTime ? parseTime(scope.row.updateTime, '{y}-{m}-{d} {h}:{i}') : '暂无' }}</span>
           </template>
         </el-table-column>
-        
+
         <el-table-column label="创建时间" align="center" prop="createTime" min-width="160">
           <template #default="scope">
             <span>{{ scope.row.createTime ? parseTime(scope.row.createTime, '{y}-{m}-{d} {h}:{i}') : '暂无' }}</span>
           </template>
         </el-table-column>
-        
+
         <el-table-column label="操作" align="center" min-width="160">
           <template #default="scope">
-            <el-button 
-              type="primary" 
-              link 
-              icon="Edit" 
-              @click="handleEdit(scope.row)"
-              class="action-btn"
-            >
-              继续编辑
-            </el-button>
-            <el-button 
-              type="danger" 
-              link 
-              icon="Delete" 
-              @click="handleDelete(scope.row)"
-              class="action-btn"
-            >
-              删除
-            </el-button>
+            <el-button type="primary" link icon="Edit" @click="handleEdit(scope.row)" class="action-btn"> 继续编辑 </el-button>
+            <el-button type="danger" link icon="Delete" @click="handleDelete(scope.row)" class="action-btn"> 删除 </el-button>
           </template>
         </el-table-column>
       </el-table>
 
       <!-- 分页 -->
       <div class="pagination-container">
-        <pagination
-          v-show="total > 0"
-          :total="total"
-          v-model:page="queryParams.pageNum"
-          v-model:limit="queryParams.pageSize"
-          @pagination="getList"
-        />
+        <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" @pagination="getList" />
       </div>
     </el-card>
   </div>
@@ -132,21 +91,9 @@ const loading = ref(false);
 
 /** 计算项目完成度 */
 const calculateCompletion = (project: ProjectVO): number => {
-  const requiredFields = [
-    'projectName',
-    'description',
-    'repositoryUrl'
-  ];
+  const requiredFields = ['projectName', 'description', 'repositoryUrl'];
 
-  const optionalFields = [
-    'websiteUrl',
-    'logoUrl',
-    'techStack',
-    'programmingLanguage',
-    'coreContributors',
-    'contactInfo',
-    'versionInfo'
-  ];
+  const optionalFields = ['websiteUrl', 'logoUrl', 'techStack', 'programmingLanguage', 'coreContributors', 'contactInfo', 'versionInfo'];
 
   // 必填字段权重为2，选填字段权重为1
   const requiredWeight = 2;
@@ -159,14 +106,14 @@ const calculateCompletion = (project: ProjectVO): number => {
   let completedWeight = 0;
 
   // 检查必填字段
-  requiredFields.forEach(field => {
+  requiredFields.forEach((field) => {
     if ((project as any)[field]) {
       completedWeight += requiredWeight;
     }
   });
 
   // 检查选填字段
-  optionalFields.forEach(field => {
+  optionalFields.forEach((field) => {
     if ((project as any)[field]) {
       completedWeight += optionalWeight;
     }
@@ -211,7 +158,7 @@ const getList = async () => {
     console.log('查询结果:', res);
     draftList.value = res.rows || [];
     total.value = res.total || 0;
-    
+
     // 调试时间字段
     if (draftList.value.length > 0) {
       console.log('第一条数据的时间字段:', {
@@ -223,7 +170,7 @@ const getList = async () => {
     }
   } catch (error) {
     console.error('查询草稿列表失败:', error);
-    const msg = (error && typeof error === 'object' && 'message' in (error as any)) ? (error as any).message : '未知错误';
+    const msg = error && typeof error === 'object' && 'message' in (error as any) ? (error as any).message : '未知错误';
     proxy?.$modal?.msgError && proxy.$modal.msgError('查询失败：' + msg);
   } finally {
     loading.value = false;

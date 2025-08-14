@@ -102,4 +102,54 @@ public class ProjectPhaseController extends BaseController {
                           @PathVariable Long[] phaseIds) {
         return toAjax(projectPhaseService.deleteWithValidByIds(List.of(phaseIds), true));
     }
+
+    /**
+     * 获取项目阶段统计数据
+     */
+    @SaCheckPermission("osc:projectPhase:list")
+    @GetMapping("/statistics/{projectId}")
+    public R<Object> getStatistics(@PathVariable Long projectId) {
+        return R.ok(projectPhaseService.getPhaseStatistics(projectId));
+    }
+
+    /**
+     * 完成项目阶段
+     */
+    @SaCheckPermission("osc:projectPhase:edit")
+    @Log(title = "完成阶段", businessType = BusinessType.UPDATE)
+    @PutMapping("/complete/{phaseId}")
+    public R<Void> complete(@PathVariable Long phaseId) {
+        return toAjax(projectPhaseService.completePhase(phaseId));
+    }
+
+    /**
+     * 暂停项目阶段
+     */
+    @SaCheckPermission("osc:projectPhase:edit")
+    @Log(title = "暂停阶段", businessType = BusinessType.UPDATE)
+    @PutMapping("/pause/{phaseId}")
+    public R<Void> pause(@PathVariable Long phaseId) {
+        return toAjax(projectPhaseService.pausePhase(phaseId));
+    }
+
+    /**
+     * 恢复项目阶段
+     */
+    @SaCheckPermission("osc:projectPhase:edit")
+    @Log(title = "恢复阶段", businessType = BusinessType.UPDATE)
+    @PutMapping("/resume/{phaseId}")
+    public R<Void> resume(@PathVariable Long phaseId) {
+        return toAjax(projectPhaseService.resumePhase(phaseId));
+    }
+
+    /**
+     * 更新阶段进度
+     */
+    @SaCheckPermission("osc:projectPhase:edit")
+    @Log(title = "更新进度", businessType = BusinessType.UPDATE)
+    @PutMapping("/progress/{phaseId}")
+    public R<Void> updateProgress(@PathVariable Long phaseId, 
+                                  @RequestParam("progress") Integer progress) {
+        return toAjax(projectPhaseService.updateProgress(phaseId, progress));
+    }
 }

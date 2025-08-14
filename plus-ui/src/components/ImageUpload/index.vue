@@ -41,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-import { listByIds, delOss } from '@/api/system/oss';
+import { listByIds, delOss } from '@/api/system/oss/index';
 import { OssVO } from '@/api/system/oss/types';
 import { propTypes } from '@/utils/propTypes';
 import { globalHeaders } from '@/utils/request';
@@ -81,7 +81,8 @@ const dialogVisible = ref(false);
 
 const baseUrl = import.meta.env.VITE_APP_BASE_API;
 const uploadImgUrl = ref(baseUrl + '/resource/oss/upload'); // 上传的图片服务器地址
-const headers = ref(globalHeaders());
+// 修复clientid不匹配问题：使用computed确保headers始终是最新的
+const headers = computed(() => globalHeaders());
 
 const fileList = ref<any[]>([]);
 const showTip = computed(() => props.isShowTip && (props.fileType || props.fileSize));

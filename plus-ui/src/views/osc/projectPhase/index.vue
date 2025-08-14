@@ -14,10 +14,7 @@
             </div>
           </div>
           <div class="stat-progress">
-            <el-progress 
-              :percentage="statistics.completionRate || 0" 
-              :status="getProgressStatus(statistics.completionRate)"
-            />
+            <el-progress :percentage="statistics.completionRate || 0" :status="getProgressStatus(statistics.completionRate)" />
           </div>
         </el-card>
       </el-col>
@@ -32,9 +29,7 @@
               <div class="stat-label">进行中</div>
             </div>
           </div>
-          <div class="stat-extra">
-            {{ statistics.completedPhases || 0 }} 已完成
-          </div>
+          <div class="stat-extra">{{ statistics.completedPhases || 0 }} 已完成</div>
         </el-card>
       </el-col>
       <el-col :span="6">
@@ -48,9 +43,7 @@
               <div class="stat-label">已延期</div>
             </div>
           </div>
-          <div class="stat-extra">
-            平均延期 {{ statistics.averageDelay || 0 }} 天
-          </div>
+          <div class="stat-extra">平均延期 {{ statistics.averageDelay || 0 }} 天</div>
         </el-card>
       </el-col>
       <el-col :span="6">
@@ -64,9 +57,7 @@
               <div class="stat-label">即将开始</div>
             </div>
           </div>
-          <div class="stat-extra">
-            未来7天内
-          </div>
+          <div class="stat-extra">未来7天内</div>
         </el-card>
       </el-col>
     </el-row>
@@ -75,38 +66,21 @@
     <el-card class="mb-4">
       <el-form :model="queryParams" ref="queryRef" :inline="true">
         <el-form-item label="项目" prop="projectId">
-          <el-select
-            v-model="queryParams.projectId"
-            placeholder="请选择项目"
-            clearable
-            style="width: 240px"
-            @change="handleProjectChange"
-          >
-            <el-option
-              v-for="item in projectOptions"
-              :key="item.projectId"
-              :label="item.projectName"
-              :value="item.projectId"
-            />
+          <el-select v-model="queryParams.projectId" placeholder="请选择项目" clearable style="width: 240px" @change="handleProjectChange">
+            <el-option v-for="item in projectOptions" :key="item.projectId" :label="item.projectName" :value="item.projectId" />
           </el-select>
         </el-form-item>
         <el-form-item label="阶段名称" prop="phaseName">
-          <el-input
-            v-model="queryParams.phaseName"
-            placeholder="请输入阶段名称"
-            clearable
-            style="width: 200px"
-            @keyup.enter="handleQuery"
-          />
+          <el-input v-model="queryParams.phaseName" placeholder="请输入阶段名称" clearable style="width: 200px" @keyup.enter="handleQuery" />
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-select v-model="queryParams.status" placeholder="请选择状态" clearable>
-            <el-option
-              v-for="dict in statusOptions"
-              :key="dict.value"
-              :label="dict.label"
-              :value="dict.value"
-            />
+            <el-option v-for="dict in statusOptions" :key="dict.value" :label="dict.label" :value="dict.value" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="优先级" prop="priority">
+          <el-select v-model="queryParams.priority" placeholder="请选择优先级" clearable>
+            <el-option v-for="item in priorityOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -114,16 +88,20 @@
           <el-button icon="Refresh" @click="resetQuery">重置</el-button>
         </el-form-item>
       </el-form>
+      
       <template #header>
         <div class="card-header">
           <span class="card-title">阶段列表</span>
           <div class="card-toolbar">
-            <el-button type="success" plain @click="handleAdd">
+            <el-button type="success" plain @click="handleAdd" v-if="queryParams.projectId">
               <el-icon><Plus /></el-icon>新增阶段
             </el-button>
             <el-button type="primary" plain @click="switchView">
               <el-icon><Operation /></el-icon>
               {{ isGanttView ? '切换列表视图' : '切换甘特图视图' }}
+            </el-button>
+            <el-button type="info" plain @click="handleExport" v-if="phaseList.length > 0">
+              <el-icon><Download /></el-icon>导出数据
             </el-button>
           </div>
         </div>
@@ -131,30 +109,63 @@
 
       <!-- 甘特图视图 -->
       <div v-if="isGanttView" class="gantt-view">
-        <gantt-chart :phases="phaseList" />
+        <gantt-chart :phases="phaseList" @update-progress="handleUpdateProgress" />
       </div>
 
       <!-- 列表视图 -->
       <div v-else class="list-view">
-        <el-table v-loading="loading" :data="phaseList">
-          <el-table-column label="阶段名称" align="center" prop="phaseName" min-width="120" />
-          <el-table-column label="项目名称" align="center" prop="projectName" min-width="120" />
+        <!-- 批量操作栏 -->
+        <div v-show="selectedRows.length > 0" class="batch-toolbar">
+          <span class="batch-info">已选择 {{ selectedRows.length }} 项</span>
+          <el-button type="success" size="small" @click="handleBatchComplete">批量完成</el-button>
+          <el-button type="warning" size="small" @click="handleBatchPause">批量暂停</el-button>
+          <el-button type="danger" size="small" @click="handleBatchDelete">批量删除</el-button>
+        </div>
+
+        <el-table 
+          v-loading="loading" 
+          :data="phaseList" 
+          @selection-change="handleSelectionChange"
+          row-key="phaseId"
+        >
+          <el-table-column type="selection" width="55" align="center" />
+          <el-table-column label="阶段名称" align="center" prop="phaseName" min-width="120" show-overflow-tooltip />
+          <el-table-column label="项目名称" align="center" prop="projectName" min-width="120" show-overflow-tooltip />
+          <el-table-column label="优先级" align="center" width="80">
+            <template #default="scope">
+              <el-tag :type="getPriorityType(scope.row.priority)" size="small">
+                {{ getPriorityLabel(scope.row.priority) }}
+              </el-tag>
+            </template>
+          </el-table-column>
           <el-table-column label="开始时间" align="center" prop="startTime" width="180">
             <template #default="scope">
-              <span>{{ parseTime(scope.row.startTime) }}</span>
+              <span>{{ parseTime(scope.row.startTime, '{y}-{m}-{d}') }}</span>
             </template>
           </el-table-column>
           <el-table-column label="结束时间" align="center" prop="endTime" width="180">
             <template #default="scope">
-              <span>{{ parseTime(scope.row.endTime) }}</span>
+              <span>{{ parseTime(scope.row.endTime, '{y}-{m}-{d}') }}</span>
             </template>
           </el-table-column>
           <el-table-column label="进度" align="center" width="200">
             <template #default="scope">
-              <el-progress 
-                :percentage="calculateProgress(scope.row)"
-                :status="getPhaseStatus(scope.row)"
-              />
+              <div class="progress-container">
+                <el-progress 
+                  :percentage="scope.row.progress || calculateProgress(scope.row)" 
+                  :status="getPhaseStatus(scope.row)"
+                  :stroke-width="8"
+                />
+                <el-button 
+                  v-if="scope.row.status === '1'" 
+                  type="primary" 
+                  link 
+                  size="small" 
+                  @click="handleProgressEdit(scope.row)"
+                >
+                  更新
+                </el-button>
+              </div>
             </template>
           </el-table-column>
           <el-table-column label="状态" align="center" width="100">
@@ -164,107 +175,116 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="操作" align="center" width="300">
+          <el-table-column label="负责人" align="center" width="100">
             <template #default="scope">
-              <el-button type="primary" link icon="Edit" @click="handleUpdate(scope.row)">
-                修改
-              </el-button>
-              <el-button 
-                type="success" 
-                link 
+              <span>{{ scope.row.ownerName || '-' }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" align="center" width="300" fixed="right">
+            <template #default="scope">
+              <el-button type="primary" link icon="Edit" @click="handleUpdate(scope.row)"> 修改 </el-button>
+              <el-button
+                type="success"
+                link
                 icon="Check"
                 v-if="scope.row.status === '0' || scope.row.status === '1'"
                 @click="handleComplete(scope.row)"
               >
                 完成
               </el-button>
-              <el-button 
-                type="warning" 
-                link 
-                icon="VideoPause"
-                v-if="scope.row.status === '1'"
-                @click="handlePause(scope.row)"
-              >
-                暂停
-              </el-button>
-              <el-button 
-                type="info" 
-                link 
-                icon="VideoPlay"
-                v-if="scope.row.status === '3'"
-                @click="handleResume(scope.row)"
-              >
-                恢复
-              </el-button>
-              <el-button type="danger" link icon="Delete" @click="handleDelete(scope.row)">
-                删除
-              </el-button>
+              <el-button type="warning" link icon="VideoPause" v-if="scope.row.status === '1'" @click="handlePause(scope.row)"> 暂停 </el-button>
+              <el-button type="info" link icon="VideoPlay" v-if="scope.row.status === '3'" @click="handleResume(scope.row)"> 恢复 </el-button>
+              <el-button type="danger" link icon="Delete" @click="handleDelete(scope.row)"> 删除 </el-button>
             </template>
           </el-table-column>
         </el-table>
 
-        <pagination
-          v-show="total > 0"
-          :total="total"
-          v-model:page="queryParams.pageNum"
-          v-model:limit="queryParams.pageSize"
-          @pagination="getList"
-        />
+        <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" @pagination="getList" />
       </div>
     </el-card>
 
     <!-- 添加/修改对话框 -->
-    <el-dialog :title="title" v-model="open" width="700px" append-to-body>
-      <el-form ref="phaseFormRef" :model="form" :rules="rules" label-width="100px">
-        <el-form-item label="项目" prop="projectId">
-          <el-select
-            v-model="form.projectId"
-            placeholder="请选择项目"
-            style="width: 100%"
-          >
-            <el-option
-              v-for="item in projectOptions"
-              :key="item.projectId"
-              :label="item.projectName"
-              :value="item.projectId"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="阶段名称" prop="phaseName">
-          <el-input v-model="form.phaseName" placeholder="请输入阶段名称" />
-        </el-form-item>
-        <el-form-item label="阶段编码" prop="phaseCode">
-          <el-input v-model="form.phaseCode" placeholder="请输入阶段编码" />
-        </el-form-item>
-        <el-form-item label="开始时间" prop="startTime">
-          <el-date-picker
-            v-model="form.startTime"
-            type="datetime"
-            placeholder="请选择开始时间"
-            style="width: 100%"
-          />
-        </el-form-item>
-        <el-form-item label="结束时间" prop="endTime">
-          <el-date-picker
-            v-model="form.endTime"
-            type="datetime"
-            placeholder="请选择结束时间"
-            style="width: 100%"
-          />
-        </el-form-item>
+    <el-dialog :title="title" v-model="open" width="800px" append-to-body>
+      <el-form ref="phaseFormRef" :model="form" :rules="rules" label-width="120px">
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="项目" prop="projectId">
+              <el-select v-model="form.projectId" placeholder="请选择项目" style="width: 100%" :disabled="!!form.phaseId">
+                <el-option v-for="item in projectOptions" :key="item.projectId" :label="item.projectName" :value="item.projectId" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="阶段编码" prop="phaseCode">
+              <el-input v-model="form.phaseCode" placeholder="请输入阶段编码" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="阶段名称" prop="phaseName">
+              <el-input v-model="form.phaseName" placeholder="请输入阶段名称" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="优先级" prop="priority">
+              <el-select v-model="form.priority" placeholder="请选择优先级" style="width: 100%">
+                <el-option v-for="item in priorityOptions" :key="item.value" :label="item.label" :value="item.value" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="开始时间" prop="startTime">
+              <el-date-picker v-model="form.startTime" type="datetime" placeholder="请选择开始时间" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="结束时间" prop="endTime">
+              <el-date-picker v-model="form.endTime" type="datetime" placeholder="请选择结束时间" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+        </el-row>
         <el-form-item label="阶段描述" prop="description">
-          <el-input
-            v-model="form.description"
-            type="textarea"
-            placeholder="请输入阶段描述"
-            :rows="3"
-          />
+          <el-input v-model="form.description" type="textarea" placeholder="请输入阶段描述" :rows="4" />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
           <el-button type="primary" @click="submitForm">确 定</el-button>
           <el-button @click="cancel">取 消</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <!-- 进度更新对话框 -->
+    <el-dialog title="更新进度" v-model="progressDialogOpen" width="500px" append-to-body>
+      <el-form :model="progressForm" label-width="100px">
+        <el-form-item label="阶段名称">
+          <el-input v-model="progressForm.phaseName" readonly />
+        </el-form-item>
+        <el-form-item label="当前进度">
+          <div class="progress-input">
+            <el-slider 
+              v-model="progressForm.progress" 
+              :min="0" 
+              :max="100" 
+              :step="5"
+              show-input
+              input-size="small"
+            />
+            <span class="progress-unit">%</span>
+          </div>
+        </el-form-item>
+        <el-form-item label="进度说明">
+          <el-input v-model="progressForm.remark" type="textarea" placeholder="可选：说明当前进度情况" :rows="3" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button type="primary" @click="submitProgress">确 定</el-button>
+          <el-button @click="progressDialogOpen = false">取 消</el-button>
         </div>
       </template>
     </el-dialog>
@@ -286,22 +306,39 @@ import {
   Search,
   Refresh,
   VideoPause,
-  VideoPlay
+  VideoPlay,
+  Download
 } from '@element-plus/icons-vue';
-import { listProjectPhase, getProjectPhase, addProjectPhase, updateProjectPhase, delProjectPhase, getPhaseStatistics, completeProjectPhase, pauseProjectPhase, resumeProjectPhase } from '@/api/osc/projectPhase';
+import {
+  listProjectPhase,
+  getProjectPhase,
+  addProjectPhase,
+  updateProjectPhase,
+  delProjectPhase,
+  getPhaseStatistics,
+  completeProjectPhase,
+  pauseProjectPhase,
+  resumeProjectPhase,
+  updatePhaseProgress,
+  exportProjectPhase,
+  batchUpdatePhaseStatus
+} from '@/api/osc/projectPhase';
 import { listProject } from '@/api/osc/project';
 import type { FormInstance } from 'element-plus';
 import GanttChart from './components/GanttChart.vue';
 import { parseTime } from '@/utils/ruoyi';
+import { download } from '@/utils/request';
 
 const { proxy } = getCurrentInstance() as any;
 
 // 遍历器
 const loading = ref(false);
 const open = ref(false);
+const progressDialogOpen = ref(false);
 const total = ref(0);
 const title = ref('');
 const isGanttView = ref(false);
+const selectedRows = ref([]);
 
 // 项目选项
 const projectOptions = ref([]);
@@ -311,7 +348,15 @@ const statusOptions = [
   { label: '未开始', value: '0' },
   { label: '进行中', value: '1' },
   { label: '已完成', value: '2' },
-  { label: '已延期', value: '3' }
+  { label: '已暂停', value: '3' },
+  { label: '已延期', value: '4' }
+];
+
+// 优先级选项
+const priorityOptions = [
+  { label: '低', value: 1 },
+  { label: '中', value: 2 },
+  { label: '高', value: 3 }
 ];
 
 // 统计数据
@@ -331,7 +376,8 @@ const queryParams = ref({
   pageSize: 10,
   projectId: undefined,
   phaseName: undefined,
-  status: undefined
+  status: undefined,
+  priority: undefined
 });
 
 // 表单参数
@@ -343,26 +389,26 @@ const form = ref({
   description: undefined,
   startTime: undefined,
   endTime: undefined,
-  status: '0'
+  status: '0',
+  priority: 2
+});
+
+// 进度表单参数
+const progressForm = ref({
+  phaseId: undefined,
+  phaseName: '',
+  progress: 0,
+  remark: ''
 });
 
 // 表单校验规则
 const rules = ref({
-  projectId: [
-    { required: true, message: '请选择项目', trigger: 'change' }
-  ],
-  phaseName: [
-    { required: true, message: '请输入阶段名称', trigger: 'blur' }
-  ],
-  phaseCode: [
-    { required: true, message: '请输入阶段编码', trigger: 'blur' }
-  ],
-  startTime: [
-    { required: true, message: '请选择开始时间', trigger: 'change' }
-  ],
-  endTime: [
-    { required: true, message: '请选择结束时间', trigger: 'change' }
-  ]
+  projectId: [{ required: true, message: '请选择项目', trigger: 'change' }],
+  phaseName: [{ required: true, message: '请输入阶段名称', trigger: 'blur' }],
+  phaseCode: [{ required: true, message: '请输入阶段编码', trigger: 'blur' }],
+  startTime: [{ required: true, message: '请选择开始时间', trigger: 'change' }],
+  endTime: [{ required: true, message: '请选择结束时间', trigger: 'change' }],
+  priority: [{ required: true, message: '请选择优先级', trigger: 'change' }]
 });
 
 const phaseList = ref([]);
@@ -411,7 +457,8 @@ const reset = () => {
     description: undefined,
     startTime: undefined,
     endTime: undefined,
-    status: '0'
+    status: '0',
+    priority: 2
   };
   phaseFormRef.value?.resetFields();
 };
@@ -439,9 +486,15 @@ const switchView = () => {
   isGanttView.value = !isGanttView.value;
 };
 
+/** 表格多选处理 */
+const handleSelectionChange = (selection: any[]) => {
+  selectedRows.value = selection;
+};
+
 /** 新增按钮操作 */
 const handleAdd = () => {
   reset();
+  form.value.projectId = queryParams.value.projectId;
   open.value = true;
   title.value = '添加阶段';
 };
@@ -533,18 +586,122 @@ const handleResume = async (row: any) => {
   }
 };
 
+/** 进度编辑按钮操作 */
+const handleProgressEdit = (row: any) => {
+  progressForm.value = {
+    phaseId: row.phaseId,
+    phaseName: row.phaseName,
+    progress: row.progress || 0,
+    remark: ''
+  };
+  progressDialogOpen.value = true;
+};
+
+/** 提交进度更新 */
+const submitProgress = async () => {
+  try {
+    await updatePhaseProgress(progressForm.value.phaseId, progressForm.value.progress);
+    progressDialogOpen.value = false;
+    await getList();
+    await loadStatistics();
+    proxy?.$modal.msgSuccess('进度更新成功');
+  } catch (error) {
+    console.error('进度更新失败:', error);
+    proxy?.$modal.msgError('操作失败');
+  }
+};
+
+/** 从甘特图更新进度 */
+const handleUpdateProgress = async (phaseId: string | number, progress: number) => {
+  try {
+    await updatePhaseProgress(phaseId, progress);
+    await getList();
+    await loadStatistics();
+    proxy?.$modal.msgSuccess('进度更新成功');
+  } catch (error) {
+    console.error('进度更新失败:', error);
+    proxy?.$modal.msgError('操作失败');
+  }
+};
+
+/** 导出数据 */
+const handleExport = async () => {
+  try {
+    await proxy?.$modal.confirm('是否确认导出所有阶段数据？');
+    await exportProjectPhase(queryParams.value);
+    proxy?.$modal.msgSuccess('导出成功');
+  } catch (error) {
+    console.error('导出失败:', error);
+    proxy?.$modal.msgError('导出失败');
+  }
+};
+
+/** 批量完成 */
+const handleBatchComplete = async () => {
+  const phaseIds = selectedRows.value.map((row: any) => row.phaseId);
+  try {
+    await proxy?.$modal.confirm('是否确认批量完成选中的阶段？');
+    await batchUpdatePhaseStatus(phaseIds, '2');
+    await getList();
+    await loadStatistics();
+    proxy?.$modal.msgSuccess('批量完成成功');
+  } catch (error) {
+    console.error('批量完成失败:', error);
+    proxy?.$modal.msgError('操作失败');
+  }
+};
+
+/** 批量暂停 */
+const handleBatchPause = async () => {
+  const phaseIds = selectedRows.value.map((row: any) => row.phaseId);
+  try {
+    await proxy?.$modal.confirm('是否确认批量暂停选中的阶段？');
+    await batchUpdatePhaseStatus(phaseIds, '3');
+    await getList();
+    await loadStatistics();
+    proxy?.$modal.msgSuccess('批量暂停成功');
+  } catch (error) {
+    console.error('批量暂停失败:', error);
+    proxy?.$modal.msgError('操作失败');
+  }
+};
+
+/** 批量删除 */
+const handleBatchDelete = async () => {
+  const phaseIds = selectedRows.value.map((row: any) => row.phaseId);
+  try {
+    await proxy?.$modal.confirm('是否确认批量删除选中的阶段？');
+    for (const phaseId of phaseIds) {
+      await delProjectPhase(phaseId);
+    }
+    await getList();
+    await loadStatistics();
+    proxy?.$modal.msgSuccess('批量删除成功');
+  } catch (error) {
+    console.error('批量删除失败:', error);
+    proxy?.$modal.msgError('操作失败');
+  }
+};
+
 /** 计算进度 */
 const calculateProgress = (phase: any) => {
+  // 如果有具体进度值，优先使用
+  if (phase.progress !== undefined && phase.progress !== null) {
+    return phase.progress;
+  }
+
+  // 根据状态计算进度
   if (phase.status === '2') return 100;
   if (phase.status === '0') return 0;
-  
+
+  // 根据时间计算进度
   const start = new Date(phase.startTime).getTime();
   const end = new Date(phase.endTime).getTime();
   const now = Date.now();
-  
+
   if (now <= start) return 0;
   if (now >= end) return 100;
-  
+
   const total = end - start;
   const current = now - start;
   return Math.round((current / total) * 100);
@@ -553,9 +710,9 @@ const calculateProgress = (phase: any) => {
 /** 获取阶段状态 */
 const getPhaseStatus = (phase: any) => {
   if (phase.status === '2') return 'success';
-  if (phase.status === '3') return 'exception';
-  
-  const progress = calculateProgress(phase);
+  if (phase.status === '3' || phase.status === '4') return 'exception';
+
+  const progress = phase.progress || calculateProgress(phase);
   if (progress >= 100) return 'warning';
   return '';
 };
@@ -566,7 +723,8 @@ const getStatusType = (status: string) => {
     '0': 'info',
     '1': 'primary',
     '2': 'success',
-    '3': 'danger'
+    '3': 'warning',
+    '4': 'danger'
   };
   return typeMap[status] || '';
 };
@@ -581,6 +739,26 @@ const getStatusLabel = (status: string) => {
     '4': '已延期'
   };
   return labelMap[status] || status;
+};
+
+/** 获取优先级类型 */
+const getPriorityType = (priority: number) => {
+  const typeMap: Record<number, string> = {
+    1: 'info',
+    2: 'primary',
+    3: 'danger'
+  };
+  return typeMap[priority] || 'primary';
+};
+
+/** 获取优先级标签 */
+const getPriorityLabel = (priority: number) => {
+  const labelMap: Record<number, string> = {
+    1: '低',
+    2: '中',
+    3: '高'
+  };
+  return labelMap[priority] || '中';
 };
 
 /** 获取进度状态 */
@@ -609,7 +787,13 @@ onMounted(() => {
 
 .stat-card {
   height: 100%;
-  
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  }
+
   :deep(.el-card__body) {
     padding: 20px;
   }
@@ -629,26 +813,44 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   margin-right: 16px;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+  }
+
+  &:hover::before {
+    left: 100%;
+  }
 
   .el-icon {
     font-size: 24px;
     color: #fff;
+    z-index: 1;
   }
 
   &.total {
-    background-color: var(--el-color-primary);
+    background: linear-gradient(135deg, var(--el-color-primary), var(--el-color-primary-light-3));
   }
 
   &.in-progress {
-    background-color: var(--el-color-success);
+    background: linear-gradient(135deg, var(--el-color-success), var(--el-color-success-light-3));
   }
 
   &.delayed {
-    background-color: var(--el-color-danger);
+    background: linear-gradient(135deg, var(--el-color-danger), var(--el-color-danger-light-3));
   }
 
   &.upcoming {
-    background-color: var(--el-color-warning);
+    background: linear-gradient(135deg, var(--el-color-warning), var(--el-color-warning-light-3));
   }
 }
 
@@ -675,6 +877,10 @@ onMounted(() => {
   margin-top: 8px;
 }
 
+.stat-progress {
+  margin-top: 16px;
+}
+
 .card-header {
   display: flex;
   justify-content: space-between;
@@ -691,6 +897,40 @@ onMounted(() => {
   gap: 12px;
 }
 
+.batch-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--el-color-primary-light-9);
+  border: 1px solid var(--el-color-primary-light-7);
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+
+.batch-info {
+  color: var(--el-color-primary);
+  font-weight: 500;
+  margin-right: auto;
+}
+
+.progress-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.progress-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.progress-unit {
+  font-weight: 500;
+  color: var(--el-text-color-primary);
+}
+
 .mb-4 {
   margin-bottom: 16px;
 }
@@ -701,5 +941,56 @@ onMounted(() => {
 
 .gantt-view {
   margin-top: 20px;
+}
+
+/* 动画效果 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stat-card {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.stat-card:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.stat-card:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.stat-card:nth-child(4) {
+  animation-delay: 0.3s;
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+  .card-toolbar {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 768px) {
+  .project-phase {
+    padding: 10px;
+  }
+  
+  .stat-card {
+    margin-bottom: 16px;
+  }
+  
+  .batch-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 </style>

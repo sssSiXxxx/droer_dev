@@ -7,6 +7,7 @@ import org.dromara.common.mybatis.core.page.PageQuery;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 进度追踪Service接口
@@ -65,4 +66,45 @@ public interface IProjectPhaseService {
      * @return 是否删除成功
      */
     Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid);
+
+    /**
+     * 获取项目阶段统计数据
+     *
+     * @param projectId 项目ID
+     * @return 统计数据
+     */
+    Map<String, Object> getPhaseStatistics(Long projectId);
+
+    /**
+     * 完成阶段
+     *
+     * @param phaseId 阶段ID
+     * @return 是否成功
+     */
+    Boolean completePhase(Long phaseId);
+
+    /**
+     * 暂停阶段
+     *
+     * @param phaseId 阶段ID
+     * @return 是否成功
+     */
+    Boolean pausePhase(Long phaseId);
+
+    /**
+     * 恢复阶段
+     *
+     * @param phaseId 阶段ID
+     * @return 是否成功
+     */
+    Boolean resumePhase(Long phaseId);
+
+    /**
+     * 更新阶段进度
+     *
+     * @param phaseId  阶段ID
+     * @param progress 进度百分比
+     * @return 是否成功
+     */
+    Boolean updateProgress(Long phaseId, Integer progress);
 }

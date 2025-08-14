@@ -14,22 +14,11 @@
       <!-- 搜索区域 -->
       <el-form :model="queryParams" ref="queryRef" :inline="true">
         <el-form-item label="项目名称" prop="projectName">
-          <el-input
-            v-model="queryParams.projectName"
-            placeholder="请输入项目名称"
-            clearable
-            style="width: 200px"
-            @keyup.enter="handleQuery"
-          />
+          <el-input v-model="queryParams.projectName" placeholder="请输入项目名称" clearable style="width: 200px" @keyup.enter="handleQuery" />
         </el-form-item>
         <el-form-item label="项目状态" prop="status">
           <el-select v-model="queryParams.status" placeholder="请选择项目状态" clearable style="width: 200px">
-            <el-option
-              v-for="dict in projectStatusOptions"
-              :key="dict.value"
-              :label="dict.label"
-              :value="dict.value"
-            />
+            <el-option v-for="dict in projectStatusOptions" :key="dict.value" :label="dict.label" :value="dict.value" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -51,25 +40,14 @@
         </el-table-column>
         <el-table-column label="技术栈" align="center" prop="techStack" :show-overflow-tooltip="true" min-width="150">
           <template #default="scope">
-            <el-tag
-              v-for="tech in getTechStackLabels(scope.row.techStack)"
-              :key="tech"
-              class="mx-1"
-              size="small"
-            >
+            <el-tag v-for="tech in getTechStackLabels(scope.row.techStack)" :key="tech" class="mx-1" size="small">
               {{ tech }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column label="编程语言" align="center" prop="programmingLanguage" :show-overflow-tooltip="true" min-width="150">
           <template #default="scope">
-            <el-tag
-              v-for="lang in getProgrammingLanguageLabels(scope.row.programmingLanguage)"
-              :key="lang"
-              class="mx-1"
-              type="success"
-              size="small"
-            >
+            <el-tag v-for="lang in getProgrammingLanguageLabels(scope.row.programmingLanguage)" :key="lang" class="mx-1" type="success" size="small">
               {{ lang }}
             </el-tag>
           </template>
@@ -82,31 +60,20 @@
         <el-table-column label="操作" align="center" width="200">
           <template #default="scope">
             <el-button type="primary" link icon="View" @click="handleView(scope.row)">查看</el-button>
-            <el-button 
-              v-if="scope.row.status === '5'"
-              type="warning" 
-              link 
-              icon="Edit" 
-              @click="handleEdit(scope.row)"
-            >修改</el-button>
+            <el-button v-if="scope.row.status === '5'" type="warning" link icon="Edit" @click="handleEdit(scope.row)">修改</el-button>
+            <el-button v-if="scope.row.status === '5'" type="info" link icon="Refresh" @click="handleResubmit(scope.row)">重新提交</el-button>
           </template>
         </el-table-column>
       </el-table>
 
       <!-- 分页 -->
-      <pagination
-        v-show="total > 0"
-        :total="total"
-        v-model:page="queryParams.pageNum"
-        v-model:limit="queryParams.pageSize"
-        @pagination="getList"
-      />
+      <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" @pagination="getList" />
     </el-card>
   </div>
 </template>
 
 <script setup name="MyProject" lang="ts">
-import { listProject, getProject } from '@/api/osc/project';
+import { listProject, getProject, updateProject } from '@/api/osc/project';
 import { ProjectVO, ProjectQuery } from '@/api/osc/project/types';
 import { getCurrentInstance, ref, watch, onMounted, toRefs, computed } from 'vue';
 import { useRouter } from 'vue-router';
@@ -152,15 +119,13 @@ const techStackDict = computed(() => {
       { label: 'JWT', value: '44' },
       { label: 'JUnit 5', value: '45' }
     ];
-    
+
     // 检查系统字典中是否已包含这些值
-    const missingValues = supplementDict.filter(supp => 
-      !systemDict.find(sys => sys.value === supp.value)
-    );
-    
+    const missingValues = supplementDict.filter((supp) => !systemDict.find((sys) => sys.value === supp.value));
+
     return [...systemDict, ...missingValues];
   }
-  
+
   // 如果为空，返回完整的技术栈列表（使用与系统字典一致的结构）
   return [
     { label: 'Spring Boot', value: '1' },
@@ -255,24 +220,23 @@ const queryParams = ref<ProjectQuery>({
   status: undefined,
   createBy: userStore.userId,
   params: {
-    statusList: ['2', '3', '5'] // 排除草稿和待审核状态
+    statusList: ['2', '3', '5'] // 包含进行中、已完成、已驳回状态
   }
 });
 
 // 保证切换用户时 createBy 始终为最新
-watch(() => userStore.userId, (newUserId) => {
-  queryParams.value.createBy = newUserId;
-});
-
-
-
-
+watch(
+  () => userStore.userId,
+  (newUserId) => {
+    queryParams.value.createBy = newUserId;
+  }
+);
 
 /** 获取技术栈标签 */
 const getTechStackLabels = (techStack: string) => {
   if (!techStack) return [];
   const values = techStack.split(',');
-  return values.map(value => {
+  return values.map((value) => {
     const trimmedValue = value.trim();
     // 先尝试按value查找
     let dict = techStackDict.value.find((item: any) => item.value === trimmedValue);
@@ -288,7 +252,7 @@ const getTechStackLabels = (techStack: string) => {
 const getProgrammingLanguageLabels = (programmingLanguage: string) => {
   if (!programmingLanguage) return [];
   const values = programmingLanguage.split(',');
-  return values.map(value => {
+  return values.map((value) => {
     const trimmedValue = value.trim();
     // 先尝试按value查找
     let dict = programmingLanguageDict.value.find((item: any) => item.value === trimmedValue);
@@ -334,78 +298,90 @@ const handleView = async (row: ProjectVO) => {
     const res = await getProject(row.projectId);
     const projectData = res.data;
     console.log('项目数据:', projectData);
-    
+
     // 获取字典标签的辅助函数
     const getDictLabelFromValue = (dictList: any[], value: string) => {
       // 先尝试按value查找
-      let dict = dictList.find(item => item.value === value);
+      let dict = dictList.find((item) => item.value === value);
       // 如果没找到，再尝试按label查找（处理一些特殊值）
       if (!dict) {
-        dict = dictList.find(item => item.label === value);
+        dict = dictList.find((item) => item.label === value);
       }
       return dict ? dict.label : value;
     };
-    
+
     // 处理多选字段的显示
     const formatMultiSelect = (value: string, dictList: any[]) => {
       if (!value) return '暂无信息';
-      return value.split(',').map(item => getDictLabelFromValue(dictList, item.trim())).join('、');
+      return value
+        .split(',')
+        .map((item) => getDictLabelFromValue(dictList, item.trim()))
+        .join('、');
     };
-    
 
-    
     // 提前计算标签文本
     const techStackText = formatMultiSelect(projectData.techStack, techStackDict.value);
     const programmingLanguageText = formatMultiSelect(projectData.programmingLanguage, programmingLanguageDict.value);
-    
+
     // 创建项目详情对话框（与项目列表页面一致）
-    ElMessageBox.alert(`
-      <div style="text-align: left;">
-        <h3 style="margin-bottom: 20px; color: #333; text-align: center; background-color: #fdfde7; padding: 15px;">${projectData.projectName}</h3>
+    // 使用项目列表样式的项目详情
+    ElMessageBox.alert(
+      `
+      <div style="text-align: left; width: 100%; margin: 0; padding: 0;">
+        <h3 style="margin: 0 0 20px 0; color: #333; text-align: center; background-color: #fdfde7; padding: 15px; border-radius: 6px;">${projectData.projectName}</h3>
         
-        <div style="margin-bottom: 2px; padding: 12px; background-color: white;">
+        <div style="margin: 0 0 2px 0; padding: 12px; background-color: white; width: 100%; box-sizing: border-box;">
           <strong style="color: #333;">项目描述：</strong>
           <p style="margin: 5px 0; color: #666;">${projectData.description || '暂无描述'}</p>
         </div>
         
-        <div style="margin-bottom: 2px; padding: 12px; background-color: #f0f9f0;">
+        <div style="margin: 0 0 2px 0; padding: 12px; background-color: #f0f9f0; width: 100%; box-sizing: border-box;">
           <strong style="color: #333;">技术栈：</strong>
           <p style="margin: 5px 0; color: #666;">${techStackText}</p>
         </div>
         
-        <div style="margin-bottom: 2px; padding: 12px; background-color: white;">
+        <div style="margin: 0 0 2px 0; padding: 12px; background-color: white; width: 100%; box-sizing: border-box;">
           <strong style="color: #333;">编程语言：</strong>
           <p style="margin: 5px 0; color: #666;">${programmingLanguageText}</p>
         </div>
         
-        <div style="margin-bottom: 2px; padding: 12px; background-color: #f0f9f0;">
+        <div style="margin: 0 0 2px 0; padding: 12px; background-color: #f0f9f0; width: 100%; box-sizing: border-box;">
           <strong style="color: #333;">代码仓库：</strong>
           <p style="margin: 5px 0;">
             <a href="${projectData.repositoryUrl}" target="_blank" style="color: #409EFF;">${projectData.repositoryUrl || '暂无仓库地址'}</a>
           </p>
         </div>
         
-        <div style="margin-bottom: 2px; padding: 12px; background-color: white;">
+        <div style="margin: 0 0 2px 0; padding: 12px; background-color: white; width: 100%; box-sizing: border-box;">
           <strong style="color: #333;">项目网站：</strong>
           <p style="margin: 5px 0;">
             <a href="${projectData.websiteUrl}" target="_blank" style="color: #409EFF;">${projectData.websiteUrl || '暂无网站地址'}</a>
           </p>
         </div>
         
-        <div style="margin-bottom: 2px; padding: 12px; background-color: #f0f9f0;">
+        <div style="margin: 0 0 2px 0; padding: 12px; background-color: #f0f9f0; width: 100%; box-sizing: border-box;">
+          <strong style="color: #333;">联系方式：</strong>
+          <p style="margin: 5px 0; color: #666;">${projectData.contactInfo || '暂无联系方式'}</p>
+        </div>
+        
+        <div style="margin: 0 0 2px 0; padding: 12px; background-color: white; width: 100%; box-sizing: border-box;">
           <strong style="color: #333;">项目状态：</strong>
           <p style="margin: 5px 0; color: #666;">${getStatusLabel(projectData.status) || '暂无状态信息'}</p>
         </div>
         
-        <div style="margin-bottom: 2px; padding: 12px; background-color: white;">
+        <div style="margin: 0 0 2px 0; padding: 12px; background-color: #f0f9f0; width: 100%; box-sizing: border-box;">
           <strong style="color: #333;">备注：</strong>
           <p style="margin: 5px 0; color: #666;">${projectData.remark || '暂无备注'}</p>
         </div>
       </div>
-    `, '项目详情', {
-      dangerouslyUseHTMLString: true,
-      confirmButtonText: '确定'
-    });
+    `,
+      '项目详情',
+      {
+        dangerouslyUseHTMLString: true,
+        confirmButtonText: '确定',
+        customClass: 'project-detail-dialog'
+      }
+    );
   } catch (error) {
     console.error('获取项目详情失败:', error);
   }
@@ -417,6 +393,29 @@ const handleEdit = (row: ProjectVO) => {
     path: '/osc/projectCreate',
     query: { projectId: row.projectId }
   });
+};
+
+/** 重新提交按钮操作 */
+const handleResubmit = async (row: ProjectVO) => {
+  try {
+    await proxy?.$modal.confirm('确认重新提交该项目进行审核吗？');
+
+    // 更新项目状态为待审核
+    const result = await updateProject({
+      projectId: row.projectId,
+      status: '1' // 设置为待审核状态
+    });
+
+    if (result) {
+      proxy?.$modal.msgSuccess('重新提交成功，项目已进入审核队列');
+      getList(); // 刷新列表
+    } else {
+      proxy?.$modal.msgError('重新提交失败');
+    }
+  } catch (error) {
+    console.error('重新提交失败:', error);
+    proxy?.$modal.msgError('重新提交失败');
+  }
 };
 
 /** 获取状态标签 */

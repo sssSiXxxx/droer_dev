@@ -1,5 +1,5 @@
-import request from '@/utils/request'
-import axios from 'axios'
+import request from '@/utils/request';
+import axios from 'axios';
 
 const GITEE_TOKEN = '53434be0c12a8cf0120d4750d252c1ab'; // Gitee私人令牌
 
@@ -13,27 +13,27 @@ const externalRequest = axios.create({
 
 // 项目信息接口
 export interface ProjectInfo {
-  id: number
-  name: string
-  full_name: string
-  description: string
-  html_url: string
-  stargazers_count: number
-  forks_count: number
-  language: string
-  updated_at: string
-  avatar_url: string
+  id: number;
+  name: string;
+  full_name: string;
+  description: string;
+  html_url: string;
+  stargazers_count: number;
+  forks_count: number;
+  language: string;
+  updated_at: string;
+  avatar_url: string;
 }
 
 // 贡献者信息接口
 export interface ContributorInfo {
-  id: number
-  login: string
-  name: string
-  avatar_url: string
-  html_url: string
-  contributions: number
-  type: string
+  id: number;
+  login: string;
+  name: string;
+  avatar_url: string;
+  html_url: string;
+  contributions: number;
+  type: string;
 }
 
 // 模拟数据 - 当 API 调用失败时使用
@@ -278,7 +278,7 @@ const mockProjects: ProjectInfo[] = [
     updated_at: '2023-12-27T23:45:00Z',
     avatar_url: 'https://gitee.com/dromara/Soul/avatar'
   }
-]
+];
 
 const mockContributors: ContributorInfo[] = [
   {
@@ -461,59 +461,57 @@ const mockContributors: ContributorInfo[] = [
     contributions: 15,
     type: 'User'
   }
-]
+];
 
 // 获取 Dromara 组织下的热门项目 - 暂时使用模拟数据
 export const getHotProjects = async (page: number = 1, per_page: number = 20): Promise<ProjectInfo[]> => {
   try {
-    console.log('获取热门项目列表...')
-    console.log('使用模拟数据展示热门项目')
-    
+    console.log('获取热门项目列表...');
+    console.log('使用模拟数据展示热门项目');
+
     // 暂时直接返回模拟数据，避免API访问问题
-    return mockProjects.slice(0, per_page)
-    
+    return mockProjects.slice(0, per_page);
   } catch (error) {
-    console.warn('获取热门项目失败，使用模拟数据:', error)
-    return mockProjects.slice(0, per_page)
+    console.warn('获取热门项目失败，使用模拟数据:', error);
+    return mockProjects.slice(0, per_page);
   }
-}
+};
 
 // 获取本周贡献榜 - 暂时使用模拟数据
 export const getWeeklyContributors = async (): Promise<ContributorInfo[]> => {
   try {
-    console.log('获取本周贡献榜数据...')
-    console.log('使用模拟数据展示本周贡献榜')
-    
+    console.log('获取本周贡献榜数据...');
+    console.log('使用模拟数据展示本周贡献榜');
+
     // 使用模拟数据，但调整贡献值以模拟本周数据
-    const weeklyMockData = mockContributors.map(contributor => ({
+    const weeklyMockData = mockContributors.map((contributor) => ({
       ...contributor,
       // 随机生成1-20之间的贡献值，模拟本周贡献
       contributions: Math.floor(Math.random() * 20) + 1
-    }))
-    
+    }));
+
     // 重新按贡献排序并返回前20个
-    return weeklyMockData.sort((a, b) => b.contributions - a.contributions).slice(0, 20)
-    
+    return weeklyMockData.sort((a, b) => b.contributions - a.contributions).slice(0, 20);
   } catch (error) {
-    console.warn('获取本周贡献榜失败，使用模拟数据:', error)
-    return mockContributors.slice(0, 20)
+    console.warn('获取本周贡献榜失败，使用模拟数据:', error);
+    return mockContributors.slice(0, 20);
   }
-}
+};
 
 // 获取社区统计数据 - 暂时使用模拟数据
 export const getCommunityStats = async () => {
   try {
     // 计算模拟数据的统计信息
-    const totalProjects = mockProjects.length
-    const totalStars = mockProjects.reduce((sum, p) => sum + (p.stargazers_count || 0), 0)
-    const totalContributors = mockContributors.length
-    
-    return { totalProjects, totalStars, totalContributors }
+    const totalProjects = mockProjects.length;
+    const totalStars = mockProjects.reduce((sum, p) => sum + (p.stargazers_count || 0), 0);
+    const totalContributors = mockContributors.length;
+
+    return { totalProjects, totalStars, totalContributors };
   } catch (e) {
     // 失败时返回0
-    return { totalProjects: 0, totalStars: 0, totalContributors: 0 }
+    return { totalProjects: 0, totalStars: 0, totalContributors: 0 };
   }
-}
+};
 
 // 获取组织信息 - 暂时使用模拟数据
 export const getOrganizationInfo = async () => {
@@ -523,14 +521,14 @@ export const getOrganizationInfo = async () => {
       description: '致力于微服务云原生解决方案的组织',
       public_repos: 50,
       followers: 8000
-    }
+    };
   } catch (error) {
-    console.warn('获取组织信息失败:', error)
+    console.warn('获取组织信息失败:', error);
     return {
       name: 'Dromara',
       description: '致力于微服务云原生解决方案的组织',
       public_repos: 50,
       followers: 8000
-    }
+    };
   }
-}
+};

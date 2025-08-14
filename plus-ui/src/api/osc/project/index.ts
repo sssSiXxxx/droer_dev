@@ -8,9 +8,28 @@ import { ProjectVO, ProjectForm, ProjectQuery } from '@/api/osc/project/types';
  * @returns {*}
  */
 
-export const listProject = (query?: ProjectQuery): AxiosPromise<ProjectVO[]> => {
+// 定义分页响应类型
+interface TableDataInfo<T> {
+  rows: T[];
+  total: number;
+  code: number;
+  msg: string;
+}
+
+export const listProject = (query?: ProjectQuery): AxiosPromise<TableDataInfo<ProjectVO>> => {
   return request({
     url: '/osc/project/list',
+    method: 'get',
+    params: query
+  });
+};
+
+/**
+ * 查询项目列表（用于OSS文件上传，无需权限）
+ */
+export const listProjectForOss = (query?: ProjectQuery): AxiosPromise<TableDataInfo<ProjectVO>> => {
+  return request({
+    url: '/osc/project/oss/list',
     method: 'get',
     params: query
   });

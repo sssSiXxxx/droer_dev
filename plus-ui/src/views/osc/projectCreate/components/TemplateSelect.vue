@@ -1,10 +1,5 @@
 <template>
-  <el-dialog
-    title="选择项目模板"
-    v-model="dialogVisible"
-    width="800px"
-    append-to-body
-  >
+  <el-dialog title="选择项目模板" v-model="dialogVisible" width="800px" append-to-body>
     <div class="template-grid">
       <el-card
         v-for="template in templates"
@@ -28,53 +23,37 @@
           <p>{{ template.description }}</p>
         </div>
         <div class="template-tags">
-          <el-tag
-            v-for="tag in template.tags"
-            :key="tag"
-            size="small"
-            class="mx-1"
-          >
+          <el-tag v-for="tag in template.tags" :key="tag" size="small" class="mx-1">
             {{ tag }}
           </el-tag>
         </div>
       </el-card>
     </div>
-    
+
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmSelect" :disabled="!selectedTemplate">
-          使用此模板
-        </el-button>
+        <el-button type="primary" @click="confirmSelect" :disabled="!selectedTemplate"> 使用此模板 </el-button>
       </div>
     </template>
   </el-dialog>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import {
-  Monitor,
-  Platform,
-  Cellphone,
-  Connection,
-  DataLine,
-  Cpu,
-  Tools,
-  Share
-} from '@element-plus/icons-vue'
+import { ref, watch } from 'vue';
+import { Monitor, Platform, Cellphone, Connection, DataLine, Cpu, Tools, Share } from '@element-plus/icons-vue';
 
 interface Template {
-  id: number
-  name: string
-  description: string
-  icon: string
-  tags: string[]
+  id: number;
+  name: string;
+  description: string;
+  icon: string;
+  tags: string[];
   config: {
-    techStack: string[]
-    programmingLanguage: string[]
-    description: string
-  }
+    techStack: string[];
+    programmingLanguage: string[];
+    description: string;
+  };
 }
 
 const templates: Template[] = [
@@ -312,41 +291,47 @@ const templates: Template[] = [
 欢迎系统优化爱好者加入，提升系统性能！`
     }
   }
-]
+];
 
 const props = defineProps<{
-  modelValue: boolean
-}>()
+  modelValue: boolean;
+}>();
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: boolean): void
-  (e: 'select', template: Template): void
-}>()
+  (e: 'update:modelValue', value: boolean): void;
+  (e: 'select', template: Template): void;
+}>();
 
-const dialogVisible = ref(props.modelValue)
-const selectedTemplate = ref<Template | null>(null)
+const dialogVisible = ref(props.modelValue);
+const selectedTemplate = ref<Template | null>(null);
 
 const selectTemplate = (template: Template) => {
-  selectedTemplate.value = template
-}
+  selectedTemplate.value = template;
+};
 
 const confirmSelect = () => {
   if (selectedTemplate.value) {
-    emit('select', selectedTemplate.value)
-    dialogVisible.value = false
+    emit('select', selectedTemplate.value);
+    dialogVisible.value = false;
   }
-}
+};
 
-watch(() => props.modelValue, (val) => {
-  dialogVisible.value = val
-})
-
-watch(() => dialogVisible.value, (val) => {
-  emit('update:modelValue', val)
-  if (!val) {
-    selectedTemplate.value = null
+watch(
+  () => props.modelValue,
+  (val) => {
+    dialogVisible.value = val;
   }
-})
+);
+
+watch(
+  () => dialogVisible.value,
+  (val) => {
+    emit('update:modelValue', val);
+    if (!val) {
+      selectedTemplate.value = null;
+    }
+  }
+);
 </script>
 
 <style scoped>
@@ -361,12 +346,12 @@ watch(() => dialogVisible.value, (val) => {
   cursor: pointer;
   transition: all 0.3s;
   border: 2px solid transparent;
-  
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
-  
+
   &.is-selected {
     border-color: var(--el-color-primary);
     background-color: var(--el-color-primary-light-9);
@@ -377,7 +362,7 @@ watch(() => dialogVisible.value, (val) => {
   display: flex;
   justify-content: center;
   margin-bottom: 16px;
-  
+
   .el-icon {
     color: var(--el-color-primary);
   }
@@ -386,13 +371,13 @@ watch(() => dialogVisible.value, (val) => {
 .template-info {
   text-align: center;
   margin-bottom: 16px;
-  
+
   h3 {
     margin: 0 0 8px;
     font-size: 16px;
     font-weight: 500;
   }
-  
+
   p {
     margin: 0;
     font-size: 14px;

@@ -3,6 +3,8 @@ package org.dromara;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.metrics.buffering.BufferingApplicationStartup;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.dromara.common.social.config.properties.SocialProperties;
 
 /**
  * 启动程序
@@ -11,6 +13,7 @@ import org.springframework.boot.context.metrics.buffering.BufferingApplicationSt
  */
 
 @SpringBootApplication
+@EnableConfigurationProperties(SocialProperties.class)
 public class DromaraApplication {
 
     public static void main(String[] args) {

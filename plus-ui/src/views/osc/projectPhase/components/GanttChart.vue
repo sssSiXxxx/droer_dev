@@ -11,16 +11,10 @@
       <div v-for="phase in phases" :key="phase.phaseId" class="gantt-row">
         <div class="phase-info">
           <div class="phase-name">{{ phase.phaseName }}</div>
-          <div class="phase-dates">
-            {{ formatDate(phase.startTime) }} - {{ formatDate(phase.endTime) }}
-          </div>
+          <div class="phase-dates">{{ formatDate(phase.startTime) }} - {{ formatDate(phase.endTime) }}</div>
         </div>
         <div class="timeline">
-          <div
-            class="phase-bar"
-            :class="getPhaseBarClass(phase)"
-            :style="getPhaseBarStyle(phase)"
-          >
+          <div class="phase-bar" :class="getPhaseBarClass(phase)" :style="getPhaseBarStyle(phase)">
             <div class="progress-bar" :style="{ width: `${calculateProgress(phase)}%` }" />
             <span class="phase-label">{{ phase.phaseName }}</span>
           </div>
@@ -83,10 +77,10 @@ const getPhaseBarStyle = (phase: any) => {
   const start = dayjs(phase.startTime);
   const end = dayjs(phase.endTime);
   const totalDays = timelineHeaders.value.length;
-  
+
   const startOffset = start.diff(timeRange.value.start, 'day');
   const duration = end.diff(start, 'day') + 1;
-  
+
   return {
     left: `${(startOffset / totalDays) * 100}%`,
     width: `${(duration / totalDays) * 100}%`,
@@ -99,7 +93,7 @@ const getPhaseBarClass = (phase: any) => {
   const now = dayjs();
   const start = dayjs(phase.startTime);
   const end = dayjs(phase.endTime);
-  
+
   if (phase.status === '2') return 'completed';
   if (phase.status === '3') return 'delayed';
   if (now.isBefore(start)) return 'not-started';
@@ -111,14 +105,14 @@ const getPhaseBarClass = (phase: any) => {
 const calculateProgress = (phase: any) => {
   if (phase.status === '2') return 100;
   if (phase.status === '0') return 0;
-  
+
   const start = dayjs(phase.startTime);
   const end = dayjs(phase.endTime);
   const now = dayjs();
-  
+
   if (now.isBefore(start)) return 0;
   if (now.isAfter(end)) return 100;
-  
+
   const total = end.diff(start, 'day');
   const current = now.diff(start, 'day');
   return Math.round((current / total) * 100);
