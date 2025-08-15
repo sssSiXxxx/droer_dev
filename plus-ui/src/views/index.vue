@@ -154,60 +154,7 @@
         </div>
       </div>
 
-      <!-- 下半部分 - 3列布局 -->
-      <div class="bottom-grid">
-        <!-- 项目版本 -->
-        <div class="grid-card">
-          <div class="card-header">
-            <h3>项目版本</h3>
-            <p>各版本使用情况分布</p>
-          </div>
-          <div class="card-content">
-            <div class="version-list">
-              <div class="version-item" v-for="(version, index) in appVersions" :key="index">
-                <div class="version-header">
-                  <span class="version-name">{{ version.name }}</span>
-                  <span class="version-users">{{ version.users }}</span>
-                </div>
-                <div class="progress-bar">
-                  <div class="progress-fill" :style="{ width: version.usage + '%' }"></div>
-                </div>
-                <div class="version-percentage">{{ version.usage }}%</div>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        <!-- 最新动态 -->
-        <div class="grid-card">
-          <div class="card-header">
-            <h3>最新动态</h3>
-            <p>社区活动</p>
-          </div>
-          <div class="card-content">
-            <div class="activity-list">
-              <div class="activity-item" v-for="(activity, index) in recentActivities" :key="index">
-                <div class="activity-dot"></div>
-                <div class="activity-content">
-                  <h4>{{ activity.title }}</h4>
-                  <p>{{ activity.description }}</p>
-                  <span class="activity-time">{{ activity.time }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 访客分布 - 使用新的世界地图组件 -->
-        <div class="grid-card world-map-card">
-          <WorldMapChart 
-            :show-title="true"
-            :show-stats="true"
-            map-height="320px"
-            :auto-refresh="false"
-          />
-        </div>
-      </div>
     </div>
   </div>
 </template>
@@ -245,7 +192,7 @@ import {
 } from '@/api/community-enhanced';
 import RealtimeStats from '@/components/RealtimeStats.vue';
 import ProjectSearchCombo from '@/components/ProjectSearchCombo.vue';
-import WorldMapChart from '@/components/WorldMapChart.vue';
+
 import TodoSidebar from '@/components/TodoSidebar.vue';
 import { todoNotificationService } from '@/utils/todoNotification';
 
@@ -304,15 +251,7 @@ const techStack = ref([
   { name: 'Others', value: 5, color: '#EF4444' }
 ]);
 
-// 项目版本数据
-const appVersions = ref([
-  { name: 'Sa-Token v1.37.0', usage: 85, users: '12.3k' },
-  { name: 'Hutool v5.8.25', usage: 72, users: '9.8k' },
-  { name: 'Forest v1.5.36', usage: 58, users: '7.2k' },
-  { name: 'TLog v1.5.0', usage: 45, users: '5.1k' },
-  { name: 'Dynamic-Tp v1.1.6', usage: 32, users: '3.8k' },
-  { name: 'Jpom v2.10.42', usage: 28, users: '2.9k' }
-]);
+
 
 // 顶级贡献者数据
 const topContributors = ref([
@@ -323,39 +262,7 @@ const topContributors = ref([
   { name: 'xiaoymin (Knife4j)', progress: 45 }
 ]);
 
-// 最新动态数据
-const recentActivities = ref([
-  {
-    title: 'Sa-Token发布新版本v1.37.0',
-    description: '修复了多个安全漏洞，增强了JWT支持，优化了性能表现。',
-    time: '2小时前'
-  },
-  {
-    title: 'Hutool工具类库获得新贡献',
-    description: '社区成员提交了新的工具方法，用于处理日期和时间格式化。',
-    time: '4小时前'
-  },
-  {
-    title: 'Forest HTTP客户端框架性能优化',
-    description: '通过连接池优化和缓存机制改进，网络请求性能提升30%。',
-    time: '6小时前'
-  },
-  {
-    title: 'TLog分布式日志追踪系统更新',
-    description: '新增了链路追踪功能，支持更细粒度的性能监控。',
-    time: '8小时前'
-  }
-]);
 
-// 访客位置数据
-const visitorLocations = ref([
-  { country: 'China', countryName: '中国', percentage: 35, count: '52.3k' },
-  { country: 'United States', countryName: '美国', percentage: 18, count: '26.8k' },
-  { country: 'Japan', countryName: '日本', percentage: 12, count: '17.9k' },
-  { country: 'Germany', countryName: '德国', percentage: 8, count: '11.2k' },
-  { country: 'South Korea', countryName: '韩国', percentage: 7, count: '10.4k' },
-  { country: 'Others', countryName: '其他', percentage: 20, count: '29.8k' }
-]);
 
 // 待办事项数据
 const todoItems = ref([

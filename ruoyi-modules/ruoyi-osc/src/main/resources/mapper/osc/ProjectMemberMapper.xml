@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.dromara.osc.mapper.ProjectMemberMapper">
+
+    <!-- 查询项目成员列表（包含项目名称和成员名称） -->
+    <select id="selectProjectMemberList" parameterType="org.dromara.osc.domain.ProjectMember" resultType="org.dromara.osc.domain.vo.ProjectMemberVo">
+        SELECT 
+            pm.id,
+            pm.project_id,
+            p.project_name,
+            pm.member_id,
+            m.member_name,
+            pm.role,
+            pm.join_time,
+            pm.create_time,
+            pm.update_time
+        FROM os_project_member pm
+        LEFT JOIN os_project p ON pm.project_id = p.project_id
+        LEFT JOIN os_member m ON pm.member_id = m.member_id
+        <where>
+            <if test="bo.projectId != null">
+                AND pm.project_id = #{bo.projectId}
+            </if>
+            <if test="bo.memberId != null">
+                AND pm.member_id = #{bo.memberId}
+            </if>
+            <if test="bo.role != null and bo.role != ''">
+                AND pm.role = #{bo.role}
+            </if>
+            <if test="bo.params.projectName != null and bo.params.projectName != ''">
+                AND p.project_name LIKE CONCAT('%', #{bo.params.projectName}, '%')
+            </if>
+            <if test="bo.params.memberName != null and bo.params.memberName != ''">
+                AND m.member_name LIKE CONCAT('%', #{bo.params.memberName}, '%')
+            </if>
+            <if test="bo.params.beginTime != null and bo.params.beginTime != ''">
+                AND pm.join_time >= #{bo.params.beginTime}
+            </if>
+            <if test="bo.params.endTime != null and bo.params.endTime != ''">
+                AND pm.join_time &lt;= #{bo.params.endTime}
+            </if>
+        </where>
+        ORDER BY pm.create_time DESC
+    </select>
+
+</mapper>

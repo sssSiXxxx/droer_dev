@@ -155,6 +155,7 @@ CREATE TABLE `os_member_skill` (
   `skill_id` bigint NOT NULL COMMENT '技能ID',
   `proficiency` int DEFAULT '1' COMMENT '熟练度（1-5）',
   `create_time` datetime COMMENT '创建时间',
+  `update_time` datetime COMMENT '更新时间',
   PRIMARY KEY (`id`),
   INDEX `idx_member_skill` (`member_id`, `skill_id`)
 ) COMMENT='成员技能关联表';
@@ -167,6 +168,7 @@ CREATE TABLE `os_project_member` (
   `role` char(1) DEFAULT '0' COMMENT '角色（0普通成员 1项目负责人 2核心开发者）',
   `join_time` datetime COMMENT '加入时间',
   `create_time` datetime COMMENT '创建时间',
+  `update_time` datetime COMMENT '更新时间',
   PRIMARY KEY (`id`),
   INDEX `idx_project_member` (`project_id`, `member_id`)
 ) COMMENT='项目成员关联表';
@@ -182,6 +184,7 @@ CREATE TABLE `os_contribution` (
   `contribution_time` datetime COMMENT '贡献时间',
   `points` int DEFAULT '0' COMMENT '贡献点数',
   `create_time` datetime COMMENT '创建时间',
+  `update_time` datetime COMMENT '更新时间',
   PRIMARY KEY (`contribution_id`),
   INDEX `idx_contribution_member` (`member_id`),
   INDEX `idx_contribution_project` (`project_id`)

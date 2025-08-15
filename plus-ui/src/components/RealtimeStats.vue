@@ -154,8 +154,8 @@ const statsData = computed(() => [
     change: `+${stats.value.newProjects} 新增`,
     changeType: 'increase',
     icon: 'Connection',
-    color: '#3b82f6',
-    gradient: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+    color: '#8fd3c7',
+    gradient: 'linear-gradient(135deg, #b4e4d9, #8fd3c7)',
     type: 'primary',
     trend: generateTrendData(stats.value.totalProjects)
   },
@@ -166,8 +166,8 @@ const statsData = computed(() => [
     change: `${stats.value.totalContributors > 1000 ? '+8%' : '+5%'} 本周`,
     changeType: 'increase',
     icon: 'User',
-    color: '#10b981',
-    gradient: 'linear-gradient(135deg, #10b981, #059669)',
+    color: '#6bb6a8',
+    gradient: 'linear-gradient(135deg, #8fd3c7, #6bb6a8)',
     type: 'success',
     trend: generateTrendData(stats.value.totalContributors)
   },
@@ -382,31 +382,32 @@ defineExpose({
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
 .stats-grid.compact {
   grid-template-columns: repeat(6, 1fr);
-  gap: 12px;
+  gap: 10px;
 }
 
 .stat-card {
   position: relative;
   background: white;
   border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(180, 228, 217, 0.1);
+  border: 1px solid rgba(180, 228, 217, 0.2);
   transition: all 0.3s ease;
   overflow: hidden;
   animation: fadeInUp 0.6s ease-out;
-  min-height: 120px;
+  min-height: 100px;
 }
 
 .stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(180, 228, 217, 0.2);
+  border-color: rgba(180, 228, 217, 0.4);
 }
 
 .stat-card.loading {
@@ -420,19 +421,19 @@ defineExpose({
   top: 0;
   left: 0;
   right: 0;
-  height: 4px;
-  background: var(--gradient, linear-gradient(90deg, #3b82f6, #1d4ed8));
-  border-radius: 16px 16px 0 0;
+  height: 3px;
+  background: var(--gradient, linear-gradient(90deg, #b4e4d9, #8fd3c7));
+  border-radius: 12px 12px 0 0;
 }
 
 .stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 10px;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   position: relative;
   overflow: hidden;
 }
@@ -453,7 +454,7 @@ defineExpose({
 }
 
 .stat-icon .el-icon {
-  font-size: 24px;
+  font-size: 20px;
   color: white;
   z-index: 1;
 }
@@ -464,19 +465,19 @@ defineExpose({
 }
 
 .stat-value {
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 700;
   color: #1f2937;
   line-height: 1.2;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   letter-spacing: -0.025em;
 }
 
 .stat-label {
-  font-size: 13px;
+  font-size: 12px;
   color: #6b7280;
   font-weight: 500;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .stat-change {
