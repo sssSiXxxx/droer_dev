@@ -25,11 +25,11 @@
       <RealtimeStats :compact="true" :show-header="false" />
     </div>
 
-    <!-- 项目搜索功能 -->
-    <div class="search-container">
-      <div class="search-section">
-        <h2>探索项目</h2>
-        <p>搜索和发现 Dromara 社区的优秀开源项目</p>
+    <!-- 搜索区域 -->
+    <div class="search-section">
+      <div class="search-container">
+        <h2>探索优秀项目</h2>
+        <p>搜索和发现 Dromara 社区的开源项目</p>
         <ProjectSearchCombo 
           placeholder="搜索项目名称或描述..."
           :max-results="20"
@@ -64,37 +64,9 @@
           </div>
 
           <div class="chart-sidebar">
-            <!-- 日活跃用户 -->
-            <div class="sidebar-card">
-              <div class="card-header">
-                <div class="header-content">
-                  <div class="header-left">
-                    <h3>日活跃用户</h3>
-                    <p>今日统计</p>
-                  </div>
-                  <div class="header-right">
-                    <div class="users-number">2.1k</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- 待办事项 -->
-            <div class="sidebar-card">
-              <div class="card-header">
-                <h3>待办事项</h3>
-                <p>当前任务</p>
-              </div>
-              <div class="card-content">
-                <div class="todo-list">
-                  <div class="todo-item" v-for="(item, index) in todoItems" :key="index">
-                    <div class="todo-checkbox" :class="{ completed: item.completed }">
-                      <div class="checkbox-inner" v-if="item.completed"></div>
-                    </div>
-                    <span class="todo-text" :class="{ completed: item.completed }">{{ item.task }}</span>
-                  </div>
-                </div>
-              </div>
+            <!-- 待办事项侧边栏 -->
+            <div class="sidebar-card todo-sidebar-card">
+              <TodoSidebar />
             </div>
           </div>
         </div>
@@ -226,9 +198,9 @@
           </div>
         </div>
 
-        <!-- 访客分布 - 使用世界地图组件 -->
+        <!-- 访客分布 - 使用新的世界地图组件 -->
         <div class="grid-card world-map-card">
-          <WorldMap 
+          <WorldMapChart 
             :show-title="true"
             :show-stats="true"
             map-height="320px"
@@ -273,6 +245,9 @@ import {
 } from '@/api/community-enhanced';
 import RealtimeStats from '@/components/RealtimeStats.vue';
 import ProjectSearchCombo from '@/components/ProjectSearchCombo.vue';
+import WorldMapChart from '@/components/WorldMapChart.vue';
+import TodoSidebar from '@/components/TodoSidebar.vue';
+import { todoNotificationService } from '@/utils/todoNotification';
 
 // 注册 ECharts 组件
 use([CanvasRenderer, LineChart, PieChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent]);
@@ -559,12 +534,13 @@ const chartOption = computed(() => ({
     textStyle: {
       color: '#6B7280'
     },
-    top: 10
+    top: 10,
+    bottom: 'auto'
   },
   grid: {
     left: '3%',
     right: '4%',
-    bottom: '3%',
+    bottom: '15%',
     containLabel: true
   },
   xAxis: {
@@ -790,6 +766,14 @@ onMounted(async () => {
   // 并行加载所有数据以提高性能
   await Promise.all([fetchHotProjects(), fetchWeeklyContributors(), fetchCommunityStats()]);
   console.log('首页数据加载完成');
+  
+  // 初始化待办事项通知服务
+  try {
+    await todoNotificationService.requestPermission();
+    console.log('✅ 待办事项通知服务已启动');
+  } catch (error) {
+    console.warn('⚠️ 通知服务启动失败:', error);
+  }
 });
 </script>
 
@@ -1035,7 +1019,8 @@ onMounted(async () => {
 .main-content {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0;
+  padding: 40px 20px 0;
+  background: #f5f7fa;
 }
 
 .bottom-grid {
@@ -1503,10 +1488,9 @@ onMounted(async () => {
 .chart-sidebar {
   display: flex;
   flex-direction: column;
-  gap: 24px;
   width: 320px;
   flex-shrink: 0;
-  height: 300px;
+  height: 520px;
 }
 
 .sidebar-card {
@@ -1531,42 +1515,15 @@ onMounted(async () => {
   min-height: 0;
 }
 
-.sidebar-card:first-child {
-  height: 90px;
-}
-
-.sidebar-card:last-child {
-  height: 320px;
+.sidebar-card {
+  height: 100%;
 }
 
 .sidebar-card:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* 侧边栏活跃用户样式优化 */
-.sidebar-card .header-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-}
 
-.sidebar-card .header-left {
-  display: flex;
-  flex-direction: column;
-}
-
-.sidebar-card .header-right {
-  display: flex;
-  align-items: center;
-}
-
-.sidebar-card .users-number {
-  font-size: 28px;
-  font-weight: 800;
-  color: #059669;
-  letter-spacing: -0.025em;
-}
 
 /* 侧边栏待办事项样式优化 */
 .sidebar-card .todo-list {
@@ -1576,7 +1533,7 @@ onMounted(async () => {
   flex: 1;
   overflow-y: auto;
   padding: 6px 8px 16px 0;
-  max-height: 220px;
+  max-height: 440px;
 }
 
 /* 自定义滚动条样式 */
@@ -1691,8 +1648,9 @@ onMounted(async () => {
 }
 
 .chart-container {
-  height: 300px;
+  height: 400px;
   position: relative;
+  overflow: hidden;
 }
 
 .chart {
@@ -2412,6 +2370,49 @@ onMounted(async () => {
   100% {
     transform: translateX(100%);
   }
+}
+
+/* 待办事项侧边栏样式 */
+.todo-sidebar-card {
+  padding: 0;
+  overflow: hidden;
+  height: 600px;
+}
+
+.todo-sidebar-card :deep(.todo-sidebar) {
+  height: 100%;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* 搜索区域样式 */
+.search-section {
+  background: white;
+  padding: 60px 0;
+  margin: 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.search-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  text-align: center;
+}
+
+.search-section h2 {
+  margin: 0 0 12px 0;
+  font-size: 32px;
+  font-weight: 700;
+  color: #1f2937;
+  letter-spacing: -0.025em;
+}
+
+.search-section p {
+  margin: 0 0 40px 0;
+  font-size: 18px;
+  color: #6b7280;
+  font-weight: 500;
 }
 
 @media (max-width: 768px) {

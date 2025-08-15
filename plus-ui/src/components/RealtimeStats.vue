@@ -44,13 +44,7 @@
         
         <div class="stat-content">
           <div class="stat-value">
-            <count-up
-              :end-val="stat.value"
-              :duration="1.5"
-              :start-val="0"
-              separator=","
-              v-if="!loading"
-            />
+            <span v-if="!loading">{{ stat.value.toLocaleString() }}</span>
             <el-skeleton-item v-else variant="text" style="width: 60px" />
           </div>
           <div class="stat-label">{{ stat.label }}</div>
@@ -387,26 +381,27 @@ defineExpose({
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 16px;
   margin-bottom: 24px;
 }
 
 .stats-grid.compact {
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
 }
 
 .stat-card {
   position: relative;
   background: white;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.1);
   transition: all 0.3s ease;
   overflow: hidden;
   animation: fadeInUp 0.6s ease-out;
+  min-height: 120px;
 }
 
 .stat-card:hover {
@@ -431,13 +426,13 @@ defineExpose({
 }
 
 .stat-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   position: relative;
   overflow: hidden;
 }
@@ -458,7 +453,7 @@ defineExpose({
 }
 
 .stat-icon .el-icon {
-  font-size: 28px;
+  font-size: 24px;
   color: white;
   z-index: 1;
 }
@@ -469,19 +464,19 @@ defineExpose({
 }
 
 .stat-value {
-  font-size: 32px;
+  font-size: 26px;
   font-weight: 700;
   color: #1f2937;
   line-height: 1.2;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   letter-spacing: -0.025em;
 }
 
 .stat-label {
-  font-size: 14px;
+  font-size: 13px;
   color: #6b7280;
   font-weight: 500;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .stat-change {
@@ -585,31 +580,45 @@ defineExpose({
 }
 
 /* 响应式设计 */
+@media (max-width: 1200px) {
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  
+  .stats-grid.compact {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+}
+
 @media (max-width: 768px) {
   .stats-grid {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 12px;
   }
   
   .stats-grid.compact {
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
   }
   
   .stat-card {
     padding: 16px;
+    min-height: 100px;
   }
   
   .stat-icon {
-    width: 48px;
-    height: 48px;
+    width: 40px;
+    height: 40px;
   }
   
   .stat-icon .el-icon {
-    font-size: 24px;
+    font-size: 20px;
   }
   
   .stat-value {
-    font-size: 24px;
+    font-size: 20px;
   }
   
   .stats-header {
