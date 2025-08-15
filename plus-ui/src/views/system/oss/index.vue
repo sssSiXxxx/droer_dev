@@ -20,7 +20,9 @@
             >
               <div class="project-option">
                 <div class="project-name">{{ item.projectName }}</div>
-                <div class="project-desc" v-if="item.description">{{ item.description }}</div>
+                <div class="project-desc" v-if="item.description" :title="item.description">
+                  {{ item.description.length > 30 ? item.description.substring(0, 30) + '...' : item.description }}
+                </div>
               </div>
             </el-option>
             <template #empty>
@@ -261,11 +263,11 @@ import { listOss, delOss } from '@/api/system/oss';
 import { getToken } from '@/utils/auth';
 import { listProjectForOss } from '@/api/osc/project';
 import { parseTime } from '@/utils/ruoyi';
-import { getCurrentInstance, ref, onMounted } from 'vue';
+import { getCurrentInstance, ref, onMounted, ComponentInternalInstance } from 'vue';
 import { Document, Grid, List, Upload, UploadFilled, VideoPlay, Headset, Files } from '@element-plus/icons-vue';
 import router from '@/router';
 
-const { proxy } = getCurrentInstance() as any;
+const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 
 // 遮罩层
 const loading = ref(false);
@@ -366,26 +368,72 @@ const getList = async () => {
 const loadProjects = async () => {
   try {
     projectSearchLoading.value = true;
-    const res = await listProjectForOss();
+    console.log('开始加载项目列表...');
+    const res = await listProjectForOss({ pageNum: 1, pageSize: 1000 });
     console.log('项目列表响应:', res);
-    // 根据API返回类型，使用rows字段获取项目列表
-    if (res && res.data && res.data.rows) {
+    
+    // 检查响应结构
+    console.log('完整响应对象:', res);
+    console.log('res.data:', res?.data);
+    console.log('res.data.rows:', res?.data?.rows);
+    console.log('res.data.rows类型:', typeof res?.data?.rows);
+    console.log('res.data.rows是否为数组:', Array.isArray(res?.data?.rows));
+    
+    // 检查响应结构 - 尝试多种可能的数据结构
+    if (res && res.data && res.data.rows && Array.isArray(res.data.rows)) {
+      // 标准响应格式：{data: {code: 200, msg: "success", rows: [...], total: 10}}
       projectOptions.value = res.data.rows;
+      console.log('成功加载项目列表（res.data.rows），数量:', res.data.rows.length);
+      console.log('项目列表内容:', res.data.rows);
+    } else if (res && res.rows && Array.isArray(res.rows)) {
+      // 直接响应格式：{rows: [...], total: 10}
+      projectOptions.value = res.rows;
+      console.log('成功加载项目列表（res.rows），数量:', res.rows.length);
+      console.log('项目列表内容:', res.rows);
+    } else if (res && res.data && Array.isArray(res.data)) {
+      // 直接数组格式：{data: [...]}
+      projectOptions.value = res.data;
+      console.log('成功加载项目列表（res.data），数量:', res.data.length);
+      console.log('项目列表内容:', res.data);
     } else {
+      console.warn('响应数据结构异常:', res);
+      console.warn('res.data:', res?.data);
+      console.warn('res.rows:', res?.rows);
       projectOptions.value = [];
     }
+    
     filteredProjectOptions.value = [...projectOptions.value]; // 初始化过滤后的选项
-    console.log('加载的项目选项:', projectOptions.value);
+    console.log('最终projectOptions.value:', projectOptions.value);
+    console.log('最终filteredProjectOptions.value:', filteredProjectOptions.value);
     
     // 如果没有数据，显示提示
     if (projectOptions.value.length === 0) {
-      proxy?.$modal.msgInfo('暂无项目数据，请先创建项目或联系管理员');
+      console.warn('项目列表为空，显示提示信息');
+      proxy?.$modal.msgWarning('暂无项目数据，请先创建项目或联系管理员');
+    } else {
+      console.log('项目列表加载成功，共', projectOptions.value.length, '个项目');
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('获取项目列表失败:', error);
+    console.error('错误详情:', {
+      message: error.message,
+      response: error.response,
+      status: error.response?.status,
+      data: error.response?.data
+    });
     projectOptions.value = [];
     filteredProjectOptions.value = [];
-    proxy?.$modal.msgError('获取项目列表失败，请稍后重试');
+    
+    // 根据错误类型显示不同的错误信息
+    if (error.response?.status === 401) {
+      proxy?.$modal.msgError('权限不足，请重新登录');
+    } else if (error.response?.status === 404) {
+      proxy?.$modal.msgError('接口不存在，请联系管理员');
+    } else if (error.response?.status >= 500) {
+      proxy?.$modal.msgError('服务器内部错误，请稍后重试');
+    } else {
+      proxy?.$modal.msgError('获取项目列表失败，请稍后重试');
+    }
   } finally {
     projectSearchLoading.value = false;
   }
@@ -454,7 +502,7 @@ const handleQuery = () => {
 /** 重置按钮操作 */
 const resetQuery = () => {
   dateRange.value = [];
-  proxy?.resetForm('queryRef');
+  (proxy?.$refs['queryRef'] as any)?.resetFields();
   handleQuery();
 };
 
@@ -481,7 +529,7 @@ const handleUpload = () => {
 
 /** 提交上传文件 */
 const submitUpload = async () => {
-  proxy?.$refs['uploadRef'].submit();
+  (proxy?.$refs['uploadRef'] as any)?.submit();
 };
 
 /** 文件上传中处理 */
@@ -731,15 +779,17 @@ onMounted(() => {
   .project-name {
     font-weight: 500;
     color: var(--el-text-color-primary);
+    font-size: 14px;
   }
   
   .project-desc {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--el-text-color-secondary);
-    margin-top: 4px;
+    margin-top: 2px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    line-height: 1.2;
   }
 }
 

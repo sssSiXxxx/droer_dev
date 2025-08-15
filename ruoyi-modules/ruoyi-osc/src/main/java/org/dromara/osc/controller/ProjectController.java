@@ -55,7 +55,15 @@ public class ProjectController extends BaseController {
      */
     @GetMapping("/oss/list")
     public TableDataInfo<ProjectVo> listForOss(ProjectBo bo, PageQuery pageQuery) {
-        return projectService.queryPageList(bo, pageQuery);
+        log.info("OSS接口调用 - 查询参数: {}, 分页参数: {}", bo, pageQuery);
+        try {
+            TableDataInfo<ProjectVo> result = projectService.queryPageList(bo, pageQuery);
+            log.info("OSS接口调用成功 - 返回数据条数: {}", result.getRows().size());
+            return result;
+        } catch (Exception e) {
+            log.error("OSS接口调用失败", e);
+            throw e;
+        }
     }
 
     /**
