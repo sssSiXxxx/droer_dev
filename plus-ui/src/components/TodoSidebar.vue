@@ -44,13 +44,13 @@
     <!-- 待办事项列表 -->
     <div class="todo-list" v-loading="loading">
       <draggable
-        v-model="sortedTodos"
+        :list="todos"
         @end="handleDragEnd"
+        @start="handleDragStart"
         item-key="id"
         handle=".drag-handle"
         ghost-class="ghost-item"
         chosen-class="chosen-item"
-        drag-class="drag-item"
       >
         <template #item="{ element: todo }">
           <div
@@ -62,7 +62,7 @@
             }"
           >
             <!-- 拖拽句柄 -->
-            <div class="drag-handle">
+            <div class="drag-handle" title="拖拽调整顺序" @click="() => console.log('点击拖拽句柄')">
               <el-icon><Rank /></el-icon>
             </div>
 
@@ -296,25 +296,8 @@ const sortedTodos = computed({
       showCompleted.value || !todo.completed
     );
     
-    // 按优先级和创建时间排序
-    return filtered.sort((a, b) => {
-      // 首先按完成状态排序（未完成的在前）
-      if (a.completed !== b.completed) {
-        return a.completed ? 1 : -1;
-      }
-      
-      // 然后按优先级排序
-      const priorityOrder = { urgent: 4, high: 3, medium: 2, low: 1 };
-      const aPriority = priorityOrder[a.priority] || 0;
-      const bPriority = priorityOrder[b.priority] || 0;
-      
-      if (aPriority !== bPriority) {
-        return bPriority - aPriority;
-      }
-      
-      // 最后按order排序
-      return a.order - b.order;
-    });
+    // 只按order排序，保持拖拽后的顺序
+    return filtered.sort((a, b) => a.order - b.order);
   },
   set(value) {
     todos.value = value;
@@ -407,15 +390,28 @@ const handleItemAction = async (command: string, todo: TodoItem) => {
   }
 };
 
+const handleDragStart = (evt: any) => {
+  console.log('开始拖拽:', evt);
+  console.log('拖拽的元素:', evt.item);
+  console.log('拖拽的索引:', evt.oldIndex);
+};
+
 const handleDragEnd = async (evt: any) => {
+  console.log('拖拽结束:', evt);
+  console.log('旧索引:', evt.oldIndex);
+  console.log('新索引:', evt.newIndex);
+  console.log('拖拽的元素:', evt.item);
   if (evt.oldIndex === evt.newIndex) return;
   
   try {
-    const todoIds = sortedTodos.value.map(todo => todo.id);
-    await todoApi.updateOrder(todoIds);
-    await loadData();
+    // 更新所有todo的order值
+    todos.value.forEach((todo, index) => {
+      todo.order = index + 1;
+    });
+    
+    // 保存到本地存储
+    await todoApi.updateOrder(todos.value.map(todo => todo.id));
   } catch (error) {
-    ElMessage.error('排序保存失败');
     console.error('更新排序失败:', error);
   }
 };
@@ -631,13 +627,14 @@ setInterval(() => {
   overflow-y: auto;
   padding: 8px;
   min-height: 400px;
+  position: relative;
 }
 
 .todo-item {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  padding: 24px 16px;
+  padding: 20px 16px;
   border-radius: 8px;
   margin-bottom: 8px;
   transition: all 0.2s ease;
@@ -645,6 +642,10 @@ setInterval(() => {
   border: 1px solid #b4e4d9;
   min-height: 80px;
   background: #fafdfc;
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
+  user-select: none;
 }
 
 .todo-item:hover {
@@ -667,30 +668,52 @@ setInterval(() => {
 }
 
 .drag-handle {
-  opacity: 0;
-  transition: opacity 0.2s ease;
+  opacity: 1;
+  transition: all 0.2s ease;
   cursor: grab;
-  color: #9ca3af;
-  font-size: 12px;
+  color: #8fd3c7;
+  font-size: 16px;
   margin-top: 2px;
+  padding: 10px;
+  border-radius: 6px;
+  user-select: none;
+  border: 2px solid rgba(180, 228, 217, 0.3);
+  background: rgba(180, 228, 217, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  pointer-events: auto;
 }
 
 .todo-item:hover .drag-handle {
   opacity: 1;
+  background: rgba(180, 228, 217, 0.2);
+  border-color: rgba(180, 228, 217, 0.4);
+  transform: scale(1.05);
+  color: #6bb6a8;
 }
 
 .drag-handle:active {
   cursor: grabbing;
+  background: rgba(180, 228, 217, 0.25);
+  border-color: rgba(180, 228, 217, 0.5);
+  transform: scale(1.05);
 }
+
+
 
 .todo-checkbox {
   flex-shrink: 0;
   margin-top: 2px;
+  pointer-events: auto;
 }
 
 .todo-content {
   flex: 1;
   min-width: 0;
+  pointer-events: auto;
 }
 
 .todo-title {
