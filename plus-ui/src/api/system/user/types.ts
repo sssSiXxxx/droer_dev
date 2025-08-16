@@ -43,6 +43,7 @@ export interface UserVO extends BaseEntity {
   loginDate: string;
   remark: string;
   deptName: string;
+  giteeAccount?: string;
   roles: RoleVO[];
   roleIds: any;
   postIds: any;
@@ -65,6 +66,7 @@ export interface UserForm {
   sex?: string;
   status: string;
   remark?: string;
+  giteeAccount?: string;
   postIds: string[];
   roleIds: string[];
 }

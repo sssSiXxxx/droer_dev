@@ -57,6 +57,17 @@ public class MemberController extends BaseController {
     }
 
     /**
+     * 根据用户ID获取社区成员信息
+     *
+     * @param userId 用户ID
+     */
+    @SaCheckPermission("osc:member:query")
+    @GetMapping("/byUserId")
+    public R<MemberVo> getByUserId(@RequestParam Long userId) {
+        return R.ok(memberService.queryByUserId(userId));
+    }
+
+    /**
      * 获取社区成员详细信息
      *
      * @param memberId 主键
@@ -88,6 +99,18 @@ public class MemberController extends BaseController {
     @PutMapping()
     public R<Void> edit(@Validated(EditGroup.class) @RequestBody MemberBo bo) {
         return toAjax(memberService.updateByBo(bo));
+    }
+
+    /**
+     * 同步Gitee用户信息
+     *
+     * @param bo 成员信息
+     */
+    @SaCheckPermission("osc:member:edit")
+    @Log(title = "同步Gitee信息", businessType = BusinessType.UPDATE)
+    @PostMapping("/syncGiteeInfo")
+    public R<Void> syncGiteeInfo(@RequestBody MemberBo bo) {
+        return toAjax(memberService.syncGiteeInfo(bo));
     }
 
     /**

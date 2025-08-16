@@ -60,6 +60,11 @@ public class SysUser extends BaseEntity {
     private String phonenumber;
 
     /**
+     * Gitee账号
+     */
+    private String giteeAccount;
+
+    /**
      * 用户性别
      */
     private String sex;

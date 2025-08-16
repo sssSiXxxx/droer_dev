@@ -125,6 +125,7 @@ CREATE TABLE `os_member` (
   `gitee_id` varchar(100) COMMENT 'Gitee ID',
   `status` char(1) DEFAULT '0' COMMENT '状态（0正常 1禁用）',
   `join_time` datetime COMMENT '加入时间',
+  `create_dept` bigint COMMENT '创建部门',
   `create_by` bigint COMMENT '创建者',
   `create_time` datetime COMMENT '创建时间',
   `update_by` bigint COMMENT '更新者',
@@ -132,7 +133,8 @@ CREATE TABLE `os_member` (
   `remark` varchar(500) DEFAULT NULL COMMENT '备注',
   PRIMARY KEY (`member_id`),
   INDEX `idx_member_user` (`user_id`),
-  INDEX `idx_member_status` (`status`)
+  INDEX `idx_member_status` (`status`),
+  INDEX `idx_member_create_dept` (`create_dept`)
 ) COMMENT='社区成员表';
 
 -- 技能表
@@ -183,11 +185,15 @@ CREATE TABLE `os_contribution` (
   `url` varchar(255) COMMENT '相关链接',
   `contribution_time` datetime COMMENT '贡献时间',
   `points` int DEFAULT '0' COMMENT '贡献点数',
+  `create_dept` bigint COMMENT '创建部门',
+  `create_by` bigint COMMENT '创建者',
   `create_time` datetime COMMENT '创建时间',
+  `update_by` bigint COMMENT '更新者',
   `update_time` datetime COMMENT '更新时间',
   PRIMARY KEY (`contribution_id`),
   INDEX `idx_contribution_member` (`member_id`),
-  INDEX `idx_contribution_project` (`project_id`)
+  INDEX `idx_contribution_project` (`project_id`),
+  INDEX `idx_contribution_create_dept` (`create_dept`)
 ) COMMENT='贡献记录表';
 
 -- ----------------------------

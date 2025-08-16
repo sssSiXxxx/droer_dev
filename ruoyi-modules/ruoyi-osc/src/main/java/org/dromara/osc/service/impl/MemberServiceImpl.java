@@ -114,4 +114,41 @@ public class MemberServiceImpl implements IMemberService {
         }
         return baseMapper.deleteBatchIds(ids) > 0;
     }
+
+    /**
+     * 根据用户ID查询社区成员信息
+     */
+    @Override
+    public MemberVo queryByUserId(Long userId) {
+        LambdaQueryWrapper<Member> lqw = Wrappers.lambdaQuery();
+        lqw.eq(Member::getUserId, userId);
+        return baseMapper.selectVoOne(lqw);
+    }
+
+    /**
+     * 同步Gitee用户信息
+     */
+    @Override
+    public Boolean syncGiteeInfo(MemberBo bo) {
+        // 检查是否已存在该用户的成员记录
+        LambdaQueryWrapper<Member> lqw = Wrappers.lambdaQuery();
+        lqw.eq(Member::getUserId, bo.getUserId());
+        Member existingMember = baseMapper.selectOne(lqw);
+        
+        if (existingMember != null) {
+            // 更新现有记录
+            existingMember.setGiteeId(bo.getGiteeId());
+            existingMember.setAvatar(bo.getAvatar());
+            existingMember.setMemberName(bo.getMemberName());
+            existingMember.setNickname(bo.getNickname());
+            existingMember.setEmail(bo.getEmail());
+            existingMember.setStatus(bo.getStatus());
+            return baseMapper.updateById(existingMember) > 0;
+        } else {
+            // 创建新记录
+            Member newMember = MapstructUtils.convert(bo, Member.class);
+            validEntityBeforeSave(newMember);
+            return baseMapper.insert(newMember) > 0;
+        }
+    }
 }

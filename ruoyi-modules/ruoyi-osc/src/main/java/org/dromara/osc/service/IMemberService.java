@@ -66,4 +66,20 @@ public interface IMemberService {
      */
     Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid);
 
+    /**
+     * 根据用户ID查询社区成员信息
+     *
+     * @param userId 用户ID
+     * @return 社区成员信息
+     */
+    MemberVo queryByUserId(Long userId);
+
+    /**
+     * 同步Gitee用户信息
+     *
+     * @param bo 成员信息
+     * @return 是否同步成功
+     */
+    Boolean syncGiteeInfo(MemberBo bo);
+
 }

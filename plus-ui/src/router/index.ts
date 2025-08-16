@@ -100,6 +100,36 @@ export const dynamicRoutes: RouteRecordRaw[] = [
     meta: { title: '系统管理', icon: 'system' },
     children: [
       {
+        path: 'user',
+        component: () => import('@/views/system/user/index.vue'),
+        name: 'User',
+        meta: { title: '用户管理', icon: 'user' }
+      },
+      {
+        path: 'user-test',
+        component: () => import('@/views/system/user/test.vue'),
+        name: 'UserTest',
+        meta: { title: '用户管理测试', icon: 'user' }
+      },
+      {
+        path: 'user-simple',
+        component: () => import('@/views/system/user/simple.vue'),
+        name: 'UserSimple',
+        meta: { title: '用户管理简化版', icon: 'user' }
+      },
+      {
+        path: 'user-diagnostic',
+        component: () => import('@/views/system/user/diagnostic.vue'),
+        name: 'UserDiagnostic',
+        meta: { title: '用户管理诊断', icon: 'user' }
+      },
+      {
+        path: 'gitee-test',
+        component: () => import('@/views/system/user/gitee-test.vue'),
+        name: 'GiteeTest',
+        meta: { title: 'Gitee API测试', icon: 'user' }
+      },
+      {
         path: 'oss',
         component: () => import('@/views/system/oss/index.vue'),
         name: 'Oss',
