@@ -1,105 +1,57 @@
 export interface ProjectMemberVO {
-  /**
-   * ID
-   */
-  id?: string | number;
-
-  /**
-   * 项目ID
-   */
-  projectId: string | number;
-
-  /**
-   * 项目名称
-   */
+  id?: number;
+  projectId?: number;
+  memberId?: number;
+  role?: string;
+  joinTime?: string;
+  permissionLevel?: number;
+  isActive?: string;
+  contributionScore?: number;
+  remark?: string;
   projectName?: string;
-
-  /**
-   * 成员ID
-   */
-  memberId: string | number;
-
-  /**
-   * 成员名称
-   */
+  projectCode?: string;
   memberName?: string;
-
-  /**
-   * 项目角色
-   */
-  role: string;
-
-  /**
-   * 加入时间
-   */
-  joinTime: string;
-
+  memberNickname?: string;
+  memberEmail?: string;
+  memberAvatar?: string;
+  giteeAccount?: string;
+  githubAccount?: string;
+  contributionCount?: number;
+  totalPoints?: number;
+  createDept?: number;
+  createBy?: number;
+  createTime?: string;
+  updateBy?: number;
+  updateTime?: string;
 }
 
-export interface ProjectMemberForm extends BaseEntity {
-  /**
-   * ID
-   */
-  id?: string | number;
-
-  /**
-   * 项目ID
-   */
-  projectId?: string | number;
-
-  /**
-   * 成员ID
-   */
-  memberId?: string | number;
-
-  /**
-   * 项目角色
-   */
+export interface ProjectMemberForm {
+  id?: number;
+  projectId?: number;
+  memberId?: number;
   role?: string;
-
-  /**
-   * 加入时间
-   */
   joinTime?: string;
-
+  permissionLevel?: number;
+  isActive?: string;
+  contributionScore?: number;
+  remark?: string;
 }
 
-export interface ProjectMemberQuery extends PageQuery {
-
-  /**
-   * 项目ID
-   */
-  projectId?: string | number;
-
-  /**
-   * 项目名称
-   */
+export interface ProjectMemberQuery {
+  pageNum?: number;
+  pageSize?: number;
+  projectId?: number;
+  memberId?: number;
   projectName?: string;
-
-  /**
-   * 成员ID
-   */
-  memberId?: string | number;
-
-  /**
-   * 成员名称
-   */
   memberName?: string;
-
-  /**
-   * 项目角色
-   */
   role?: string;
-
-  /**
-   * 加入时间
-   */
+  permissionLevel?: number;
+  isActive?: string;
+  contributionScore?: number;
   joinTime?: string;
-
-    /**
-     * 日期范围参数
-     */
-    params?: any;
+  beginJoinTime?: string;
+  endJoinTime?: string;
+  params?: any;
 }
 
 

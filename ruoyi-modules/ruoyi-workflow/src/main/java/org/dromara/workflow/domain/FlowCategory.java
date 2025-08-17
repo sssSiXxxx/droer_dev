@@ -33,6 +33,11 @@ public class FlowCategory extends BaseEntity {
     private Long categoryId;
 
     /**
+     * 租户编号
+     */
+    private String tenantId;
+
+    /**
      * 父流程分类id
      */
     private Long parentId;

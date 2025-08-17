@@ -167,12 +167,23 @@ CREATE TABLE `os_project_member` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'ID',
   `project_id` bigint NOT NULL COMMENT '项目ID',
   `member_id` bigint NOT NULL COMMENT '成员ID',
-  `role` char(1) DEFAULT '0' COMMENT '角色（0普通成员 1项目负责人 2核心开发者）',
+  `role` char(1) DEFAULT '0' COMMENT '角色（0普通成员 1项目负责人 2核心开发者 3维护者 4贡献者）',
   `join_time` datetime COMMENT '加入时间',
+  `permission_level` int DEFAULT '1' COMMENT '权限级别（1-5，数字越大权限越高）',
+  `is_active` char(1) DEFAULT '1' COMMENT '是否活跃（0非活跃 1活跃）',
+  `contribution_score` int DEFAULT '0' COMMENT '贡献度评分（1-100）',
+  `remark` varchar(500) COMMENT '备注',
+  `create_dept` bigint COMMENT '创建部门',
+  `create_by` bigint COMMENT '创建者',
   `create_time` datetime COMMENT '创建时间',
+  `update_by` bigint COMMENT '更新者',
   `update_time` datetime COMMENT '更新时间',
   PRIMARY KEY (`id`),
-  INDEX `idx_project_member` (`project_id`, `member_id`)
+  UNIQUE KEY `uk_project_member` (`project_id`, `member_id`),
+  INDEX `idx_project_member` (`project_id`, `member_id`),
+  INDEX `idx_member_project` (`member_id`, `project_id`),
+  INDEX `idx_role` (`role`),
+  INDEX `idx_is_active` (`is_active`)
 ) COMMENT='项目成员关联表';
 
 -- 贡献记录表

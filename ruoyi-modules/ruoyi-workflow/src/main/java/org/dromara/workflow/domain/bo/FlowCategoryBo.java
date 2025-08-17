@@ -28,6 +28,11 @@ public class FlowCategoryBo {
     private Long categoryId;
 
     /**
+     * 租户编号
+     */
+    private String tenantId;
+
+    /**
      * 父流程分类id
      */
     @NotNull(message = "父流程分类id不能为空", groups = {AddGroup.class, EditGroup.class})

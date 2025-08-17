@@ -33,6 +33,11 @@ public class FlowCategoryVo implements Serializable {
     private Long categoryId;
 
     /**
+     * 租户编号
+     */
+    private String tenantId;
+
+    /**
      * 父级分类id
      */
     private Long parentId;
