@@ -1,14 +1,10 @@
 package org.dromara.osc.domain.vo;
 
-import io.github.linpeilie.annotations.AutoMapper;
 import lombok.Data;
-import org.dromara.common.translation.annotation.Translation;
-import org.dromara.common.translation.constant.TransConstant;
-import org.dromara.osc.domain.ProjectMember;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * 项目成员关联视图对象 os_project_member
@@ -17,14 +13,13 @@ import java.util.Date;
  * @date 2025-08-17
  */
 @Data
-@AutoMapper(target = ProjectMember.class, reverseConvertGenerate = false)
 public class ProjectMemberVo implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     /**
-     * ID
+     * 主键ID
      */
     private Long id;
 
@@ -34,9 +29,29 @@ public class ProjectMemberVo implements Serializable {
     private Long projectId;
 
     /**
+     * 项目名称
+     */
+    private String projectName;
+
+    /**
+     * 项目代码
+     */
+    private String projectCode;
+
+    /**
      * 成员ID
      */
     private Long memberId;
+
+    /**
+     * 成员名称
+     */
+    private String memberName;
+
+    /**
+     * 成员邮箱
+     */
+    private String memberEmail;
 
     /**
      * 角色
@@ -44,9 +59,9 @@ public class ProjectMemberVo implements Serializable {
     private String role;
 
     /**
-     * 加入时间
+     * 角色名称
      */
-    private Date joinTime;
+    private String roleName;
 
     /**
      * 权限级别
@@ -64,59 +79,13 @@ public class ProjectMemberVo implements Serializable {
     private Integer contributionScore;
 
     /**
+     * 加入时间
+     */
+    private LocalDateTime joinTime;
+
+    /**
      * 备注
      */
     private String remark;
 
-    // 扩展字段，用于前端显示
-    /**
-     * 项目名称
-     */
-    private String projectName;
-
-    /**
-     * 项目代码
-     */
-    private String projectCode;
-
-    /**
-     * 成员名称
-     */
-    private String memberName;
-
-    /**
-     * 成员昵称
-     */
-    private String memberNickname;
-
-    /**
-     * 成员邮箱
-     */
-    private String memberEmail;
-
-    /**
-     * 成员头像
-     */
-    @Translation(type = TransConstant.OSS_ID_TO_URL, mapper = "memberAvatar", other = "")
-    private String memberAvatar;
-
-    /**
-     * Gitee账号
-     */
-    private String giteeAccount;
-
-    /**
-     * GitHub账号
-     */
-    private String githubAccount;
-
-    /**
-     * 贡献记录数
-     */
-    private Integer contributionCount;
-
-    /**
-     * 总贡献点数
-     */
-    private Integer totalPoints;
 }

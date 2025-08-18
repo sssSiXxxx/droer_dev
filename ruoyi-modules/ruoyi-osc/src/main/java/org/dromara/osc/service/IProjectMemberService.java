@@ -7,6 +7,7 @@ import org.dromara.common.mybatis.core.page.PageQuery;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 项目成员关联Service接口
@@ -138,5 +139,21 @@ public interface IProjectMemberService {
      * @param projectId 项目ID
      * @return 统计信息
      */
-    Object getProjectMemberStats(Long projectId);
+    Map<String, Object> getProjectMemberStats(Long projectId);
+
+    /**
+     * 获取项目成员可视化数据
+     *
+     * @param projectId 项目ID
+     * @return 可视化数据
+     */
+    Map<String, Object> getProjectMemberVisualization(Long projectId);
+
+    /**
+     * 获取成员参与的项目数量统计
+     *
+     * @param memberId 成员ID
+     * @return 统计信息
+     */
+    Map<String, Object> getMemberProjectStats(Long memberId);
 }

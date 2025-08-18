@@ -1,13 +1,17 @@
 package org.dromara.osc.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import lombok.RequiredArgsConstructor;
 import org.dromara.common.core.utils.MapstructUtils;
 import org.dromara.common.core.utils.StringUtils;
 import org.dromara.common.mybatis.core.page.TableDataInfo;
 import org.dromara.common.mybatis.core.page.PageQuery;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.dromara.osc.domain.bo.ProjectMemberBo;
 import org.dromara.osc.domain.vo.ProjectMemberVo;
@@ -15,13 +19,12 @@ import org.dromara.osc.domain.ProjectMember;
 import org.dromara.osc.mapper.ProjectMemberMapper;
 import org.dromara.osc.service.IProjectMemberService;
 
-
+import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * 项目成员关联Service业务层处理
@@ -44,11 +47,17 @@ public class ProjectMemberServiceImpl implements IProjectMemberService {
     }
 
     /**
-     * 查询项目成员关联列表
+     * 分页查询项目成员关联列表
      */
     @Override
     public TableDataInfo<ProjectMemberVo> queryPageList(ProjectMemberBo bo, PageQuery pageQuery) {
-        LambdaQueryWrapper<ProjectMember> lqw = buildQueryWrapper(bo);
+        LambdaQueryWrapper<ProjectMember> lqw = Wrappers.lambdaQuery(ProjectMember.class);
+        lqw.eq(bo.getProjectId() != null, ProjectMember::getProjectId, bo.getProjectId());
+        lqw.eq(bo.getMemberId() != null, ProjectMember::getMemberId, bo.getMemberId());
+        lqw.eq(StringUtils.isNotBlank(bo.getRole()), ProjectMember::getRole, bo.getRole());
+        lqw.eq(StringUtils.isNotBlank(bo.getIsActive()), ProjectMember::getIsActive, bo.getIsActive());
+        lqw.orderByDesc(ProjectMember::getCreateTime);
+
         Page<ProjectMemberVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
         return TableDataInfo.build(result);
     }
@@ -58,22 +67,14 @@ public class ProjectMemberServiceImpl implements IProjectMemberService {
      */
     @Override
     public List<ProjectMemberVo> queryList(ProjectMemberBo bo) {
-        LambdaQueryWrapper<ProjectMember> lqw = buildQueryWrapper(bo);
-        return baseMapper.selectVoList(lqw);
-    }
-
-    private LambdaQueryWrapper<ProjectMember> buildQueryWrapper(ProjectMemberBo bo) {
-        Map<String, Object> params = bo.getParams();
-        LambdaQueryWrapper<ProjectMember> lqw = Wrappers.lambdaQuery();
+        LambdaQueryWrapper<ProjectMember> lqw = Wrappers.lambdaQuery(ProjectMember.class);
         lqw.eq(bo.getProjectId() != null, ProjectMember::getProjectId, bo.getProjectId());
         lqw.eq(bo.getMemberId() != null, ProjectMember::getMemberId, bo.getMemberId());
         lqw.eq(StringUtils.isNotBlank(bo.getRole()), ProjectMember::getRole, bo.getRole());
-        lqw.eq(bo.getPermissionLevel() != null, ProjectMember::getPermissionLevel, bo.getPermissionLevel());
         lqw.eq(StringUtils.isNotBlank(bo.getIsActive()), ProjectMember::getIsActive, bo.getIsActive());
-        lqw.eq(bo.getContributionScore() != null, ProjectMember::getContributionScore, bo.getContributionScore());
-        lqw.between(params.get("beginJoinTime") != null && params.get("endJoinTime") != null,
-            ProjectMember::getJoinTime, params.get("beginJoinTime"), params.get("endJoinTime"));
-        return lqw;
+        lqw.orderByDesc(ProjectMember::getCreateTime);
+
+        return baseMapper.selectVoList(lqw);
     }
 
     /**
@@ -104,14 +105,25 @@ public class ProjectMemberServiceImpl implements IProjectMemberService {
      * 保存前的数据校验
      */
     private void validEntityBeforeSave(ProjectMember entity) {
+        // 检查项目成员关联是否已存在
+        QueryWrapper<ProjectMember> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("project_id", entity.getProjectId());
+        queryWrapper.eq("member_id", entity.getMemberId());
+        if (entity.getId() != null) {
+            queryWrapper.ne("id", entity.getId());
+        }
+        if (baseMapper.selectCount(queryWrapper) > 0) {
+            throw new RuntimeException("该成员已在此项目中存在");
+        }
+
         // 设置默认值
         if (entity.getJoinTime() == null) {
-            entity.setJoinTime(new Date());
+            entity.setJoinTime(LocalDateTime.now());
         }
         if (entity.getPermissionLevel() == null) {
-            entity.setPermissionLevel(1);
+            entity.setPermissionLevel(getDefaultPermissionLevel(entity.getRole()));
         }
-        if (StringUtils.isBlank(entity.getIsActive())) {
+        if (entity.getIsActive() == null) {
             entity.setIsActive("1");
         }
         if (entity.getContributionScore() == null) {
@@ -120,26 +132,24 @@ public class ProjectMemberServiceImpl implements IProjectMemberService {
     }
 
     /**
-     * 批量删除项目成员关联
+     * 批量删除项目成员关联信息
      */
     @Override
     public Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid) {
         if (isValid) {
-            // 做一些业务上的校验,判断是否需要校验
+            // 这里可以添加业务校验逻辑
         }
         return baseMapper.deleteBatchIds(ids) > 0;
     }
-
-
 
     /**
      * 根据项目ID查询项目成员列表
      */
     @Override
     public List<ProjectMemberVo> queryByProjectId(Long projectId) {
-        LambdaQueryWrapper<ProjectMember> lqw = Wrappers.lambdaQuery();
+        LambdaQueryWrapper<ProjectMember> lqw = Wrappers.lambdaQuery(ProjectMember.class);
         lqw.eq(ProjectMember::getProjectId, projectId);
-        lqw.orderByDesc(ProjectMember::getJoinTime);
+        lqw.orderByDesc(ProjectMember::getCreateTime);
         return baseMapper.selectVoList(lqw);
     }
 
@@ -148,9 +158,9 @@ public class ProjectMemberServiceImpl implements IProjectMemberService {
      */
     @Override
     public List<ProjectMemberVo> queryByMemberId(Long memberId) {
-        LambdaQueryWrapper<ProjectMember> lqw = Wrappers.lambdaQuery();
+        LambdaQueryWrapper<ProjectMember> lqw = Wrappers.lambdaQuery(ProjectMember.class);
         lqw.eq(ProjectMember::getMemberId, memberId);
-        lqw.orderByDesc(ProjectMember::getJoinTime);
+        lqw.orderByDesc(ProjectMember::getCreateTime);
         return baseMapper.selectVoList(lqw);
     }
 
@@ -159,31 +169,28 @@ public class ProjectMemberServiceImpl implements IProjectMemberService {
      */
     @Override
     public Boolean batchAddMembers(Long projectId, List<Long> memberIds, String role) {
+        if (CollUtil.isEmpty(memberIds)) {
+            return false;
+        }
+
         List<ProjectMember> members = new ArrayList<>();
-        Date now = new Date();
+        LocalDateTime now = LocalDateTime.now();
 
         for (Long memberId : memberIds) {
-            // 检查是否已存在
-            LambdaQueryWrapper<ProjectMember> lqw = Wrappers.lambdaQuery();
-            lqw.eq(ProjectMember::getProjectId, projectId);
-            lqw.eq(ProjectMember::getMemberId, memberId);
-            if (baseMapper.selectCount(lqw) > 0) {
-                continue; // 跳过已存在的成员
-            }
-
             ProjectMember member = new ProjectMember();
             member.setProjectId(projectId);
             member.setMemberId(memberId);
             member.setRole(role);
-            member.setJoinTime(now);
             member.setPermissionLevel(getDefaultPermissionLevel(role));
             member.setIsActive("1");
             member.setContributionScore(0);
+            member.setJoinTime(now);
             members.add(member);
         }
 
-        if (!members.isEmpty()) {
-            return baseMapper.insertBatch(members);
+        // 批量插入
+        for (ProjectMember member : members) {
+            baseMapper.insert(member);
         }
         return true;
     }
@@ -193,7 +200,7 @@ public class ProjectMemberServiceImpl implements IProjectMemberService {
      */
     @Override
     public Boolean removeMember(Long projectId, Long memberId) {
-        LambdaQueryWrapper<ProjectMember> lqw = Wrappers.lambdaQuery();
+        LambdaQueryWrapper<ProjectMember> lqw = Wrappers.lambdaQuery(ProjectMember.class);
         lqw.eq(ProjectMember::getProjectId, projectId);
         lqw.eq(ProjectMember::getMemberId, memberId);
         return baseMapper.delete(lqw) > 0;
@@ -204,14 +211,14 @@ public class ProjectMemberServiceImpl implements IProjectMemberService {
      */
     @Override
     public Boolean updateMemberRole(Long projectId, Long memberId, String role) {
-        LambdaQueryWrapper<ProjectMember> lqw = Wrappers.lambdaQuery();
+        LambdaQueryWrapper<ProjectMember> lqw = Wrappers.lambdaQuery(ProjectMember.class);
         lqw.eq(ProjectMember::getProjectId, projectId);
         lqw.eq(ProjectMember::getMemberId, memberId);
-
+        
         ProjectMember update = new ProjectMember();
         update.setRole(role);
         update.setPermissionLevel(getDefaultPermissionLevel(role));
-
+        
         return baseMapper.update(update, lqw) > 0;
     }
 
@@ -220,13 +227,13 @@ public class ProjectMemberServiceImpl implements IProjectMemberService {
      */
     @Override
     public Boolean updateMemberActiveStatus(Long projectId, Long memberId, String isActive) {
-        LambdaQueryWrapper<ProjectMember> lqw = Wrappers.lambdaQuery();
+        LambdaQueryWrapper<ProjectMember> lqw = Wrappers.lambdaQuery(ProjectMember.class);
         lqw.eq(ProjectMember::getProjectId, projectId);
         lqw.eq(ProjectMember::getMemberId, memberId);
-
+        
         ProjectMember update = new ProjectMember();
         update.setIsActive(isActive);
-
+        
         return baseMapper.update(update, lqw) > 0;
     }
 
@@ -236,37 +243,97 @@ public class ProjectMemberServiceImpl implements IProjectMemberService {
     @Override
     public Integer calculateContributionScore(Long projectId, Long memberId) {
         // 这里可以实现复杂的贡献度计算逻辑
-        // 基于贡献记录、代码提交、问题修复等
-        return 50; // 默认返回50分
+        // 暂时返回一个简单的评分
+        return 75;
     }
 
     /**
      * 获取项目成员统计信息
      */
     @Override
-    public Object getProjectMemberStats(Long projectId) {
+    public Map<String, Object> getProjectMemberStats(Long projectId) {
         Map<String, Object> stats = new HashMap<>();
-
-        // 总成员数
-        LambdaQueryWrapper<ProjectMember> totalLqw = Wrappers.lambdaQuery();
-        totalLqw.eq(ProjectMember::getProjectId, projectId);
-        stats.put("totalMembers", baseMapper.selectCount(totalLqw));
-
-        // 活跃成员数
-        LambdaQueryWrapper<ProjectMember> activeLqw = Wrappers.lambdaQuery();
-        activeLqw.eq(ProjectMember::getProjectId, projectId);
-        activeLqw.eq(ProjectMember::getIsActive, "1");
-        stats.put("activeMembers", baseMapper.selectCount(activeLqw));
-
+        
+        // 查询项目成员总数
+        LambdaQueryWrapper<ProjectMember> lqw = Wrappers.lambdaQuery(ProjectMember.class);
+        lqw.eq(ProjectMember::getProjectId, projectId);
+        long totalMembers = baseMapper.selectCount(lqw);
+        
+        // 查询活跃成员数
+        lqw.eq(ProjectMember::getIsActive, "1");
+        long activeMembers = baseMapper.selectCount(lqw);
+        
         // 按角色统计
         List<ProjectMemberVo> members = queryByProjectId(projectId);
-        Map<String, Long> roleStats = members.stream()
-            .collect(java.util.stream.Collectors.groupingBy(
-                ProjectMemberVo::getRole,
-                java.util.stream.Collectors.counting()
-            ));
+        Map<String, Long> roleStats = new HashMap<>();
+        for (ProjectMemberVo member : members) {
+            String role = member.getRole();
+            roleStats.put(role, roleStats.getOrDefault(role, 0L) + 1);
+        }
+        
+        stats.put("totalMembers", totalMembers);
+        stats.put("activeMembers", activeMembers);
         stats.put("roleStats", roleStats);
+        
+        return stats;
+    }
 
+    /**
+     * 获取项目成员可视化数据
+     */
+    @Override
+    public Map<String, Object> getProjectMemberVisualization(Long projectId) {
+        Map<String, Object> visualization = new HashMap<>();
+        
+        List<ProjectMemberVo> members = queryByProjectId(projectId);
+        
+        // 角色分布数据
+        Map<String, Long> roleDistribution = new HashMap<>();
+        for (ProjectMemberVo member : members) {
+            String role = member.getRole();
+            roleDistribution.put(role, roleDistribution.getOrDefault(role, 0L) + 1);
+        }
+        
+        // 活跃度数据
+        long activeCount = members.stream()
+            .filter(member -> "1".equals(member.getIsActive()))
+            .count();
+        
+        visualization.put("roleDistribution", roleDistribution);
+        visualization.put("activeCount", activeCount);
+        visualization.put("totalCount", members.size());
+        
+        return visualization;
+    }
+
+    /**
+     * 获取成员参与的项目数量统计
+     */
+    @Override
+    public Map<String, Object> getMemberProjectStats(Long memberId) {
+        Map<String, Object> stats = new HashMap<>();
+        
+        List<ProjectMemberVo> projects = queryByMemberId(memberId);
+        
+        // 参与项目总数
+        long totalProjects = projects.size();
+        
+        // 活跃项目数（成员状态为活跃的项目）
+        long activeProjects = projects.stream()
+            .filter(project -> "1".equals(project.getIsActive()))
+            .count();
+        
+        // 角色分布
+        Map<String, Long> roleDistribution = new HashMap<>();
+        for (ProjectMemberVo project : projects) {
+            String role = project.getRole();
+            roleDistribution.put(role, roleDistribution.getOrDefault(role, 0L) + 1);
+        }
+        
+        stats.put("totalProjects", totalProjects);
+        stats.put("activeProjects", activeProjects);
+        stats.put("roleDistribution", roleDistribution);
+        
         return stats;
     }
 
@@ -275,16 +342,12 @@ public class ProjectMemberServiceImpl implements IProjectMemberService {
      */
     private Integer getDefaultPermissionLevel(String role) {
         switch (role) {
-            case "1": // 项目负责人
-                return 5;
-            case "2": // 核心开发者
-                return 4;
-            case "3": // 维护者
-                return 3;
-            case "4": // 贡献者
-                return 2;
-            default: // 普通成员
-                return 1;
+            case "0": return 5; // 项目负责人
+            case "1": return 4; // 开发负责人
+            case "2": return 3; // 开发人员
+            case "3": return 2; // 测试人员
+            case "4": return 1; // 观察者
+            default: return 1;
         }
     }
 }

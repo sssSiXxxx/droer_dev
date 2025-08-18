@@ -330,7 +330,10 @@ const upload = ref({
   isUploading: false,
   // 设置上传的请求头部
   get headers() {
-    return { Authorization: 'Bearer ' + getToken() };
+    return { 
+      Authorization: 'Bearer ' + getToken(),
+      clientid: import.meta.env.VITE_APP_CLIENT_ID
+    };
   },
   // 上传的地址
   url: import.meta.env.VITE_APP_BASE_API + '/resource/oss/upload',

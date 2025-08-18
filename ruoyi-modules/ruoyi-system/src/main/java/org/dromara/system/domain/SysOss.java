@@ -23,6 +23,21 @@ public class SysOss extends BaseEntity {
     private Long ossId;
 
     /**
+     * 租户ID
+     */
+    private Long tenantId;
+
+    /**
+     * 所属项目ID
+     */
+    private Long projectId;
+
+    /**
+     * 分类ID
+     */
+    private Long categoryId;
+
+    /**
      * 文件名
      */
     private String fileName;
@@ -56,16 +71,6 @@ public class SysOss extends BaseEntity {
      * 文件大小（字节）
      */
     private Long size;
-
-    /**
-     * 所属项目ID
-     */
-    private Long projectId;
-
-    /**
-     * 所属项目名称（非数据库字段）
-     */
-    private String projectName;
 
     /**
      * 文档类型（logo: Logo图片, requirement: 需求文档, help: 帮助文档, design: 设计文档, api: 接口文档, other: 其他文档）

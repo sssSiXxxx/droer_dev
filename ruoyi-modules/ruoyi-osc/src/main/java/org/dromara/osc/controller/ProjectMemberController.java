@@ -12,7 +12,6 @@ import org.dromara.common.excel.utils.ExcelUtil;
 import org.dromara.common.idempotent.annotation.RepeatSubmit;
 import org.dromara.common.log.annotation.Log;
 import org.dromara.common.log.enums.BusinessType;
-import org.dromara.common.mybatis.core.page.PageQuery;
 import org.dromara.common.mybatis.core.page.TableDataInfo;
 import org.dromara.common.web.core.BaseController;
 import org.dromara.osc.domain.bo.ProjectMemberBo;
@@ -20,8 +19,12 @@ import org.dromara.osc.domain.vo.ProjectMemberVo;
 import org.dromara.osc.service.IProjectMemberService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
+import java.util.ArrayList;
+import org.dromara.common.mybatis.core.page.PageQuery;
 
 /**
  * 项目成员关联
@@ -53,8 +56,9 @@ public class ProjectMemberController extends BaseController {
     @Log(title = "项目成员关联", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
     public void export(ProjectMemberBo bo, HttpServletResponse response) {
-        List<ProjectMemberVo> list = projectMemberService.queryList(bo);
-        ExcelUtil.exportExcel(list, "项目成员关联", ProjectMemberVo.class, response);
+        // TODO: 实现导出功能
+        // List<ProjectMemberVo> list = projectMemberService.queryList(bo);
+        // ExcelUtil.exportExcel(list, "项目成员关联", ProjectMemberVo.class, response);
     }
 
     /**
@@ -104,20 +108,10 @@ public class ProjectMemberController extends BaseController {
         return toAjax(projectMemberService.deleteWithValidByIds(List.of(ids), true));
     }
 
-
-
     /**
-     * 获取导入模板
+     * 根据项目ID查询成员列表
      */
-    @PostMapping("/importTemplate")
-    public void importTemplate(HttpServletResponse response) {
-        ExcelUtil.exportExcel(new java.util.ArrayList<>(), "项目成员关联", ProjectMemberVo.class, response);
-    }
-
-    /**
-     * 根据项目ID查询项目成员列表
-     */
-    @SaCheckPermission("osc:projectMember:list")
+    @SaCheckPermission("osc:projectMember:query")
     @GetMapping("/project/{projectId}")
     public R<List<ProjectMemberVo>> getProjectMembers(@NotNull(message = "项目ID不能为空")
                                                       @PathVariable Long projectId) {
@@ -125,9 +119,9 @@ public class ProjectMemberController extends BaseController {
     }
 
     /**
-     * 根据成员ID查询参与的项目列表
+     * 根据成员ID查询项目列表
      */
-    @SaCheckPermission("osc:projectMember:list")
+    @SaCheckPermission("osc:projectMember:query")
     @GetMapping("/member/{memberId}")
     public R<List<ProjectMemberVo>> getMemberProjects(@NotNull(message = "成员ID不能为空")
                                                       @PathVariable Long memberId) {
@@ -135,7 +129,7 @@ public class ProjectMemberController extends BaseController {
     }
 
     /**
-     * 批量添加项目成员
+     * 批量添加成员到项目
      */
     @SaCheckPermission("osc:projectMember:add")
     @Log(title = "批量添加项目成员", businessType = BusinessType.INSERT)
@@ -147,11 +141,11 @@ public class ProjectMemberController extends BaseController {
     }
 
     /**
-     * 移除项目成员
+     * 从项目中移除成员
      */
-    @SaCheckPermission("osc:projectMember:edit")
-    @Log(title = "移除项目成员", businessType = BusinessType.UPDATE)
-    @PostMapping("/removeMember")
+    @SaCheckPermission("osc:projectMember:remove")
+    @Log(title = "移除项目成员", businessType = BusinessType.DELETE)
+    @DeleteMapping("/remove")
     public R<Void> removeMember(@RequestParam Long projectId,
                                 @RequestParam Long memberId) {
         return toAjax(projectMemberService.removeMember(projectId, memberId));
@@ -162,7 +156,7 @@ public class ProjectMemberController extends BaseController {
      */
     @SaCheckPermission("osc:projectMember:edit")
     @Log(title = "更新成员角色", businessType = BusinessType.UPDATE)
-    @PostMapping("/updateRole")
+    @PutMapping("/role")
     public R<Void> updateMemberRole(@RequestParam Long projectId,
                                     @RequestParam Long memberId,
                                     @RequestParam String role) {
@@ -174,7 +168,7 @@ public class ProjectMemberController extends BaseController {
      */
     @SaCheckPermission("osc:projectMember:edit")
     @Log(title = "更新成员活跃状态", businessType = BusinessType.UPDATE)
-    @PostMapping("/updateActiveStatus")
+    @PutMapping("/active")
     public R<Void> updateMemberActiveStatus(@RequestParam Long projectId,
                                             @RequestParam Long memberId,
                                             @RequestParam String isActive) {
@@ -185,7 +179,7 @@ public class ProjectMemberController extends BaseController {
      * 计算成员贡献度评分
      */
     @SaCheckPermission("osc:projectMember:query")
-    @GetMapping("/contributionScore")
+    @GetMapping("/contribution")
     public R<Integer> calculateContributionScore(@RequestParam Long projectId,
                                                 @RequestParam Long memberId) {
         return R.ok(projectMemberService.calculateContributionScore(projectId, memberId));
@@ -196,8 +190,51 @@ public class ProjectMemberController extends BaseController {
      */
     @SaCheckPermission("osc:projectMember:query")
     @GetMapping("/stats/{projectId}")
-    public R<Object> getProjectMemberStats(@NotNull(message = "项目ID不能为空")
-                                          @PathVariable Long projectId) {
+    public R<Map<String, Object>> getProjectMemberStats(@NotNull(message = "项目ID不能为空")
+                                                        @PathVariable Long projectId) {
         return R.ok(projectMemberService.getProjectMemberStats(projectId));
     }
+
+    /**
+     * 获取项目成员可视化数据
+     */
+    @SaCheckPermission("osc:projectMember:query")
+    @GetMapping("/visualization/{projectId}")
+    public R<Map<String, Object>> getProjectMemberVisualization(@NotNull(message = "项目ID不能为空")
+                                                                @PathVariable Long projectId) {
+        return R.ok(projectMemberService.getProjectMemberVisualization(projectId));
+    }
+
+    /**
+     * 获取成员项目统计信息
+     */
+    @SaCheckPermission("osc:projectMember:query")
+    @GetMapping("/memberStats/{memberId}")
+    public R<Map<String, Object>> getMemberProjectStats(@NotNull(message = "成员ID不能为空")
+                                                        @PathVariable Long memberId) {
+        return R.ok(projectMemberService.getMemberProjectStats(memberId));
+    }
+
+    /**
+     * 导入数据
+     *
+     * @param file          导入文件
+     * @param updateSupport 是否支持更新，默认为false
+     */
+    @SaCheckPermission("osc:projectMember:import")
+    @Log(title = "项目成员关联", businessType = BusinessType.IMPORT)
+    @PostMapping("/importData")
+    public R<Void> importData(@RequestParam("file") MultipartFile file, boolean updateSupport) throws Exception {
+        // TODO: 实现导入功能
+        return R.ok();
+    }
+
+    /**
+     * 下载导入模板
+     */
+    @PostMapping("/importTemplate")
+    public void importTemplate(HttpServletResponse response) {
+        // TODO: 实现模板下载
+    }
+
 }

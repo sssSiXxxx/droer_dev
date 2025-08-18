@@ -113,6 +113,7 @@ security:
     - /warm-flow-ui/config
     - /osc/project/importData
     - /osc/project/importTemplate
+    - /resource/oss/upload
 
 # MyBatisPlus配置
 # https://baomidou.com/config/

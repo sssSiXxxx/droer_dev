@@ -1,6 +1,8 @@
 package org.dromara.system.domain.vo;
 
+import io.github.linpeilie.annotations.AutoMapper;
 import lombok.Data;
+import org.dromara.system.domain.SysOss;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -12,6 +14,7 @@ import java.util.Date;
  * @author lmq
  */
 @Data
+@AutoMapper(target = SysOss.class)
 public class SysOssVo implements Serializable {
 
     @Serial
@@ -21,6 +24,21 @@ public class SysOssVo implements Serializable {
      * 对象存储主键
      */
     private Long ossId;
+
+    /**
+     * 租户ID
+     */
+    private Long tenantId;
+
+    /**
+     * 所属项目ID
+     */
+    private Long projectId;
+
+    /**
+     * 分类ID
+     */
+    private Long categoryId;
 
     /**
      * 文件名
@@ -43,6 +61,11 @@ public class SysOssVo implements Serializable {
     private String url;
 
     /**
+     * 扩展字段
+     */
+    private String ext1;
+
+    /**
      * 服务商
      */
     private String service;
@@ -53,19 +76,14 @@ public class SysOssVo implements Serializable {
     private Long size;
 
     /**
-     * 所属项目ID
-     */
-    private Long projectId;
-
-    /**
-     * 所属项目名称
-     */
-    private String projectName;
-
-    /**
      * 文档类型（logo: Logo图片, requirement: 需求文档, help: 帮助文档, design: 设计文档, api: 接口文档, other: 其他文档）
      */
     private String fileType;
+
+    /**
+     * 创建部门
+     */
+    private Long createDept;
 
     /**
      * 创建者

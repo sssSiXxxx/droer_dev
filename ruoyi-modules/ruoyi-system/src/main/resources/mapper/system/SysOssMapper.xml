@@ -4,38 +4,43 @@
 
     <resultMap type="org.dromara.system.domain.SysOss" id="SysOssResult">
         <id property="ossId" column="oss_id"/>
+        <result property="tenantId" column="tenant_id"/>
+        <result property="projectId" column="project_id"/>
+        <result property="categoryId" column="category_id"/>
         <result property="fileName" column="file_name"/>
         <result property="originalName" column="original_name"/>
         <result property="fileSuffix" column="file_suffix"/>
         <result property="url" column="url"/>
+        <result property="ext1" column="ext1"/>
+        <result property="createDept" column="create_dept"/>
+        <result property="createTime" column="create_time"/>
+        <result property="createBy" column="create_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="updateBy" column="update_by"/>
         <result property="service" column="service"/>
         <result property="size" column="size"/>
-        <result property="projectId" column="project_id"/>
-        <result property="projectName" column="project_name"/>
         <result property="fileType" column="file_type"/>
-        <result property="createBy" column="create_by"/>
-        <result property="createTime" column="create_time"/>
-        <result property="updateBy" column="update_by"/>
-        <result property="updateTime" column="update_time"/>
     </resultMap>
 
     <sql id="selectOssVo">
         SELECT o.oss_id,
+               o.tenant_id,
+               o.project_id,
+               o.category_id,
                o.file_name,
                o.original_name,
                o.file_suffix,
                o.url,
+               o.ext1,
+               o.create_dept,
+               o.create_time,
+               o.create_by,
+               o.update_time,
+               o.update_by,
                o.service,
                o.size,
-               o.project_id,
-               p.project_name,
-               o.file_type,
-               o.create_by,
-               o.create_time,
-               o.update_by,
-               o.update_time
+               o.file_type
         FROM sys_oss o
-        LEFT JOIN os_project p ON o.project_id = p.project_id
     </sql>
 
     <select id="selectOssList" parameterType="org.dromara.system.domain.SysOss" resultMap="SysOssResult">

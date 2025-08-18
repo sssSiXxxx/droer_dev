@@ -140,8 +140,11 @@
         </el-table-column>
 
         <!-- 操作 -->
-        <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="100">
+        <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="150">
           <template #default="scope">
+            <el-tooltip content="查看详情" placement="top">
+              <el-button link type="primary" icon="View" @click="handleViewDetail(scope.row)"></el-button>
+            </el-tooltip>
             <el-tooltip content="修改" placement="top">
               <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['osc:project:edit']"></el-button>
             </el-tooltip>
@@ -639,6 +642,11 @@ const submitForm = () => {
       await getList();
     }
   });
+};
+
+/** 查看详情按钮操作 */
+const handleViewDetail = (row: ProjectVO) => {
+  router.push(`/osc/project/detail/${row.projectId}`);
 };
 
 /** 删除按钮操作 */
