@@ -9,11 +9,13 @@
             placeholder="请选择项目" 
             clearable 
             filterable
+            remote
+            :remote-method="handleProjectSearch"
             style="width: 240px" 
             @change="handleQuery"
           >
             <el-option 
-              v-for="item in projectOptions" 
+              v-for="item in filteredProjectOptions" 
               :key="item.projectId" 
               :label="item.projectName" 
               :value="item.projectId"
@@ -98,7 +100,27 @@
               <!-- 文件预览 -->
               <div class="file-preview">
                 <template v-if="isImage(item.fileName)">
-                  <el-image :src="item.url" fit="cover" :preview-src-list="[item.url]" />
+                  <el-image 
+                    :src="item.url" 
+                    fit="cover" 
+                    :preview-src-list="[item.url]"
+                    :initial-index="0"
+                    @error="handleImageError"
+                    @load="handleImageLoad"
+                  >
+                    <template #error>
+                      <div class="image-error">
+                        <el-icon :size="40"><Picture /></el-icon>
+                        <span>图片加载失败</span>
+                      </div>
+                    </template>
+                    <template #placeholder>
+                      <div class="image-loading">
+                        <el-icon :size="40" class="is-loading"><Loading /></el-icon>
+                        <span>加载中...</span>
+                      </div>
+                    </template>
+                  </el-image>
                 </template>
                 <template v-else>
                   <div class="file-icon">
@@ -114,7 +136,10 @@
               <!-- 文件信息 -->
               <div class="file-info">
                 <div class="file-name" :title="item.fileName">
-                  {{ item.fileName }}
+                  {{ getDisplayFileName(item) }}
+                </div>
+                <div class="file-project" v-if="item.projectName">
+                  <el-tag size="small" type="info">{{ item.projectName }}</el-tag>
                 </div>
                 <div class="file-meta">
                   <span>{{ formatSize(item.size) }}</span>
@@ -137,7 +162,7 @@
       <template v-else>
         <el-table v-loading="loading" :data="fileList" @selection-change="handleSelectionChange">
           <el-table-column type="selection" width="55" align="center" />
-          <el-table-column label="文件名" align="left" prop="fileName" min-width="200">
+          <el-table-column label="文件名" align="center" prop="fileName" min-width="200">
             <template #default="{ row }">
               <div class="file-name-cell">
                 <el-icon :size="20" class="mr-2">
@@ -146,11 +171,16 @@
                   <Headset v-else-if="isAudio(row.fileName)" />
                   <Files v-else />
                 </el-icon>
-                <span>{{ row.fileName }}</span>
+                <span :title="row.fileName">{{ getDisplayFileName(row) }}</span>
               </div>
             </template>
           </el-table-column>
-          <el-table-column label="所属项目" align="center" prop="projectName" min-width="120" />
+          <el-table-column label="所属项目" align="center" prop="projectName" min-width="120">
+            <template #default="{ row }">
+              <span v-if="row.projectName">{{ row.projectName }}</span>
+              <span v-else class="text-muted">未分配项目</span>
+            </template>
+          </el-table-column>
           <el-table-column label="文档类型" align="center" prop="fileType" min-width="100">
             <template #default="{ row }">
               <dict-tag :options="fileTypeOptions" :value="row.fileType" />
@@ -188,9 +218,10 @@
             style="width: 100%"
             filterable
             clearable
+            remote
+            :remote-method="handleProjectSearch"
             :loading="projectSearchLoading"
             @change="handleProjectChange"
-            @filter-change="handleProjectFilterChange"
           >
             <el-option 
               v-for="item in filteredProjectOptions" 
@@ -264,8 +295,21 @@ import { getToken } from '@/utils/auth';
 import { listProjectForOss } from '@/api/osc/project';
 import { parseTime } from '@/utils/ruoyi';
 import { getCurrentInstance, ref, onMounted, ComponentInternalInstance } from 'vue';
-import { Document, Grid, List, Upload, UploadFilled, VideoPlay, Headset, Files } from '@element-plus/icons-vue';
+import { Document, Grid, List, Upload, UploadFilled, VideoPlay, Headset, Files, Picture, Loading } from '@element-plus/icons-vue';
 import router from '@/router';
+
+// 防抖函数
+const debounce = (func: Function, wait: number) => {
+  let timeout: NodeJS.Timeout;
+  return function executedFunction(...args: any[]) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+};
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 
@@ -442,27 +486,29 @@ const loadProjects = async () => {
   }
 };
 
-/** 项目搜索处理 */
-const handleProjectSearch = async (query: string) => {
+/** 项目搜索处理（防抖优化） */
+const handleProjectSearch = debounce(async (query: string) => {
   if (query !== '') {
     projectSearchLoading.value = true;
     try {
+      // 如果项目列表为空，先加载所有项目
+      if (projectOptions.value.length === 0) {
+        await loadProjects();
+      }
+      
       // 本地过滤项目
-      const filtered = projectOptions.value.filter((item: any) => 
-        item.projectName?.toLowerCase().includes(query.toLowerCase()) ||
-        item.description?.toLowerCase().includes(query.toLowerCase()) ||
-        item.projectCode?.toLowerCase().includes(query.toLowerCase())
+      filteredProjectOptions.value = projectOptions.value.filter(item => 
+        item.projectName.toLowerCase().includes(query.toLowerCase()) ||
+        (item.description && item.description.toLowerCase().includes(query.toLowerCase()))
       );
-      filteredProjectOptions.value = filtered;
-    } catch (error) {
-      console.error('项目搜索失败:', error);
     } finally {
       projectSearchLoading.value = false;
     }
   } else {
-    filteredProjectOptions.value = projectOptions.value;
+    // 如果搜索词为空，显示所有项目
+    filteredProjectOptions.value = [...projectOptions.value];
   }
-};
+}, 300);
 
 /** 项目过滤变化处理 */
 const handleProjectFilterChange = (query: string) => {
@@ -487,8 +533,9 @@ const handleProjectFilterChange = (query: string) => {
 };
 
 /** 项目选择变化处理 */
-const handleProjectChange = (value: any) => {
-  console.log('选择的项目ID:', value);
+const handleProjectChange = (projectId: number) => {
+  console.log('选择的项目ID:', projectId);
+  // 可以在这里添加其他逻辑
 };
 
 /** 跳转到项目管理页面 */
@@ -632,17 +679,52 @@ const isAudio = (fileName: string) => {
   return /\.(mp3|wav|ogg|m4a)$/i.test(fileName);
 };
 
-/** 文件大小格式化 */
-const formatSize = (size: number) => {
-  if (size < 1024) {
-    return size + ' B';
-  } else if (size < 1024 * 1024) {
-    return (size / 1024).toFixed(2) + ' KB';
-  } else if (size < 1024 * 1024 * 1024) {
-    return (size / (1024 * 1024)).toFixed(2) + ' MB';
-  } else {
-    return (size / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+/** 获取显示的文件名 */
+const getDisplayFileName = (item: any) => {
+  // 生成格式：项目名_文件类型
+  const projectName = item.projectName || '未分配项目';
+  const fileTypeLabel = getFileTypeLabel(item.fileType);
+  
+  return `${projectName}_${fileTypeLabel}`;
+};
+
+/** 获取文件类型的中文标签 */
+const getFileTypeLabel = (fileType: string) => {
+  switch (fileType) {
+    case 'logo': return 'Logo';
+    case 'requirement': return '需求文档';
+    case 'help': return '帮助文档';
+    case 'design': return '设计文档';
+    case 'api': return '接口文档';
+    case 'other': return '其他文档';
+    default: return '文档';
   }
+};
+
+/** 格式化文件大小 */
+const formatSize = (size: number | null | undefined) => {
+  if (!size || size === 0) return '0 B';
+  
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let index = 0;
+  let fileSize = size;
+  
+  while (fileSize >= 1024 && index < units.length - 1) {
+    fileSize /= 1024;
+    index++;
+  }
+  
+  return `${fileSize.toFixed(1)} ${units[index]}`;
+};
+
+/** 图片加载失败处理 */
+const handleImageError = (e: any) => {
+  console.error('图片加载失败:', e);
+};
+
+/** 图片加载成功处理 */
+const handleImageLoad = (e: any) => {
+  console.log('图片加载成功:', e);
 };
 
 onMounted(() => {
@@ -685,13 +767,44 @@ onMounted(() => {
   gap: 12px;
 }
 
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .file-card {
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  overflow: hidden;
+  height: 280px;
+  display: flex;
+  flex-direction: column;
+  animation: fadeIn 0.5s ease-out;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  }
 
   &.selected {
-    border-color: var(--el-color-primary);
-    box-shadow: 0 0 0 1px var(--el-color-primary);
+    border: 2px solid var(--el-color-primary);
+    box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
   }
 
   .file-preview {
@@ -699,11 +812,14 @@ onMounted(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--el-fill-color-lighter);
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    position: relative;
+    overflow: hidden;
 
     .el-image {
       width: 100%;
       height: 100%;
+      object-fit: cover;
     }
 
     .file-icon {
@@ -711,19 +827,51 @@ onMounted(() => {
       align-items: center;
       justify-content: center;
       color: var(--el-text-color-secondary);
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 50%;
+      width: 80px;
+      height: 80px;
+      backdrop-filter: blur(10px);
+    }
+
+    .image-error, .image-loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--el-text-color-secondary);
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 8px;
+      padding: 20px;
+      width: 100%;
+      height: 100%;
+      backdrop-filter: blur(10px);
+
+      .is-loading {
+        animation: spin 1s linear infinite;
+      }
     }
   }
 
   .file-info {
-    padding: 12px;
+    padding: 16px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 
     .file-name {
       font-size: 14px;
-      font-weight: 500;
+      font-weight: 600;
       margin-bottom: 8px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      color: var(--el-text-color-primary);
+      line-height: 1.4;
+    }
+
+    .file-project {
+      margin-bottom: 8px;
     }
 
     .file-meta {
@@ -731,13 +879,16 @@ onMounted(() => {
       justify-content: space-between;
       font-size: 12px;
       color: var(--el-text-color-secondary);
-      margin-bottom: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 4px;
     }
 
     .file-actions {
       display: flex;
       justify-content: flex-end;
       gap: 8px;
+      margin-top: auto;
     }
   }
 }
@@ -745,6 +896,19 @@ onMounted(() => {
 .file-name-cell {
   display: flex;
   align-items: center;
+  justify-content: center;
+  text-align: center;
+  
+  .el-icon {
+    margin-right: 8px;
+  }
+  
+  span {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 :deep(.el-upload-dragger) {
@@ -783,12 +947,12 @@ onMounted(() => {
     font-weight: 500;
     color: var(--el-text-color-primary);
     font-size: 14px;
+    margin-bottom: 2px;
   }
   
   .project-desc {
     font-size: 11px;
     color: var(--el-text-color-secondary);
-    margin-top: 2px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -806,5 +970,10 @@ onMounted(() => {
   gap: 8px;
   justify-content: center;
   margin-top: 12px;
+}
+
+.text-muted {
+  color: var(--el-text-color-secondary);
+  font-style: italic;
 }
 </style>

@@ -38,9 +38,6 @@
             <el-button type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="['osc:project:add']">新增</el-button>
           </el-col>
           <el-col :span="1.5">
-            <el-button type="info" plain icon="List" @click="handleMyProjects">我的创建</el-button>
-          </el-col>
-          <el-col :span="1.5">
             <el-button type="success" plain icon="Edit" :disabled="single" @click="handleUpdate()" v-hasPermi="['osc:project:edit']">修改</el-button>
           </el-col>
           <el-col :span="1.5">
@@ -520,63 +517,6 @@ const resetQuery = () => {
   queryParams.value.status = undefined;
   queryParams.value.createBy = undefined;
   handleQuery();
-};
-
-/** 处理我的创建按钮点击 */
-const handleMyProjects = async () => {
-  const userId = useUserStore().userId;
-  if (!userId) {
-    proxy?.$modal.msgError('获取用户信息失败');
-    return;
-  }
-
-  try {
-    // 弹出选择状态的对话框
-    const action = await proxy?.$confirm('请选择要查看的项目状态', '我的创建', {
-      confirmButtonText: '全部项目',
-      cancelButtonText: '草稿箱',
-      distinguishCancelAndClose: true,
-      showClose: true,
-      closeOnClickModal: false,
-      type: 'info',
-      center: true
-    });
-
-    // 用户点击"全部项目"
-    queryParams.value.createBy = userId;
-    queryParams.value.status = undefined;
-    queryParams.value.params = {
-      statusList: ['1', '2', '3', '4', '5'] // 待审核、进行中、已完成、已归档、已驳回
-    };
-    handleQuery();
-  } catch (action) {
-    if (action === 'cancel') {
-      // 用户点击"草稿箱"
-      loading.value = true;
-      queryParams.value.createBy = userId;
-      queryParams.value.status = '0'; // 草稿状态
-      queryParams.value.params = {};
-
-      try {
-        await listProject(queryParams.value);
-        if (total.value === 0) {
-          proxy?.$modal.msgInfo('暂无草稿项目');
-          // 重置为默认显示（除草稿外的所有状态）
-          queryParams.value.createBy = userId;
-          queryParams.value.status = undefined;
-          queryParams.value.params = {
-            statusList: ['1', '2', '3', '4', '5']
-          };
-        }
-      } finally {
-        loading.value = false;
-        handleQuery();
-      }
-    } else if (action === 'close') {
-      // 用户点击关闭按钮，显示所有状态
-      resetQuery(); // 重置为默认状态
-    }
-  }
 };
 
 /** 多选框选中数据 */

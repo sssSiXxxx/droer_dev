@@ -33,6 +33,11 @@ public class SysOss extends BaseEntity {
     private Long projectId;
 
     /**
+     * 所属项目名称（非数据库字段，用于显示）
+     */
+    private String projectName;
+
+    /**
      * 分类ID
      */
     private Long categoryId;

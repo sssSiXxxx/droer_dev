@@ -36,6 +36,11 @@ public class SysOssVo implements Serializable {
     private Long projectId;
 
     /**
+     * 所属项目名称
+     */
+    private String projectName;
+
+    /**
      * 分类ID
      */
     private Long categoryId;

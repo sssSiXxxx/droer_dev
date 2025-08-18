@@ -54,9 +54,9 @@
               {{ item.repositoryUrl }}
             </el-link>
           </div>
-          <div class="info-row bg-[#f8fdfb]">
+          <div class="info-row bg-[#f8fdfb] description-row">
             <span class="info-label">项目描述：</span>
-            <span>{{ item.description }}</span>
+            <span class="description-content">{{ item.description }}</span>
           </div>
           <div class="info-row bg-white">
             <span class="info-label">联系方式：</span>
@@ -436,6 +436,21 @@ onMounted(() => {
   font-weight: bold;
   width: 100px;
   flex-shrink: 0;
+}
+
+/* 项目描述特殊样式 */
+.description-row {
+  align-items: flex-start;
+}
+
+.description-content {
+  flex: 1;
+  word-wrap: break-word;
+  word-break: break-all;
+  white-space: pre-wrap;
+  line-height: 1.5;
+  color: #666;
+  font-size: 14px;
 }
 
 .el-card :deep(.el-card__header) {

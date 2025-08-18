@@ -231,17 +231,18 @@ public class SysOssServiceImpl implements ISysOssService, OssService {
         oss.setUrl(uploadResult.getUrl());
         oss.setFileSuffix(suffix);
         oss.setFileName(uploadResult.getFilename());
-        oss.setOriginalName(originalfileName);
+        oss.setOriginalName(originalfileName); // 保存原始文件名
         oss.setService(configKey);
         oss.setProjectId(projectId);
         oss.setFileType(fileType);
         // 设置文件大小，如果 uploadResult 没有 size 则设为 null
         oss.setSize(uploadResult.getSize() != null ? uploadResult.getSize() : null);
+        
         baseMapper.insert(oss);
         SysOssVo sysOssVo = MapstructUtils.convert(oss, SysOssVo.class);
         return this.matchingUrl(sysOssVo);
     }
-
+    
     /**
      * 删除OSS对象存储
      *

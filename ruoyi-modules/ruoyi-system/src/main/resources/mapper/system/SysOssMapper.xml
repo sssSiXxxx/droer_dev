@@ -20,6 +20,7 @@
         <result property="service" column="service"/>
         <result property="size" column="size"/>
         <result property="fileType" column="file_type"/>
+        <result property="projectName" column="project_name"/>
     </resultMap>
 
     <sql id="selectOssVo">
@@ -39,8 +40,10 @@
                o.update_by,
                o.service,
                o.size,
-               o.file_type
+               o.file_type,
+               p.project_name
         FROM sys_oss o
+        LEFT JOIN os_project p ON o.project_id = p.project_id
     </sql>
 
     <select id="selectOssList" parameterType="org.dromara.system.domain.SysOss" resultMap="SysOssResult">
