@@ -1,5 +1,6 @@
 package org.dromara.system.domain;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -35,6 +36,7 @@ public class SysOss extends BaseEntity {
     /**
      * 所属项目名称（非数据库字段，用于显示）
      */
+    @TableField(exist = false)
     private String projectName;
 
     /**
