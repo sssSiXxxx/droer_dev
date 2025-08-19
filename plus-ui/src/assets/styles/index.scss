@@ -238,3 +238,82 @@ aside {
     padding: 0 !important;
   }
 }
+
+/* 统一浅绿色主题 - Element Plus CSS 变量覆盖 */
+:root {
+  --el-color-primary: #10b981;
+  --el-color-primary-light-3: #34d399;
+  --el-color-primary-light-5: #6ee7b7;
+  --el-color-primary-light-7: #a7f3d0;
+  --el-color-primary-light-8: #c6f6d5;
+  --el-color-primary-light-9: #d1fae5;
+  --el-color-primary-dark-2: #047857;
+  --el-color-success: #22c55e;
+  --el-color-warning: #84cc16;
+  --el-color-danger: #dc2626;
+  --el-color-info: #6b7280;
+  
+  /* 链接颜色 */
+  --el-color-primary-rgb: 16, 185, 129;
+  
+  /* 菜单相关颜色 */
+  --tags-view-active-bg: #10b981;
+  --tags-view-active-border-color: #10b981;
+}
+
+/* 覆盖侧边栏选中状态颜色 */
+.el-menu--vertical .el-menu-item.is-active {
+  background-color: rgba(16, 185, 129, 0.1) !important;
+  color: #10b981 !important;
+}
+
+.el-menu--vertical .el-sub-menu.is-active > .el-sub-menu__title {
+  color: #10b981 !important;
+}
+
+/* 覆盖按钮颜色 */
+.el-button--primary {
+  --el-button-bg-color: #10b981;
+  --el-button-border-color: #10b981;
+  --el-button-hover-bg-color: #059669;
+  --el-button-hover-border-color: #059669;
+  --el-button-active-bg-color: #047857;
+  --el-button-active-border-color: #047857;
+}
+
+/* 覆盖表单组件焦点颜色 */
+.el-input__wrapper.is-focus,
+.el-select .el-input__wrapper.is-focus,
+.el-textarea__inner:focus {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.2) inset !important;
+}
+
+/* 覆盖标签页颜色 */
+.el-tabs__item.is-active {
+  color: #10b981 !important;
+}
+
+.el-tabs__active-bar {
+  background-color: #10b981 !important;
+}
+
+/* 覆盖进度条颜色 */
+.el-progress-bar__inner {
+  background-color: #10b981 !important;
+}
+
+/* 覆盖开关颜色 */
+.el-switch.is-checked .el-switch__core {
+  background-color: #10b981 !important;
+  border-color: #10b981 !important;
+}
+
+/* 覆盖滑块颜色 */
+.el-slider__button {
+  border-color: #10b981 !important;
+}
+
+.el-slider__bar {
+  background-color: #10b981 !important;
+}

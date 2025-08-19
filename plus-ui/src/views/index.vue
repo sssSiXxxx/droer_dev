@@ -22,7 +22,7 @@
 
     <!-- 统计区域 - 使用实时统计组件 -->
     <div class="stats-container">
-      <RealtimeStats :compact="true" :show-header="false" />
+      <RealtimeStats :compact="true" :show-header="false" ref="realtimeStatsRef" />
     </div>
 
     <!-- 搜索区域 -->
@@ -49,15 +49,20 @@
               <div class="chart-header">
                 <div class="chart-title">
                   <h3>社区活跃度趋势</h3>
-                  <p>最近一周的活动统计</p>
+                  <p>实时数据同步，最近一周的活动统计</p>
                 </div>
-                <el-select v-model="selectedTimeRange" size="small" style="width: 120px">
-                  <el-option label="最近7天" value="7" />
-                  <el-option label="最近30天" value="30" />
-                  <el-option label="最近90天" value="90" />
-                </el-select>
+                <div class="chart-controls">
+                  <el-select v-model="selectedTimeRange" size="small" style="width: 120px" @change="handleTimeRangeChange">
+                    <el-option label="最近7天" value="7" />
+                    <el-option label="最近30天" value="30" />
+                    <el-option label="最近90天" value="90" />
+                  </el-select>
+                  <el-button size="small" @click="refreshChartData" :loading="chartLoading">
+                    <el-icon><Refresh /></el-icon>
+                  </el-button>
+                </div>
               </div>
-              <div class="chart-container">
+              <div class="chart-container" v-loading="chartLoading">
                 <v-chart class="chart" :option="chartOption" />
               </div>
             </div>
@@ -78,11 +83,14 @@
         <div class="chart-card-small">
           <div class="card-header">
             <h3>热门项目</h3>
-            <p>最受欢迎的开源项目</p>
+            <p>实时同步最受欢迎的开源项目</p>
+            <el-button size="small" text @click="refreshHotProjects" :loading="projectsLoading">
+              <el-icon><Refresh /></el-icon>
+            </el-button>
           </div>
-          <div class="card-content">
+          <div class="card-content" v-loading="projectsLoading">
             <div class="hot-projects-list">
-              <div class="project-item" v-for="(project, index) in hotProjects" :key="index">
+              <div class="project-item" v-for="(project, index) in hotProjects" :key="index" @click="openProjectLink(project)">
                 <div class="project-rank">{{ index + 1 }}</div>
                 <div class="project-info">
                   <div class="project-name">{{ project.name }}</div>
@@ -101,6 +109,10 @@
                   </div>
                 </div>
               </div>
+              <div v-if="hotProjects.length === 0 && !projectsLoading" class="empty-state">
+                <el-icon><Warning /></el-icon>
+                <p>暂无数据</p>
+              </div>
             </div>
           </div>
         </div>
@@ -109,11 +121,14 @@
         <div class="chart-card-small">
           <div class="card-header">
             <h3>本周贡献榜</h3>
-            <p>活跃贡献者排行</p>
+            <p>实时更新的活跃贡献者排行</p>
+            <el-button size="small" text @click="refreshContributors" :loading="contributorsLoading">
+              <el-icon><Refresh /></el-icon>
+            </el-button>
           </div>
-          <div class="card-content">
+          <div class="card-content" v-loading="contributorsLoading">
             <div class="contributors-list">
-              <div class="contributor-item" v-for="(contributor, index) in weeklyContributors" :key="index">
+              <div class="contributor-item" v-for="(contributor, index) in weeklyContributors" :key="index" @click="openContributorLink(contributor)">
                 <div class="contributor-rank" :class="getRankClass(index)">
                   {{ index + 1 }}
                 </div>
@@ -129,6 +144,10 @@
                   </div>
                 </div>
               </div>
+              <div v-if="weeklyContributors.length === 0 && !contributorsLoading" class="empty-state">
+                <el-icon><Warning /></el-icon>
+                <p>暂无数据</p>
+              </div>
             </div>
           </div>
         </div>
@@ -137,9 +156,12 @@
         <div class="chart-card-small">
           <div class="card-header">
             <h3>技术栈分布</h3>
-            <p>社区项目技术栈统计</p>
+            <p>实时统计社区项目技术栈分布</p>
+            <el-button size="small" text @click="refreshTechStats" :loading="techStatsLoading">
+              <el-icon><Refresh /></el-icon>
+            </el-button>
           </div>
-          <div class="card-content">
+          <div class="card-content" v-loading="techStatsLoading">
             <div class="tech-chart-container">
               <v-chart class="tech-chart" :option="techChartOption" />
             </div>
@@ -153,14 +175,12 @@
           </div>
         </div>
       </div>
-
-
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch, nextTick } from 'vue';
 import { use } from 'echarts/core';
 import { CanvasRenderer } from 'echarts/renderers';
 import { LineChart, PieChart } from 'echarts/charts';
@@ -186,26 +206,35 @@ import {
   getDashboardData, 
   refreshAllData, 
   getTrendingData, 
+  getProjectStats,
+  getContributorStats,
+  getTechStackStats,
   type ProjectInfo, 
   type ContributorInfo, 
   type DashboardData 
 } from '@/api/community-enhanced';
 import RealtimeStats from '@/components/RealtimeStats.vue';
 import ProjectSearchCombo from '@/components/ProjectSearchCombo.vue';
-
 import TodoSidebar from '@/components/TodoSidebar.vue';
 import { todoNotificationService } from '@/utils/todoNotification';
 
 // 注册 ECharts 组件
 use([CanvasRenderer, LineChart, PieChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent]);
 
+// 组件引用
+const realtimeStatsRef = ref();
+
 // 响应式数据
 const hotProjects = ref<ProjectInfo[]>([]);
 const weeklyContributors = ref<ContributorInfo[]>([]);
 const dashboardData = ref<DashboardData | null>(null);
+
+// 加载状态
 const projectsLoading = ref(false);
 const contributorsLoading = ref(false);
 const dataLoading = ref(false);
+const chartLoading = ref(false);
+const techStatsLoading = ref(false);
 
 // 统计数据
 const totalProjects = ref(0);
@@ -215,133 +244,29 @@ const totalContributors = ref(0);
 // 趋势数据
 const trendingData = ref({
   dates: [] as string[],
-  stars: [] as number[],
-  projects: [] as number[],
-  contributions: [] as number[]
+  commits: [] as number[],
+  issues: [] as number[],
+  pullRequests: [] as number[],
+  releases: [] as number[],
+  contributors: [] as number[]
 });
 
 // 错误信息
 const errorMessage = ref('');
 
-// 社区公告数据
-const announcements = ref([
-  {
-    date: '2024-07-31',
-    title: '系统升级通知',
-    content: '为提供更好的服务体验，系统将于8月5日进行升级维护，届时部分功能可能暂时不可用。'
-  },
-  {
-    date: '2024-07-28',
-    title: 'Dromara社区月度活动',
-    content: '8月线上技术分享会将于8月15日晚8点举行，主题为"微服务架构最佳实践"，欢迎参与。'
-  },
-  {
-    date: '2024-07-25',
-    title: '新项目加入公告',
-    content: '热烈欢迎"FastRequest"项目正式加入Dromara开源社区，这是一款高效的API调试工具。'
-  }
-]);
-
-// 技术栈数据
+// 技术栈数据 - 更新为浅绿色调
 const techStack = ref([
-  { name: 'Java', value: 45, color: '#F59E0B' },
-  { name: 'JavaScript', value: 25, color: '#10B981' },
-  { name: 'Go', value: 15, color: '#3B82F6' },
-  { name: 'Python', value: 10, color: '#8B5CF6' },
-  { name: 'Others', value: 5, color: '#EF4444' }
-]);
-
-
-
-// 顶级贡献者数据
-const topContributors = ref([
-  { name: 'looly (Hutool)', progress: 95 },
-  { name: 'click33 (Sa-Token)', progress: 88 },
-  { name: 'bryan31 (Forest)', progress: 72 },
-  { name: 'yanhom (Dynamic-Tp)', progress: 58 },
-  { name: 'xiaoymin (Knife4j)', progress: 45 }
-]);
-
-
-
-// 待办事项数据
-const todoItems = ref([
-  { task: '安排核心团队会议', completed: false },
-  { task: '审核 Hutool 的 PR', completed: false },
-  { task: '更新项目文档', completed: true },
-  { task: '准备月度社区报告', completed: false },
-  { task: '检查系统性能监控', completed: false },
-  { task: '回复用户反馈邮件', completed: true },
-  { task: '更新技术文档', completed: false },
-  { task: '准备下周会议议程', completed: false }
-]);
-
-// 统计数据
-const statsData = ref([
-  {
-    title: '项目总数',
-    value: '45',
-    change: '+3 From last Week',
-    icon: 'Connection',
-    color: '#2563EB',
-    bg: '#EFF6FF'
-  },
-  {
-    title: '活跃贡献者',
-    value: '1,235',
-    change: '+8% From last Week',
-    icon: 'User',
-    color: '#16A34A',
-    bg: '#F0FDF4'
-  },
-  {
-    title: 'Star总数',
-    value: '25,840',
-    change: '+12% From last Week',
-    icon: 'Star',
-    color: '#CA8A04',
-    bg: '#FFFBEB'
-  },
-  {
-    title: 'PR合并数',
-    value: '4,567',
-    change: '+15% From last Week',
-    icon: 'Refresh',
-    color: '#9333EA',
-    bg: '#FAF5FF'
-  },
-  {
-    title: '下载量',
-    value: '2,315K',
-    change: '+5% From last Week',
-    icon: 'Download',
-    color: '#4F46E5',
-    bg: '#EEF2FF'
-  },
-  {
-    title: 'Issue处理',
-    value: '1,845',
-    change: '+2% From last Week',
-    icon: 'Warning',
-    color: '#DC2626',
-    bg: '#FEF2F2'
-  }
-]);
-
-// 快速入口
-const quickEntries = ref([
-  { title: '项目文档', icon: 'Document', link: 'https://dromara.org/zh-cn/docs/' },
-  { title: '系统设置', icon: 'Setting', link: '/system/user' },
-  { title: '个人中心', icon: 'User', link: '/user/profile' },
-  { title: '系统监控', icon: 'Monitor', link: '/monitor/server' },
-  { title: '日程安排', icon: 'Calendar', link: '#' },
-  { title: '消息通知', icon: 'Bell', link: '#' }
+  { name: 'Java', value: 45, color: '#22c55e' },       // 主绿色
+  { name: 'JavaScript', value: 25, color: '#16a34a' }, // 深绿色
+  { name: 'Go', value: 15, color: '#15803d' },         // 更深绿色
+  { name: 'Python', value: 10, color: '#84cc16' },     // 黄绿色
+  { name: 'Others', value: 5, color: '#65a30d' }       // 橄榄绿
 ]);
 
 // 时间范围选择
 const selectedTimeRange = ref('7');
 
-// 社区活跃度数据 - 使用实时趋势数据
+// 社区活跃度数据 - 使用真实趋势数据
 const communityActivity = computed(() => {
   if (!trendingData.value.dates.length) {
     // 默认数据
@@ -357,9 +282,9 @@ const communityActivity = computed(() => {
   
   return trendingData.value.dates.map((date, index) => ({
     name: formatDateLabel(date),
-    commits: trendingData.value.contributions[index] || 0,
-    issues: Math.floor((trendingData.value.contributions[index] || 0) * 0.3),
-    prs: Math.floor((trendingData.value.contributions[index] || 0) * 0.2)
+    commits: trendingData.value.commits[index] || 0,
+    issues: trendingData.value.issues[index] || 0,
+    prs: trendingData.value.pullRequests[index] || 0
   }));
 });
 
@@ -369,12 +294,12 @@ const formatDateLabel = (dateStr: string): string => {
   return date.toLocaleDateString('zh-CN', { month: 'short', day: '2-digit' });
 };
 
-// 技术栈饼图配置
+// 技术栈饼图配置 - 更新为浅绿色调
 const techChartOption = computed(() => ({
   tooltip: {
     trigger: 'item',
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderColor: '#e2e8f0',
+    borderColor: '#10b981',
     borderWidth: 1,
     textStyle: {
       color: '#374151'
@@ -401,7 +326,8 @@ const techChartOption = computed(() => ({
         label: {
           show: true,
           fontSize: '18',
-          fontWeight: 'bold'
+          fontWeight: 'bold',
+          color: '#10b981'
         }
       },
       labelLine: {
@@ -418,12 +344,12 @@ const techChartOption = computed(() => ({
   ]
 }));
 
-// 社区活跃度图表配置
+// 社区活跃度图表配置 - 更新为浅绿色调
 const chartOption = computed(() => ({
   tooltip: {
     trigger: 'axis',
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderColor: '#e2e8f0',
+    borderColor: '#10b981',
     borderWidth: 1,
     textStyle: {
       color: '#374151'
@@ -456,26 +382,26 @@ const chartOption = computed(() => ({
     data: communityActivity.value.map((item) => item.name),
     axisLine: {
       lineStyle: {
-        color: '#E5E7EB'
+        color: '#d1fae5'
       }
     },
     axisLabel: {
-      color: '#9CA3AF'
+      color: '#6b7280'
     }
   },
   yAxis: {
     type: 'value',
     axisLine: {
       lineStyle: {
-        color: '#E5E7EB'
+        color: '#d1fae5'
       }
     },
     axisLabel: {
-      color: '#9CA3AF'
+      color: '#6b7280'
     },
     splitLine: {
       lineStyle: {
-        color: '#F3F4F6'
+        color: '#f0fdf4'
       }
     }
   },
@@ -492,17 +418,17 @@ const chartOption = computed(() => ({
           x2: 0,
           y2: 1,
           colorStops: [
-            { offset: 0, color: 'rgba(16, 185, 129, 0.8)' },
-            { offset: 1, color: 'rgba(16, 185, 129, 0.1)' }
+            { offset: 0, color: 'rgba(34, 197, 94, 0.8)' },   // 主绿色
+            { offset: 1, color: 'rgba(34, 197, 94, 0.1)' }
           ]
         }
       },
       lineStyle: {
-        color: '#10B981',
-        width: 2
+        color: '#22c55e',
+        width: 3
       },
       itemStyle: {
-        color: '#10B981'
+        color: '#22c55e'
       },
       data: communityActivity.value.map((item) => item.commits),
       smooth: true
@@ -519,17 +445,17 @@ const chartOption = computed(() => ({
           x2: 0,
           y2: 1,
           colorStops: [
-            { offset: 0, color: 'rgba(59, 130, 246, 0.8)' },
-            { offset: 1, color: 'rgba(59, 130, 246, 0.1)' }
+            { offset: 0, color: 'rgba(22, 163, 74, 0.8)' },   // 深绿色
+            { offset: 1, color: 'rgba(22, 163, 74, 0.1)' }
           ]
         }
       },
       lineStyle: {
-        color: '#3B82F6',
-        width: 2
+        color: '#16a34a',
+        width: 3
       },
       itemStyle: {
-        color: '#3B82F6'
+        color: '#16a34a'
       },
       data: communityActivity.value.map((item) => item.issues),
       smooth: true
@@ -546,17 +472,17 @@ const chartOption = computed(() => ({
           x2: 0,
           y2: 1,
           colorStops: [
-            { offset: 0, color: 'rgba(139, 92, 246, 0.8)' },
-            { offset: 1, color: 'rgba(139, 92, 246, 0.1)' }
+            { offset: 0, color: 'rgba(21, 128, 61, 0.8)' },   // 更深绿色
+            { offset: 1, color: 'rgba(21, 128, 61, 0.1)' }
           ]
         }
       },
       lineStyle: {
-        color: '#8B5CF6',
-        width: 2
+        color: '#15803d',
+        width: 3
       },
       itemStyle: {
-        color: '#8B5CF6'
+        color: '#15803d'
       },
       data: communityActivity.value.map((item) => item.prs),
       smooth: true
@@ -608,9 +534,99 @@ const refreshAllDataAndUI = async () => {
     totalStars.value = data.stats.totalStars;
     totalContributors.value = data.stats.totalContributors;
     
+    // 同步刷新统计组件
+    if (realtimeStatsRef.value) {
+      await realtimeStatsRef.value.refreshData();
+    }
+    
     console.log('✅ 数据刷新完成');
   } catch (error) {
     console.error('❌ 刷新数据失败:', error);
+  }
+};
+
+// 刷新热门项目
+const refreshHotProjects = async () => {
+  projectsLoading.value = true;
+  try {
+    const data = await getProjectStats();
+    hotProjects.value = data.hotProjects || [];
+    console.log('✅ 热门项目数据刷新完成');
+  } catch (error) {
+    console.error('❌ 刷新热门项目失败:', error);
+  } finally {
+    projectsLoading.value = false;
+  }
+};
+
+// 刷新贡献者排行
+const refreshContributors = async () => {
+  contributorsLoading.value = true;
+  try {
+    const data = await getContributorStats();
+    weeklyContributors.value = data.weeklyContributors || [];
+    console.log('✅ 贡献者排行数据刷新完成');
+  } catch (error) {
+    console.error('❌ 刷新贡献者排行失败:', error);
+  } finally {
+    contributorsLoading.value = false;
+  }
+};
+
+// 刷新技术栈统计
+const refreshTechStats = async () => {
+  techStatsLoading.value = true;
+  try {
+    const data = await getTechStackStats();
+    if (data.techStack) {
+      techStack.value = data.techStack.map((item: any) => ({
+        name: item.name,
+        value: item.value,
+        color: getGreenColor(item.name) // 使用浅绿色调
+      }));
+    }
+    console.log('✅ 技术栈统计数据刷新完成');
+  } catch (error) {
+    console.error('❌ 刷新技术栈统计失败:', error);
+  } finally {
+    techStatsLoading.value = false;
+  }
+};
+
+// 获取浅绿色调
+const getGreenColor = (tech: string): string => {
+  const greenColors: Record<string, string> = {
+    'Java': '#22c55e',       // 主绿色
+    'JavaScript': '#16a34a', // 深绿色
+    'TypeScript': '#15803d', // 更深绿色
+    'Go': '#84cc16',         // 黄绿色
+    'Python': '#65a30d',     // 橄榄绿
+    'Vue': '#059669',        // 翠绿色
+    'React': '#047857',      // 深翠绿色
+    'Others': '#10b981'      // 默认绿色
+  };
+  return greenColors[tech] || '#10b981';
+};
+
+// 时间范围变化处理
+const handleTimeRangeChange = async (value: string) => {
+  console.log('🕒 时间范围变化:', value);
+  await refreshChartData();
+};
+
+// 刷新图表数据
+const refreshChartData = async () => {
+  chartLoading.value = true;
+  try {
+    const data = await getTrendingData({
+      days: parseInt(selectedTimeRange.value)
+    });
+    trendingData.value = data;
+    console.log('✅ 图表数据刷新完成');
+  } catch (error) {
+    console.error('❌ 刷新图表数据失败:', error);
+  } finally {
+    chartLoading.value = false;
   }
 };
 
@@ -622,6 +638,21 @@ const handleProjectSearch = (results: ProjectInfo[], query: string) => {
 // 项目选择处理
 const handleProjectSelect = (project: ProjectInfo) => {
   console.log('📂 选择项目:', project.name);
+  openProjectLink(project);
+};
+
+// 打开项目链接
+const openProjectLink = (project: ProjectInfo) => {
+  if (project.html_url) {
+    window.open(project.html_url, '_blank');
+  }
+};
+
+// 打开贡献者链接
+const openContributorLink = (contributor: ContributorInfo) => {
+  if (contributor.html_url) {
+    window.open(contributor.html_url, '_blank');
+  }
 };
 
 // 打开链接
@@ -637,21 +668,21 @@ const formatNumber = (num: number): string => {
   return num.toString();
 };
 
-// 获取编程语言颜色
+// 获取编程语言颜色 - 更新为浅绿色调
 const getLanguageColor = (language: string): string => {
   const colors: Record<string, string> = {
-    'Java': '#b07219',
-    'JavaScript': '#f1e05a',
-    'TypeScript': '#2b7489',
-    'Python': '#3572A5',
-    'Go': '#00ADD8',
-    'C++': '#f34b7d',
-    'C#': '#239120',
-    'PHP': '#4F5D95',
-    'Vue': '#4FC08D',
-    'React': '#61DAFB'
+    'Java': '#22c55e',
+    'JavaScript': '#16a34a',
+    'TypeScript': '#15803d',
+    'Python': '#84cc16',
+    'Go': '#65a30d',
+    'C++': '#059669',
+    'C#': '#047857',
+    'PHP': '#10b981',
+    'Vue': '#059669',
+    'React': '#047857'
   };
-  return colors[language] || '#666';
+  return colors[language] || '#10b981';
 };
 
 // 获取排名样式
@@ -668,11 +699,24 @@ const handleAvatarError = (event: Event) => {
   target.src = 'https://gitee.com/assets/no_portrait-2b772d6b.png';
 };
 
+// 监听时间范围变化
+watch(selectedTimeRange, async (newValue) => {
+  await refreshChartData();
+});
+
 // 页面加载时获取数据
 onMounted(async () => {
+  console.log('🚀 首页开始加载...');
+  
   // 并行加载所有数据以提高性能
-  await Promise.all([fetchHotProjects(), fetchWeeklyContributors(), fetchCommunityStats()]);
-  console.log('首页数据加载完成');
+  await Promise.all([
+    fetchDashboardData(),
+    refreshHotProjects(),
+    refreshContributors(),
+    refreshTechStats()
+  ]);
+  
+  console.log('✅ 首页数据加载完成');
   
   // 初始化待办事项通知服务
   try {
@@ -682,60 +726,52 @@ onMounted(async () => {
     console.warn('⚠️ 通知服务启动失败:', error);
   }
 });
+
+// 自动刷新数据（每5分钟）
+let autoRefreshTimer: NodeJS.Timeout | null = null;
+
+const startAutoRefresh = () => {
+  autoRefreshTimer = setInterval(async () => {
+    console.log('🔄 自动刷新数据...');
+    await refreshAllDataAndUI();
+  }, 5 * 60 * 1000); // 5分钟
+};
+
+const stopAutoRefresh = () => {
+  if (autoRefreshTimer) {
+    clearInterval(autoRefreshTimer);
+    autoRefreshTimer = null;
+  }
+};
+
+// 启动自动刷新
+onMounted(() => {
+  startAutoRefresh();
+});
+
+// 清理定时器
+onUnmounted(() => {
+  stopAutoRefresh();
+});
 </script>
 
 <style scoped>
-/* 配色方案选择 - 取消注释您喜欢的配色 */
-
-/* 方案1：浅灰绿色渐变（当前使用） */
+/* 统一浅绿色主题设计 */
 .community-header {
-  background: linear-gradient(135deg, #b4e4d9 0%, #8fd3c7 100%);
-  color: #2a3f54;
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 50%, #86efac 100%);
+  color: #065f46;
   padding: 60px 0;
   position: relative;
   overflow: hidden;
+  border-bottom: 1px solid #10b981;
 }
-
-/* 方案2：浅绿色渐变 */
-/* .community-header {
-  background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
-  color: white;
-  padding: 60px 0;
-  position: relative;
-  overflow: hidden;
-} */
-
-/* 方案3：浅橙色渐变 */
-/* .community-header {
-  background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
-  color: white;
-  padding: 60px 0;
-  position: relative;
-  overflow: hidden;
-} */
-
-/* 方案4：浅青色渐变 */
-/* .community-header {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-  color: white;
-  padding: 60px 0;
-  position: relative;
-  overflow: hidden;
-} */
-
-/* 方案5：浅粉色渐变 */
-/* .community-header {
-  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-  color: white;
-  padding: 60px 0;
-  position: relative;
-  overflow: hidden;
-} */
 
 .community-home {
   min-height: 100vh;
-  background: #f5f7fa;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
   padding: 0;
+  margin: 0;
+  width: 100%;
 }
 
 .community-header::before {
@@ -745,15 +781,15 @@ onMounted(async () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 100" fill="rgba(255,255,255,0.1)"><polygon points="0,0 1000,0 1000,100"/></svg>');
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 100" fill="rgba(16,185,129,0.1)"><polygon points="0,0 1000,0 1000,100"/></svg>');
   background-size: 100% 100%;
-  opacity: 0.1;
+  opacity: 0.2;
 }
 
 .header-content {
-  max-width: 1200px;
+  max-width: 100%;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 40px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -789,24 +825,47 @@ onMounted(async () => {
   margin: 0 0 12px 0;
   font-size: 36px;
   font-weight: 700;
-  color: #2a3f54;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  color: #065f46;
+  text-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
 }
 
 .slogan {
   margin: 0 0 8px 0;
   font-size: 18px;
-  color: #4a6b7f;
+  color: #047857;
   font-weight: 500;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 1px 2px rgba(16, 185, 129, 0.1);
 }
 
 .desc {
   margin: 0 0 25px 0;
   font-size: 16px;
-  color: #5a7a8f;
+  color: #059669;
   line-height: 1.6;
   max-width: 600px;
+}
+
+.quick-links .el-button {
+  border-radius: 20px;
+  padding: 8px 20px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+}
+
+.quick-links .el-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+}
+
+.quick-links .el-button--primary {
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-color: #10b981;
+}
+
+.quick-links .el-button--success {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  border-color: #22c55e;
 }
 
 .quick-links {
@@ -815,25 +874,13 @@ onMounted(async () => {
   flex-wrap: wrap;
 }
 
-.quick-links .el-button {
-  border-radius: 20px;
-  padding: 8px 20px;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-.quick-links .el-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-}
-
 .stats-container {
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
   padding: 40px 0;
-  margin: 20px 0;
+  margin: 0;
   border-radius: 0;
   position: relative;
+  width: 100%;
 }
 
 .stats-container::before {
@@ -843,91 +890,14 @@ onMounted(async () => {
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent 0%, rgba(180, 228, 217, 0.3) 50%, transparent 100%);
-}
-
-.stats-section {
-  display: flex;
-  gap: 20px;
-  align-items: center;
-  flex-wrap: nowrap;
-  justify-content: center;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
-  position: relative;
-  z-index: 1;
-}
-
-.stat-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px 18px;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 12px;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(180, 228, 217, 0.2);
-  transition: all 0.3s ease;
-  min-width: 160px;
-  flex: 1;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.stat-item:hover {
-  background: rgba(255, 255, 255, 0.95);
-  transform: translateY(-2px);
-  border-color: rgba(180, 228, 217, 0.5);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.stat-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-}
-
-.stat-content {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.stat-value {
-  font-size: 22px;
-  font-weight: 700;
-  color: #2a3f54;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.stat-title {
-  font-size: 11px;
-  color: #4a6b7f;
-  font-weight: 500;
-}
-
-.stat-change {
-  font-size: 9px;
-  font-weight: 500;
-}
-
-.stat-change.positive {
-  color: #16a34a;
-}
-
-.stat-change.negative {
-  color: #dc2626;
+  background: linear-gradient(90deg, transparent 0%, rgba(16, 185, 129, 0.3) 50%, transparent 100%);
 }
 
 .main-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 40px 20px 0;
-  background: #f5f7fa;
+  max-width: 100%;
+  margin: 0;
+  padding: 40px 40px 0;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
 }
 
 .bottom-grid {
@@ -1594,13 +1564,14 @@ onMounted(async () => {
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #10b981, #3b82f6, #8b5cf6);
+  background: linear-gradient(90deg, #10b981, #22c55e, #16a34a);
   border-radius: 20px 20px 0 0;
 }
 
 .chart-card-small:hover {
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 32px rgba(16, 185, 129, 0.12);
   transform: translateY(-4px);
+  border-color: #10b981;
 }
 
 .card-header {

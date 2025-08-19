@@ -178,12 +178,14 @@ CREATE TABLE `os_project_member` (
   `create_time` datetime COMMENT '创建时间',
   `update_by` bigint COMMENT '更新者',
   `update_time` datetime COMMENT '更新时间',
+  `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0代表存在 2代表删除）',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_project_member` (`project_id`, `member_id`),
   INDEX `idx_project_member` (`project_id`, `member_id`),
   INDEX `idx_member_project` (`member_id`, `project_id`),
   INDEX `idx_role` (`role`),
-  INDEX `idx_is_active` (`is_active`)
+  INDEX `idx_is_active` (`is_active`),
+  INDEX `idx_del_flag` (`del_flag`)
 ) COMMENT='项目成员关联表';
 
 -- 贡献记录表
@@ -292,3 +294,11 @@ ADD COLUMN file_type varchar(20) DEFAULT 'other' COMMENT '文档类型（logo: L
 -- 添加外键约束
 ALTER TABLE sys_oss
 ADD CONSTRAINT fk_oss_project FOREIGN KEY (project_id) REFERENCES os_project (project_id) ON DELETE SET NULL;
+
+-- 为已存在的 os_project_member 表添加 del_flag 字段（仅在字段不存在时执行）
+ALTER TABLE os_project_member 
+ADD COLUMN IF NOT EXISTS del_flag char(1) DEFAULT '0' COMMENT '删除标志（0代表存在 2代表删除）';
+
+-- 为 del_flag 字段添加索引（仅在索引不存在时执行）
+ALTER TABLE os_project_member 
+ADD INDEX IF NOT EXISTS idx_del_flag (del_flag);

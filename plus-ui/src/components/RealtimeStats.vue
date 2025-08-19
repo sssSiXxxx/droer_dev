@@ -154,8 +154,8 @@ const statsData = computed(() => [
     change: `+${stats.value.newProjects} 新增`,
     changeType: 'increase',
     icon: 'Connection',
-    color: '#8fd3c7',
-    gradient: 'linear-gradient(135deg, #b4e4d9, #8fd3c7)',
+    color: '#10b981',
+    gradient: 'linear-gradient(135deg, #10b981, #059669)',
     type: 'primary',
     trend: generateTrendData(stats.value.totalProjects)
   },
@@ -166,8 +166,8 @@ const statsData = computed(() => [
     change: `${stats.value.totalContributors > 1000 ? '+8%' : '+5%'} 本周`,
     changeType: 'increase',
     icon: 'User',
-    color: '#6bb6a8',
-    gradient: 'linear-gradient(135deg, #8fd3c7, #6bb6a8)',
+    color: '#22c55e',
+    gradient: 'linear-gradient(135deg, #22c55e, #16a34a)',
     type: 'success',
     trend: generateTrendData(stats.value.totalContributors)
   },
@@ -178,8 +178,8 @@ const statsData = computed(() => [
     change: '+12% 本周',
     changeType: 'increase',
     icon: 'Star',
-    color: '#f59e0b',
-    gradient: 'linear-gradient(135deg, #f59e0b, #d97706)',
+    color: '#84cc16',
+    gradient: 'linear-gradient(135deg, #84cc16, #65a30d)',
     type: 'warning',
     trend: generateTrendData(stats.value.totalStars)
   },
@@ -190,8 +190,8 @@ const statsData = computed(() => [
     change: '+15% 本周',
     changeType: 'increase',
     icon: 'Share',
-    color: '#8b5cf6',
-    gradient: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+    color: '#16a34a',
+    gradient: 'linear-gradient(135deg, #16a34a, #15803d)',
     type: 'info',
     trend: generateTrendData(stats.value.totalForks)
   },
@@ -202,8 +202,8 @@ const statsData = computed(() => [
     change: `${stats.value.activeProjects > stats.value.totalProjects * 0.7 ? '高活跃度' : '正常'}`,
     changeType: stats.value.activeProjects > stats.value.totalProjects * 0.7 ? 'increase' : 'stable',
     icon: 'Download',
-    color: '#6366f1',
-    gradient: 'linear-gradient(135deg, #6366f1, #4f46e5)',
+    color: '#059669',
+    gradient: 'linear-gradient(135deg, #059669, #047857)',
     type: 'primary',
     trend: generateTrendData(stats.value.activeProjects)
   },
@@ -214,8 +214,8 @@ const statsData = computed(() => [
     change: '+2% 本周',
     changeType: 'increase',
     icon: 'Warning',
-    color: '#ef4444',
-    gradient: 'linear-gradient(135deg, #ef4444, #dc2626)',
+    color: '#dc2626',
+    gradient: 'linear-gradient(135deg, #dc2626, #b91c1c)',
     type: 'danger',
     trend: generateTrendData(Math.floor(stats.value.totalProjects * 25.6))
   }

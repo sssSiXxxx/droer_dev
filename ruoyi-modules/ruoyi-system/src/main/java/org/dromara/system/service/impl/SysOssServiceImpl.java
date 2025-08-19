@@ -142,6 +142,8 @@ public class SysOssServiceImpl implements ISysOssService, OssService {
         lqw.like(StringUtils.isNotBlank(bo.getOriginalName()), SysOss::getOriginalName, bo.getOriginalName());
         lqw.eq(StringUtils.isNotBlank(bo.getFileSuffix()), SysOss::getFileSuffix, bo.getFileSuffix());
         lqw.eq(StringUtils.isNotBlank(bo.getUrl()), SysOss::getUrl, bo.getUrl());
+        lqw.eq(ObjectUtil.isNotNull(bo.getProjectId()), SysOss::getProjectId, bo.getProjectId());
+        lqw.eq(StringUtils.isNotBlank(bo.getFileType()), SysOss::getFileType, bo.getFileType());
         lqw.between(params.get("beginCreateTime") != null && params.get("endCreateTime") != null,
             SysOss::getCreateTime, params.get("beginCreateTime"), params.get("endCreateTime"));
         lqw.eq(ObjectUtil.isNotNull(bo.getCreateBy()), SysOss::getCreateBy, bo.getCreateBy());
@@ -237,12 +239,12 @@ public class SysOssServiceImpl implements ISysOssService, OssService {
         oss.setFileType(fileType);
         // 设置文件大小，如果 uploadResult 没有 size 则设为 null
         oss.setSize(uploadResult.getSize() != null ? uploadResult.getSize() : null);
-        
+
         baseMapper.insert(oss);
         SysOssVo sysOssVo = MapstructUtils.convert(oss, SysOssVo.class);
         return this.matchingUrl(sysOssVo);
     }
-    
+
     /**
      * 删除OSS对象存储
      *

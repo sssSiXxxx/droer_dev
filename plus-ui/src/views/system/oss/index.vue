@@ -404,6 +404,22 @@ const getList = async () => {
   loading.value = true;
   try {
     const res = await listOss(proxy?.addDateRange(queryParams.value, dateRange.value));
+    console.log('OSS列表响应:', res);
+    console.log('OSS数据行:', res.rows);
+    
+    // 调试每个文件的项目信息
+    if (res.rows && Array.isArray(res.rows)) {
+      res.rows.forEach((item: any, index: number) => {
+        console.log(`文件 ${index + 1}:`, {
+          fileName: item.fileName,
+          projectId: item.projectId,
+          projectName: item.projectName,
+          hasProjectName: !!item.projectName,
+          projectNameType: typeof item.projectName
+        });
+      });
+    }
+    
     fileList.value = res.rows;
     total.value = res.total;
   } finally {
