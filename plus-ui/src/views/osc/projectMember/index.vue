@@ -318,7 +318,7 @@
                   placeholder="请选择项目"
                   filterable
                   remote
-                  :remote-method="searchProjects"
+                  :remote-method="handleSearchProjects"
                   :loading="projectLoading"
                   style="width: 100%"
                 >
@@ -343,7 +343,7 @@
                   placeholder="请选择成员"
                   filterable
                   remote
-                  :remote-method="searchMembers"
+                  :remote-method="handleSearchMembers"
                   :loading="memberLoading"
                   style="width: 100%"
                 >
