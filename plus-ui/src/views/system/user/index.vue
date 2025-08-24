@@ -8,7 +8,7 @@
             <div class="flex items-center justify-between">
               <div class="flex items-center">
                 <el-icon class="mr-2 text-primary"><Search /></el-icon>
-                <span class="font-medium">开源社区</span>
+                <span class="font-medium">信息管理</span>
                 <el-badge 
                   v-if="enhancedStats.totalProjects > 0" 
                   :value="enhancedStats.totalProjects" 
@@ -477,6 +477,7 @@
             <el-table-column v-if="columns[1].visible" key="userName" label="用户名称" align="center" prop="userName" :show-overflow-tooltip="true" />
             <el-table-column v-if="columns[2].visible" key="nickName" label="用户昵称" align="center" prop="nickName" :show-overflow-tooltip="true" />
             <el-table-column v-if="columns[3].visible" key="giteeAccount" label="Gitee账号" align="center" prop="giteeAccount" :show-overflow-tooltip="true" />
+            <el-table-column v-if="columns[3].visible" key="githubAccount" label="GitHub账号" align="center" prop="githubAccount" :show-overflow-tooltip="true" />
             <el-table-column v-if="columns[4].visible" key="contributionSummary" label="贡献记录" align="center" width="150">
               <template #default="scope">
                 <div class="contribution-summary">
@@ -585,6 +586,61 @@
                    </el-button>
                  </template>
                </el-input>
+             </el-form-item>
+           </el-col>
+         </el-row>
+         <el-row>
+           <el-col :span="12">
+             <el-form-item label="GitHub账号" prop="githubAccount">
+               <el-input 
+                 v-model="form.githubAccount" 
+                 placeholder="请输入GitHub用户名" 
+                 maxlength="50"
+                 prefix-icon="Link"
+               >
+                 <template #suffix>
+                   <el-button 
+                     v-if="form.githubAccount" 
+                     type="primary" 
+                     size="small" 
+                     text 
+                     @click="openGithubProfile"
+                   >
+                     查看
+                   </el-button>
+                 </template>
+               </el-input>
+             </el-form-item>
+           </el-col>
+           <el-col :span="12">
+             <el-form-item label="所在地" prop="location">
+               <el-input v-model="form.location" placeholder="请输入所在地" maxlength="100" />
+             </el-form-item>
+           </el-col>
+         </el-row>
+         <el-row>
+           <el-col :span="24">
+             <el-form-item label="个人简介" prop="bio">
+               <el-input
+                 v-model="form.bio"
+                 type="textarea"
+                 :rows="3"
+                 placeholder="请简单介绍一下自己..."
+                 maxlength="200"
+                 show-word-limit
+               />
+             </el-form-item>
+           </el-col>
+         </el-row>
+         <el-row>
+           <el-col :span="12">
+             <el-form-item label="技能标签" prop="skills">
+               <el-input v-model="form.skills" placeholder="请输入技能标签，用逗号分隔" maxlength="200" />
+             </el-form-item>
+           </el-col>
+           <el-col :span="12">
+             <el-form-item label="个人网站" prop="website">
+               <el-input v-model="form.website" placeholder="请输入个人网站地址" maxlength="500" />
              </el-form-item>
            </el-col>
          </el-row>
@@ -1576,6 +1632,14 @@ const formatDate = (dateStr: string) => {
 const openGiteeProfile = () => {
   if (form.value.giteeAccount) {
     const url = `https://gitee.com/${form.value.giteeAccount}`;
+    window.open(url, '_blank');
+  }
+};
+
+// 打开GitHub个人资料页面
+const openGithubProfile = () => {
+  if (form.value.githubAccount) {
+    const url = `https://github.com/${form.value.githubAccount}`;
     window.open(url, '_blank');
   }
 };
@@ -2764,5 +2828,10 @@ async function handleDeptChange(value: number | string) {
 .contribution-summary .el-tag:hover {
   transform: scale(1.05);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+
+.mr-1 {
+  margin-right: 4px;
 }
 </style>
