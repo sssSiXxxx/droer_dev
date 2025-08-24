@@ -103,7 +103,7 @@ export const dynamicRoutes: RouteRecordRaw[] = [
         path: 'user',
         component: () => import('@/views/system/user/index.vue'),
         name: 'User',
-        meta: { title: '用户管理', icon: 'user' }
+        meta: { title: '信息管理', icon: 'user' }
       },
       {
         path: 'user-test',
