@@ -7,18 +7,12 @@
           <el-button type="primary" @click="testAPI">测试API</el-button>
         </div>
       </template>
-      
+
       <div class="test-content">
-        <el-alert
-          title="页面加载状态"
-          :description="`页面已加载，当前时间: ${currentTime}`"
-          type="info"
-          show-icon
-          :closable="false"
-        />
-        
+        <el-alert title="页面加载状态" :description="`页面已加载，当前时间: ${currentTime}`" type="info" show-icon :closable="false" />
+
         <el-divider />
-        
+
         <el-row :gutter="20">
           <el-col :span="12">
             <el-card>
@@ -35,19 +29,14 @@
               </div>
             </el-card>
           </el-col>
-          
+
           <el-col :span="12">
             <el-card>
               <template #header>
                 <span>错误信息</span>
               </template>
               <div v-if="errorMessage">
-                <el-alert
-                  :title="errorMessage"
-                  type="error"
-                  show-icon
-                  :closable="false"
-                />
+                <el-alert :title="errorMessage" type="error" show-icon :closable="false" />
               </div>
               <div v-else>
                 <p>暂无错误信息</p>
@@ -55,19 +44,14 @@
             </el-card>
           </el-col>
         </el-row>
-        
+
         <el-divider />
-        
+
         <el-card>
           <template #header>
             <span>数据列表</span>
           </template>
-          <el-table
-            v-loading="loading"
-            :data="projectMemberList"
-            border
-            style="width: 100%"
-          >
+          <el-table v-loading="loading" :data="projectMemberList" border style="width: 100%">
             <el-table-column label="ID" prop="id" width="80" />
             <el-table-column label="项目ID" prop="projectId" width="100" />
             <el-table-column label="成员ID" prop="memberId" width="100" />
@@ -110,11 +94,11 @@ const errorMessage = ref<string>('');
 // 获取角色标签类型
 function getRoleTagType(role: string) {
   const typeMap: { [key: string]: string } = {
-    '0': 'info',    // 普通成员
-    '1': 'danger',  // 项目负责人
+    '0': 'info', // 普通成员
+    '1': 'danger', // 项目负责人
     '2': 'warning', // 核心开发者
     '3': 'success', // 维护者
-    '4': 'primary'  // 贡献者
+    '4': 'primary' // 贡献者
   };
   return typeMap[role] || 'info';
 }
@@ -135,30 +119,30 @@ function getRoleText(role: string) {
 async function testAPI() {
   loading.value = true;
   errorMessage.value = '';
-  
+
   try {
     console.log('开始测试API...');
     const response = await listProjectMember();
     console.log('API响应:', response);
-    
+
     apiResult.value = {
       status: '成功',
       data: response
     };
-    
+
     projectMemberList.value = response.rows || [];
-    
+
     ElMessage.success('API测试成功');
   } catch (error: any) {
     console.error('API测试失败:', error);
-    
+
     apiResult.value = {
       status: '失败',
       error: error.message
     };
-    
+
     errorMessage.value = `API调用失败: ${error.message}`;
-    
+
     ElMessage.error('API测试失败');
   } finally {
     loading.value = false;

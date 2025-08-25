@@ -6,18 +6,12 @@
           <span>项目成员管理 - 基础测试页面</span>
         </div>
       </template>
-      
+
       <div class="basic-content">
-        <el-alert
-          title="页面状态"
-          description="这是一个基础测试页面，用于验证页面是否能正常显示"
-          type="info"
-          show-icon
-          :closable="false"
-        />
-        
+        <el-alert title="页面状态" description="这是一个基础测试页面，用于验证页面是否能正常显示" type="info" show-icon :closable="false" />
+
         <el-divider />
-        
+
         <el-row :gutter="20">
           <el-col :span="12">
             <el-card>
@@ -30,7 +24,7 @@
               <el-button type="primary" @click="testClick">点击测试</el-button>
             </el-card>
           </el-col>
-          
+
           <el-col :span="12">
             <el-card>
               <template #header>
@@ -41,9 +35,9 @@
             </el-card>
           </el-col>
         </el-row>
-        
+
         <el-divider />
-        
+
         <el-card>
           <template #header>
             <span>简单表格</span>

@@ -4,19 +4,16 @@
       <h3>访客分布统计</h3>
       <p>基于IP地址统计的访客数量分布</p>
     </div>
-    
+
     <div class="map-wrapper">
       <div ref="mapContainer" class="map-chart" :style="{ height: mapHeight }"></div>
-      
+
       <!-- 数据图例 -->
       <div class="map-legend">
         <div class="legend-title">访客数量</div>
         <div class="legend-items">
           <div v-for="item in legendData" :key="item.label" class="legend-item">
-            <div 
-              class="legend-color" 
-              :style="{ backgroundColor: item.color }"
-            ></div>
+            <div class="legend-color" :style="{ backgroundColor: item.color }"></div>
             <span class="legend-text">{{ item.label }}</span>
           </div>
         </div>
@@ -39,7 +36,7 @@
           <div class="stat-label">访问最多</div>
         </div>
         <div class="stat-item">
-          <div class="stat-value">{{ ((topCountry?.value || 0) / totalVisitors * 100).toFixed(1) }}%</div>
+          <div class="stat-value">{{ (((topCountry?.value || 0) / totalVisitors) * 100).toFixed(1) }}%</div>
           <div class="stat-label">占比最高</div>
         </div>
       </div>
@@ -111,17 +108,11 @@ const visitorData = ref([
 ]);
 
 // 计算统计数据
-const totalVisitors = computed(() => 
-  visitorData.value.reduce((sum, item) => sum + item.value, 0)
-);
+const totalVisitors = computed(() => visitorData.value.reduce((sum, item) => sum + item.value, 0));
 
 const countryCount = computed(() => visitorData.value.length);
 
-const topCountry = computed(() => 
-  visitorData.value.reduce((max, item) => 
-    item.value > max.value ? item : max, visitorData.value[0]
-  )
-);
+const topCountry = computed(() => visitorData.value.reduce((max, item) => (item.value > max.value ? item : max), visitorData.value[0]));
 
 // 图例数据
 const legendData = computed(() => [
@@ -149,7 +140,7 @@ const initMap = async () => {
 
   try {
     mapChart = echarts.init(mapContainer.value);
-    
+
     // 使用简化的散点图替代地图，避免地图数据依赖问题
     const option: echarts.EChartsOption = {
       tooltip: {
@@ -183,7 +174,7 @@ const initMap = async () => {
       },
       xAxis: {
         type: 'category',
-        data: visitorData.value.map(item => item.name),
+        data: visitorData.value.map((item) => item.name),
         axisLabel: {
           rotate: 45,
           fontSize: 10
@@ -215,7 +206,7 @@ const initMap = async () => {
       series: [
         {
           type: 'scatter',
-          data: visitorData.value.map(item => ({
+          data: visitorData.value.map((item) => ({
             name: item.name,
             value: item.value,
             itemStyle: {
@@ -225,7 +216,7 @@ const initMap = async () => {
             }
           })),
           symbolSize: (value: any) => {
-            const maxValue = Math.max(...visitorData.value.map(item => item.value));
+            const maxValue = Math.max(...visitorData.value.map((item) => item.value));
             return Math.max(8, (value / maxValue) * 30);
           },
           emphasis: {
@@ -266,13 +257,13 @@ const updateMapData = () => {
   if (!mapChart) return;
 
   // 模拟数据更新（添加小幅随机变化）
-  visitorData.value = visitorData.value.map(item => ({
+  visitorData.value = visitorData.value.map((item) => ({
     ...item,
     value: Math.max(0, item.value + Math.floor((Math.random() - 0.5) * 100))
   }));
 
   const option = mapChart.getOption() as any;
-  option.series[0].data = visitorData.value.map(item => ({
+  option.series[0].data = visitorData.value.map((item) => ({
     name: item.name,
     value: item.value,
     itemStyle: {
@@ -291,7 +282,7 @@ const startAutoRefresh = () => {
   if (refreshTimer) {
     clearInterval(refreshTimer);
   }
-  
+
   refreshTimer = setInterval(() => {
     updateMapData();
   }, props.refreshInterval * 1000);
@@ -306,18 +297,21 @@ const stopAutoRefresh = () => {
 };
 
 // 监听自动刷新属性变化
-watch(() => props.autoRefresh, (newValue) => {
-  if (newValue) {
-    startAutoRefresh();
-  } else {
-    stopAutoRefresh();
+watch(
+  () => props.autoRefresh,
+  (newValue) => {
+    if (newValue) {
+      startAutoRefresh();
+    } else {
+      stopAutoRefresh();
+    }
   }
-});
+);
 
 // 生命周期
 onMounted(async () => {
   await initMap();
-  
+
   if (props.autoRefresh) {
     startAutoRefresh();
   }
@@ -481,11 +475,11 @@ defineExpose({
   .world-map-container {
     padding: 16px;
   }
-  
+
   .map-chart {
     height: 300px !important;
   }
-  
+
   .map-legend {
     position: relative;
     top: auto;
@@ -493,22 +487,22 @@ defineExpose({
     margin-top: 16px;
     width: 100%;
   }
-  
+
   .legend-items {
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: center;
   }
-  
+
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
   }
-  
+
   .stat-item {
     padding: 12px;
   }
-  
+
   .stat-value {
     font-size: 16px;
   }
@@ -518,7 +512,7 @@ defineExpose({
   .map-chart {
     height: 250px !important;
   }
-  
+
   .stats-grid {
     grid-template-columns: 1fr;
   }
@@ -538,7 +532,11 @@ defineExpose({
 }
 
 @keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 </style>

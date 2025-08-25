@@ -1,7 +1,7 @@
 <template>
   <div class="p-4">
     <h1>用户管理界面诊断</h1>
-    
+
     <el-card class="mb-4">
       <template #header>
         <span>路由检查</span>
@@ -18,13 +18,11 @@
       <el-button type="primary" @click="testUserAPI">测试用户API</el-button>
       <el-button type="success" @click="testDeptAPI">测试部门API</el-button>
       <el-button type="warning" @click="testProjectAPI">测试项目API</el-button>
-      
+
       <div v-if="apiResults.length > 0" class="mt-4">
         <h3>API测试结果:</h3>
         <div v-for="result in apiResults" :key="result.id" class="mb-2">
-          <el-tag :type="result.success ? 'success' : 'danger'">
-            {{ result.name }}: {{ result.success ? '成功' : '失败' }}
-          </el-tag>
+          <el-tag :type="result.success ? 'success' : 'danger'"> {{ result.name }}: {{ result.success ? '成功' : '失败' }} </el-tag>
           <p v-if="result.error" class="text-red-500 text-sm">{{ result.error }}</p>
         </div>
       </div>

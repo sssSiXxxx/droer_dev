@@ -30,12 +30,7 @@
       <div class="search-container">
         <h2>探索优秀项目</h2>
         <p>搜索和发现 Dromara 社区的开源项目</p>
-        <ProjectSearchCombo 
-          placeholder="搜索项目名称或描述..."
-          :max-results="20"
-          @search="handleProjectSearch"
-          @select="handleProjectSelect"
-        />
+        <ProjectSearchCombo placeholder="搜索项目名称或描述..." :max-results="20" @search="handleProjectSearch" @select="handleProjectSelect" />
       </div>
     </div>
 
@@ -202,16 +197,16 @@ import {
   Download,
   Warning
 } from '@element-plus/icons-vue';
-import { 
-  getDashboardData, 
-  refreshAllData, 
-  getTrendingData, 
+import {
+  getDashboardData,
+  refreshAllData,
+  getTrendingData,
   getProjectStats,
   getContributorStats,
   getTechStackStats,
-  type ProjectInfo, 
-  type ContributorInfo, 
-  type DashboardData 
+  type ProjectInfo,
+  type ContributorInfo,
+  type DashboardData
 } from '@/api/community-enhanced';
 import RealtimeStats from '@/components/RealtimeStats.vue';
 import ProjectSearchCombo from '@/components/ProjectSearchCombo.vue';
@@ -256,11 +251,11 @@ const errorMessage = ref('');
 
 // 技术栈数据 - 更新为浅绿色调
 const techStack = ref([
-  { name: 'Java', value: 45, color: '#22c55e' },       // 主绿色
+  { name: 'Java', value: 45, color: '#22c55e' }, // 主绿色
   { name: 'JavaScript', value: 25, color: '#16a34a' }, // 深绿色
-  { name: 'Go', value: 15, color: '#15803d' },         // 更深绿色
-  { name: 'Python', value: 10, color: '#84cc16' },     // 黄绿色
-  { name: 'Others', value: 5, color: '#65a30d' }       // 橄榄绿
+  { name: 'Go', value: 15, color: '#15803d' }, // 更深绿色
+  { name: 'Python', value: 10, color: '#84cc16' }, // 黄绿色
+  { name: 'Others', value: 5, color: '#65a30d' } // 橄榄绿
 ]);
 
 // 时间范围选择
@@ -279,7 +274,7 @@ const communityActivity = computed(() => {
       { name: 'Dec 06', commits: 210, issues: 55, prs: 48 }
     ];
   }
-  
+
   return trendingData.value.dates.map((date, index) => ({
     name: formatDateLabel(date),
     commits: trendingData.value.commits[index] || 0,
@@ -418,7 +413,7 @@ const chartOption = computed(() => ({
           x2: 0,
           y2: 1,
           colorStops: [
-            { offset: 0, color: 'rgba(34, 197, 94, 0.8)' },   // 主绿色
+            { offset: 0, color: 'rgba(34, 197, 94, 0.8)' }, // 主绿色
             { offset: 1, color: 'rgba(34, 197, 94, 0.1)' }
           ]
         }
@@ -445,7 +440,7 @@ const chartOption = computed(() => ({
           x2: 0,
           y2: 1,
           colorStops: [
-            { offset: 0, color: 'rgba(22, 163, 74, 0.8)' },   // 深绿色
+            { offset: 0, color: 'rgba(22, 163, 74, 0.8)' }, // 深绿色
             { offset: 1, color: 'rgba(22, 163, 74, 0.1)' }
           ]
         }
@@ -472,7 +467,7 @@ const chartOption = computed(() => ({
           x2: 0,
           y2: 1,
           colorStops: [
-            { offset: 0, color: 'rgba(21, 128, 61, 0.8)' },   // 更深绿色
+            { offset: 0, color: 'rgba(21, 128, 61, 0.8)' }, // 更深绿色
             { offset: 1, color: 'rgba(21, 128, 61, 0.1)' }
           ]
         }
@@ -496,20 +491,20 @@ const fetchDashboardData = async () => {
   errorMessage.value = '';
   try {
     console.log('🚀 正在加载仪表盘数据...');
-    
+
     const data = await getDashboardData();
     dashboardData.value = data;
-    
+
     // 更新各个数据项
     hotProjects.value = data.hotProjects;
     weeklyContributors.value = data.weeklyContributors;
     trendingData.value = data.trendingData;
-    
+
     // 更新统计数据
     totalProjects.value = data.stats.totalProjects;
     totalStars.value = data.stats.totalStars;
     totalContributors.value = data.stats.totalContributors;
-    
+
     console.log('✅ 仪表盘数据加载完成');
   } catch (error) {
     console.error('❌ 加载仪表盘数据失败:', error);
@@ -525,20 +520,20 @@ const refreshAllDataAndUI = async () => {
     console.log('🔄 正在强制刷新所有数据...');
     const data = await refreshAllData();
     dashboardData.value = data;
-    
+
     hotProjects.value = data.hotProjects;
     weeklyContributors.value = data.weeklyContributors;
     trendingData.value = data.trendingData;
-    
+
     totalProjects.value = data.stats.totalProjects;
     totalStars.value = data.stats.totalStars;
     totalContributors.value = data.stats.totalContributors;
-    
+
     // 同步刷新统计组件
     if (realtimeStatsRef.value) {
       await realtimeStatsRef.value.refreshData();
     }
-    
+
     console.log('✅ 数据刷新完成');
   } catch (error) {
     console.error('❌ 刷新数据失败:', error);
@@ -596,14 +591,14 @@ const refreshTechStats = async () => {
 // 获取浅绿色调
 const getGreenColor = (tech: string): string => {
   const greenColors: Record<string, string> = {
-    'Java': '#22c55e',       // 主绿色
+    'Java': '#22c55e', // 主绿色
     'JavaScript': '#16a34a', // 深绿色
     'TypeScript': '#15803d', // 更深绿色
-    'Go': '#84cc16',         // 黄绿色
-    'Python': '#65a30d',     // 橄榄绿
-    'Vue': '#059669',        // 翠绿色
-    'React': '#047857',      // 深翠绿色
-    'Others': '#10b981'      // 默认绿色
+    'Go': '#84cc16', // 黄绿色
+    'Python': '#65a30d', // 橄榄绿
+    'Vue': '#059669', // 翠绿色
+    'React': '#047857', // 深翠绿色
+    'Others': '#10b981' // 默认绿色
   };
   return greenColors[tech] || '#10b981';
 };
@@ -707,17 +702,12 @@ watch(selectedTimeRange, async (newValue) => {
 // 页面加载时获取数据
 onMounted(async () => {
   console.log('🚀 首页开始加载...');
-  
+
   // 并行加载所有数据以提高性能
-  await Promise.all([
-    fetchDashboardData(),
-    refreshHotProjects(),
-    refreshContributors(),
-    refreshTechStats()
-  ]);
-  
+  await Promise.all([fetchDashboardData(), refreshHotProjects(), refreshContributors(), refreshTechStats()]);
+
   console.log('✅ 首页数据加载完成');
-  
+
   // 初始化待办事项通知服务
   try {
     await todoNotificationService.requestPermission();
@@ -731,10 +721,13 @@ onMounted(async () => {
 let autoRefreshTimer: NodeJS.Timeout | null = null;
 
 const startAutoRefresh = () => {
-  autoRefreshTimer = setInterval(async () => {
-    console.log('🔄 自动刷新数据...');
-    await refreshAllDataAndUI();
-  }, 5 * 60 * 1000); // 5分钟
+  autoRefreshTimer = setInterval(
+    async () => {
+      console.log('🔄 自动刷新数据...');
+      await refreshAllDataAndUI();
+    },
+    5 * 60 * 1000
+  ); // 5分钟
 };
 
 const stopAutoRefresh = () => {
@@ -1399,8 +1392,6 @@ onUnmounted(() => {
 .sidebar-card:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
-
-
 
 /* 侧边栏待办事项样式优化 */
 .sidebar-card .todo-list {

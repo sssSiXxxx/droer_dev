@@ -7,21 +7,10 @@
         <span>待办事项</span>
         <el-badge :value="pendingCount" v-if="pendingCount > 0" />
       </div>
-      
+
       <div class="header-actions">
-        <el-button 
-          type="primary" 
-          size="small" 
-          text 
-          @click="showAddDialog = true"
-          :icon="Plus"
-        />
-        <el-button 
-          size="small" 
-          text 
-          @click="showFullManager = true"
-          :icon="FullScreen"
-        />
+        <el-button type="primary" size="small" text @click="showAddDialog = true" :icon="Plus" />
+        <el-button size="small" text @click="showFullManager = true" :icon="FullScreen" />
       </div>
     </div>
 
@@ -68,34 +57,27 @@
 
             <!-- 复选框 -->
             <div class="todo-checkbox">
-              <el-checkbox
-                :model-value="todo.completed"
-                @change="toggleComplete(todo.id)"
-                size="small"
-              />
+              <el-checkbox :model-value="todo.completed" @change="toggleComplete(todo.id)" size="small" />
             </div>
 
             <!-- 内容 -->
             <div class="todo-content" @click="editTodo(todo)">
               <div class="todo-title">{{ todo.title }}</div>
-              
+
               <div class="todo-meta">
                 <!-- 分类 -->
                 <div class="category-badge">
-                  <div 
-                    class="category-dot" 
-                    :style="{ backgroundColor: getCategoryColor(todo.category) }"
-                  ></div>
+                  <div class="category-dot" :style="{ backgroundColor: getCategoryColor(todo.category) }"></div>
                   <span class="category-name">{{ getCategoryName(todo.category) }}</span>
                 </div>
-                
+
                 <!-- 优先级 -->
                 <div class="priority-badge" :class="todo.priority">
                   <el-icon>
                     <component :is="getPriorityIcon(todo.priority)" />
                   </el-icon>
                 </div>
-                
+
                 <!-- 截止时间 -->
                 <div class="due-date" v-if="todo.dueDate">
                   <el-icon><Clock /></el-icon>
@@ -127,66 +109,31 @@
       <div v-if="todos.length === 0 && !loading" class="empty-state">
         <el-icon><DocumentAdd /></el-icon>
         <p>还没有待办事项</p>
-        <el-button size="small" type="primary" @click="showAddDialog = true">
-          创建第一个
-        </el-button>
+        <el-button size="small" type="primary" @click="showAddDialog = true"> 创建第一个 </el-button>
       </div>
     </div>
 
     <!-- 底部操作 -->
     <div class="sidebar-footer">
-      <el-button 
-        size="small" 
-        text 
-        @click="showCompleted = !showCompleted"
-        :icon="showCompleted ? Hide : View"
-      >
+      <el-button size="small" text @click="showCompleted = !showCompleted" :icon="showCompleted ? Hide : View">
         {{ showCompleted ? '隐藏已完成' : '显示已完成' }}
       </el-button>
-      
-      <el-button 
-        size="small" 
-        text 
-        @click="clearCompleted"
-        v-if="stats.completed > 0"
-      >
-        清空已完成
-      </el-button>
+
+      <el-button size="small" text @click="clearCompleted" v-if="stats.completed > 0"> 清空已完成 </el-button>
     </div>
 
     <!-- 快速添加对话框 -->
-    <el-dialog
-      v-model="showAddDialog"
-      title="快速添加待办事项"
-      width="400px"
-      @close="resetForm"
-    >
-      <el-form
-        ref="quickFormRef"
-        :model="quickForm"
-        :rules="quickRules"
-        @keyup.enter="quickAdd"
-      >
+    <el-dialog v-model="showAddDialog" title="快速添加待办事项" width="400px" @close="resetForm">
+      <el-form ref="quickFormRef" :model="quickForm" :rules="quickRules" @keyup.enter="quickAdd">
         <el-form-item prop="title">
-          <el-input
-            v-model="quickForm.title"
-            placeholder="输入待办事项标题"
-            maxlength="100"
-            show-word-limit
-            autofocus
-          />
+          <el-input v-model="quickForm.title" placeholder="输入待办事项标题" maxlength="100" show-word-limit autofocus />
         </el-form-item>
 
         <el-form-item>
           <el-row :gutter="8">
             <el-col :span="12">
               <el-select v-model="quickForm.category" placeholder="分类" size="small">
-                <el-option
-                  v-for="category in categories"
-                  :key="category.id"
-                  :label="category.name"
-                  :value="category.id"
-                />
+                <el-option v-for="category in categories" :key="category.id" :label="category.name" :value="category.id" />
               </el-select>
             </el-col>
             <el-col :span="12">
@@ -216,28 +163,13 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="showAddDialog = false" size="small">取消</el-button>
-          <el-button 
-            type="primary" 
-            @click="quickAdd"
-            :loading="saving"
-            size="small"
-          >
-            添加
-          </el-button>
+          <el-button type="primary" @click="quickAdd" :loading="saving" size="small"> 添加 </el-button>
         </span>
       </template>
     </el-dialog>
 
     <!-- 完整管理器对话框 -->
-    <el-dialog
-      v-model="showFullManager"
-      title="待办事项管理"
-      width="90%"
-      top="5vh"
-      destroy-on-close
-      :show-close="true"
-      class="full-manager-dialog"
-    >
+    <el-dialog v-model="showFullManager" title="待办事项管理" width="90%" top="5vh" destroy-on-close :show-close="true" class="full-manager-dialog">
       <TodoManager @refresh="loadData" />
     </el-dialog>
   </div>
@@ -245,9 +177,20 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, watch } from 'vue';
-import { 
-  List, Plus, FullScreen, Clock, View, Hide, MoreFilled, 
-  DocumentAdd, Rank, Warning, ArrowUp, Minus, ArrowDown
+import {
+  List,
+  Plus,
+  FullScreen,
+  Clock,
+  View,
+  Hide,
+  MoreFilled,
+  DocumentAdd,
+  Rank,
+  Warning,
+  ArrowUp,
+  Minus,
+  ArrowDown
 } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
 import draggable from 'vuedraggable';
@@ -292,10 +235,8 @@ const quickRules: FormRules = {
 // 计算属性
 const sortedTodos = computed({
   get() {
-    let filtered = todos.value.filter(todo => 
-      showCompleted.value || !todo.completed
-    );
-    
+    let filtered = todos.value.filter((todo) => showCompleted.value || !todo.completed);
+
     // 只按order排序，保持拖拽后的顺序
     return filtered.sort((a, b) => a.order - b.order);
   },
@@ -310,12 +251,8 @@ const pendingCount = computed(() => stats.value.pending);
 const loadData = async () => {
   loading.value = true;
   try {
-    const [todosData, categoriesData, statsData] = await Promise.all([
-      todoApi.getTodos(),
-      todoApi.getCategories(),
-      todoApi.getStats()
-    ]);
-    
+    const [todosData, categoriesData, statsData] = await Promise.all([todoApi.getTodos(), todoApi.getCategories(), todoApi.getStats()]);
+
     todos.value = todosData;
     categories.value = categoriesData;
     stats.value = statsData;
@@ -347,7 +284,7 @@ const handleItemAction = async (command: string, todo: TodoItem) => {
     case 'edit':
       editTodo(todo);
       break;
-      
+
     case 'duplicate':
       try {
         await todoApi.createTodo({
@@ -360,7 +297,7 @@ const handleItemAction = async (command: string, todo: TodoItem) => {
           tags: [...todo.tags],
           order: todos.value.length + 1
         });
-        
+
         await loadData();
         ElMessage.success('待办事项已复制');
       } catch (error) {
@@ -368,7 +305,7 @@ const handleItemAction = async (command: string, todo: TodoItem) => {
         console.error('复制待办事项失败:', error);
       }
       break;
-      
+
     case 'delete':
       try {
         await ElMessageBox.confirm('确定要删除这个待办事项吗？', '确认删除', {
@@ -376,7 +313,7 @@ const handleItemAction = async (command: string, todo: TodoItem) => {
           cancelButtonText: '取消',
           type: 'warning'
         });
-        
+
         await todoApi.deleteTodo(todo.id);
         await loadData();
         ElMessage.success('删除成功');
@@ -402,15 +339,15 @@ const handleDragEnd = async (evt: any) => {
   console.log('新索引:', evt.newIndex);
   console.log('拖拽的元素:', evt.item);
   if (evt.oldIndex === evt.newIndex) return;
-  
+
   try {
     // 更新所有todo的order值
     todos.value.forEach((todo, index) => {
       todo.order = index + 1;
     });
-    
+
     // 保存到本地存储
-    await todoApi.updateOrder(todos.value.map(todo => todo.id));
+    await todoApi.updateOrder(todos.value.map((todo) => todo.id));
   } catch (error) {
     console.error('更新排序失败:', error);
   }
@@ -418,11 +355,11 @@ const handleDragEnd = async (evt: any) => {
 
 const quickAdd = async () => {
   if (!quickFormRef.value) return;
-  
+
   try {
     await quickFormRef.value.validate();
     saving.value = true;
-    
+
     await todoApi.createTodo({
       title: quickForm.title,
       description: '',
@@ -433,7 +370,7 @@ const quickAdd = async () => {
       completed: false,
       order: 0
     });
-    
+
     await loadData();
     showAddDialog.value = false;
     resetForm();
@@ -457,23 +394,23 @@ const resetForm = () => {
 };
 
 const clearCompleted = async () => {
-  const completedTodos = todos.value.filter(t => t.completed);
+  const completedTodos = todos.value.filter((t) => t.completed);
   if (completedTodos.length === 0) {
     ElMessage.info('没有已完成的待办事项');
     return;
   }
-  
+
   try {
     await ElMessageBox.confirm(`确定要清空所有 ${completedTodos.length} 个已完成的待办事项吗？`, '确认删除', {
       confirmButtonText: '删除',
       cancelButtonText: '取消',
       type: 'warning'
     });
-    
+
     for (const todo of completedTodos) {
       await todoApi.deleteTodo(todo.id);
     }
-    
+
     await loadData();
     ElMessage.success('清空已完成项目成功');
   } catch (error) {
@@ -491,12 +428,12 @@ const isOverdue = (todo: TodoItem): boolean => {
 };
 
 const getCategoryName = (categoryId: string): string => {
-  const category = categories.value.find(c => c.id === categoryId);
+  const category = categories.value.find((c) => c.id === categoryId);
   return category?.name || '未分类';
 };
 
 const getCategoryColor = (categoryId: string): string => {
-  const category = categories.value.find(c => c.id === categoryId);
+  const category = categories.value.find((c) => c.id === categoryId);
   return category?.color || '#666';
 };
 
@@ -515,7 +452,7 @@ const formatDueDate = (dateStr: string): string => {
   const now = new Date();
   const diffMs = date.getTime() - now.getTime();
   const diffDays = Math.ceil(diffMs / (24 * 60 * 60 * 1000));
-  
+
   if (diffDays < 0) {
     return `逾期 ${Math.abs(diffDays)} 天`;
   } else if (diffDays === 0) {
@@ -535,9 +472,12 @@ onMounted(() => {
 });
 
 // 定期刷新数据
-setInterval(() => {
-  loadData();
-}, 5 * 60 * 1000); // 每5分钟刷新一次
+setInterval(
+  () => {
+    loadData();
+  },
+  5 * 60 * 1000
+); // 每5分钟刷新一次
 </script>
 
 <style scoped>
@@ -701,8 +641,6 @@ setInterval(() => {
   border-color: rgba(180, 228, 217, 0.5);
   transform: scale(1.05);
 }
-
-
 
 .todo-checkbox {
   flex-shrink: 0;

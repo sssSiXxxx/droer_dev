@@ -7,18 +7,12 @@
           <el-button type="primary" @click="testLoad">测试加载</el-button>
         </div>
       </template>
-      
+
       <div class="debug-content">
-        <el-alert
-          title="页面状态"
-          :description="`页面已加载，当前时间: ${currentTime}`"
-          type="info"
-          show-icon
-          :closable="false"
-        />
-        
+        <el-alert title="页面状态" :description="`页面已加载，当前时间: ${currentTime}`" type="info" show-icon :closable="false" />
+
         <el-divider />
-        
+
         <el-row :gutter="20">
           <el-col :span="12">
             <el-card>
@@ -31,19 +25,14 @@
               <p><strong>成员选项:</strong> {{ memberOptions.length }}</p>
             </el-card>
           </el-col>
-          
+
           <el-col :span="12">
             <el-card>
               <template #header>
                 <span>错误信息</span>
               </template>
               <div v-if="errorMessage">
-                <el-alert
-                  :title="errorMessage"
-                  type="error"
-                  show-icon
-                  :closable="false"
-                />
+                <el-alert :title="errorMessage" type="error" show-icon :closable="false" />
               </div>
               <div v-else>
                 <p>暂无错误信息</p>
@@ -51,19 +40,14 @@
             </el-card>
           </el-col>
         </el-row>
-        
+
         <el-divider />
-        
+
         <el-card>
           <template #header>
             <span>数据列表</span>
           </template>
-          <el-table
-            v-loading="loading"
-            :data="projectMemberList"
-            border
-            style="width: 100%"
-          >
+          <el-table v-loading="loading" :data="projectMemberList" border style="width: 100%">
             <el-table-column label="ID" prop="id" width="80" />
             <el-table-column label="项目ID" prop="projectId" width="100" />
             <el-table-column label="成员ID" prop="memberId" width="100" />
@@ -111,11 +95,11 @@ const errorMessage = ref<string>('');
 // 获取角色标签类型
 function getRoleTagType(role: string) {
   const typeMap: { [key: string]: string } = {
-    '0': 'info',    // 普通成员
-    '1': 'danger',  // 项目负责人
+    '0': 'info', // 普通成员
+    '1': 'danger', // 项目负责人
     '2': 'warning', // 核心开发者
     '3': 'success', // 维护者
-    '4': 'primary'  // 贡献者
+    '4': 'primary' // 贡献者
   };
   return typeMap[role] || 'info';
 }
@@ -136,25 +120,25 @@ function getRoleText(role: string) {
 async function testLoad() {
   loading.value = true;
   errorMessage.value = '';
-  
+
   try {
     console.log('开始加载数据...');
-    
+
     // 加载项目成员列表
     const memberResponse = await listProjectMember();
     console.log('项目成员响应:', memberResponse);
     projectMemberList.value = memberResponse.rows || [];
-    
+
     // 加载项目选项
     const projectResponse = await listProject({ pageSize: 1000 });
     console.log('项目响应:', projectResponse);
     projectOptions.value = projectResponse.rows || [];
-    
+
     // 加载成员选项
     const memberOptionsResponse = await listMember({ pageSize: 1000 });
     console.log('成员选项响应:', memberOptionsResponse);
     memberOptions.value = memberOptionsResponse.rows || [];
-    
+
     ElMessage.success('数据加载成功');
   } catch (error: any) {
     console.error('数据加载失败:', error);

@@ -114,7 +114,7 @@ export function getLocalContributions(userId: number) {
   return request({
     url: '/osc/contribution/list',
     method: 'get',
-    params: { 
+    params: {
       userId: userId,
       pageNum: 1,
       pageSize: 1000

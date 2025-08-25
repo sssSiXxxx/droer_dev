@@ -74,6 +74,3 @@ export interface StatsData {
   activeMembers: number;
   roleStats: Record<string, number>;
 }
-
-
-

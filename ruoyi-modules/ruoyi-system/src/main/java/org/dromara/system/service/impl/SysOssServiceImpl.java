@@ -62,11 +62,31 @@ public class SysOssServiceImpl implements ISysOssService, OssService {
      */
     @Override
     public TableDataInfo<SysOssVo> queryPageList(SysOssBo bo, PageQuery pageQuery) {
-        LambdaQueryWrapper<SysOss> lqw = buildQueryWrapper(bo);
-        Page<SysOssVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
-        List<SysOssVo> filterResult = StreamUtils.toList(result.getRecords(), this::matchingUrl);
-        result.setRecords(filterResult);
-        return TableDataInfo.build(result);
+        try {
+            LambdaQueryWrapper<SysOss> lqw = buildQueryWrapper(bo);
+            Page<SysOssVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
+            List<SysOssVo> filterResult = StreamUtils.toList(result.getRecords(), this::matchingUrl);
+            result.setRecords(filterResult);
+            return TableDataInfo.build(result);
+        } catch (Exception e) {
+            // 如果出现类型转换异常，使用原始查询方式
+            LambdaQueryWrapper<SysOss> lqw = buildQueryWrapper(bo);
+            Page<SysOss> ossPage = baseMapper.selectPage(pageQuery.build(), lqw);
+            
+            // 手动转换为VO对象
+            List<SysOssVo> voList = ossPage.getRecords().stream()
+                .map(this::convertToVo)
+                .map(this::matchingUrl)
+                .toList();
+                
+            Page<SysOssVo> result = new Page<>();
+            result.setRecords(voList);
+            result.setTotal(ossPage.getTotal());
+            result.setCurrent(ossPage.getCurrent());
+            result.setSize(ossPage.getSize());
+            
+            return TableDataInfo.build(result);
+        }
     }
 
     /**
@@ -263,6 +283,16 @@ public class SysOssServiceImpl implements ISysOssService, OssService {
             storage.delete(sysOss.getUrl());
         }
         return baseMapper.deleteByIds(ids) > 0;
+    }
+
+    /**
+     * 将SysOss实体转换为SysOssVo视图对象
+     *
+     * @param oss SysOss实体
+     * @return SysOssVo视图对象
+     */
+    private SysOssVo convertToVo(SysOss oss) {
+        return MapstructUtils.convert(oss, SysOssVo.class);
     }
 
     /**

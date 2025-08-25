@@ -120,8 +120,8 @@ aside {
   display: block;
   line-height: 32px;
   font-size: 16px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   color: #2c3e50;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -217,13 +217,13 @@ aside {
     max-width: 1000px !important;
     min-width: 700px !important;
   }
-  
+
   .el-message-box__content {
     padding: 0 !important;
     max-height: 75vh !important;
     overflow-y: auto !important;
   }
-  
+
   .el-message-box__message {
     max-height: 75vh !important;
     overflow-y: auto !important;
@@ -231,7 +231,7 @@ aside {
     margin: 0 !important;
     padding: 0 !important;
   }
-  
+
   .el-message-box__message > div {
     width: 100% !important;
     margin: 0 !important;
@@ -252,10 +252,10 @@ aside {
   --el-color-warning: #84cc16;
   --el-color-danger: #dc2626;
   --el-color-info: #6b7280;
-  
+
   /* 链接颜色 */
   --el-color-primary-rgb: 16, 185, 129;
-  
+
   /* 菜单相关颜色 */
   --tags-view-active-bg: #10b981;
   --tags-view-active-border-color: #10b981;

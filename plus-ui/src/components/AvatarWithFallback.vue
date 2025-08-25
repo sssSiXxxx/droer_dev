@@ -1,28 +1,14 @@
 <template>
-  <div 
+  <div
     class="avatar-container"
-    :class="[
-      `avatar-size-${size}`,
-      { 'avatar-circle': shape === 'circle', 'avatar-square': shape === 'square' }
-    ]"
+    :class="[`avatar-size-${size}`, { 'avatar-circle': shape === 'circle', 'avatar-square': shape === 'square' }]"
     :style="containerStyle"
   >
     <!-- 头像图片 -->
-    <img 
-      v-if="!showFallback && src"
-      :src="src"
-      :alt="alt || name"
-      class="avatar-image"
-      @error="handleImageError"
-      @load="handleImageLoad"
-    />
-    
+    <img v-if="!showFallback && src" :src="src" :alt="alt || name" class="avatar-image" @error="handleImageError" @load="handleImageLoad" />
+
     <!-- 名字首字母 fallback -->
-    <div 
-      v-else
-      class="avatar-fallback"
-      :style="fallbackStyle"
-    >
+    <div v-else class="avatar-fallback" :style="fallbackStyle">
       {{ initials }}
     </div>
   </div>
@@ -56,17 +42,18 @@ const showFallback = ref(false);
 // 计算名字首字母
 const initials = computed(() => {
   if (!props.name) return '?';
-  
+
   const words = props.name.trim().split(/\s+/);
   if (words.length === 0) return '?';
-  
+
   if (words.length === 1) {
     // 单个词，取前两个字符
     return words[0].substring(0, 2).toUpperCase();
   } else {
     // 多个词，取每个词的首字母（最多两个）
-    return words.slice(0, 2)
-      .map(word => word.charAt(0))
+    return words
+      .slice(0, 2)
+      .map((word) => word.charAt(0))
       .join('')
       .toUpperCase();
   }
@@ -77,13 +64,13 @@ const actualSize = computed(() => {
   if (typeof props.size === 'number') {
     return props.size;
   }
-  
+
   const sizeMap = {
     'small': 32,
     'default': 40,
     'large': 64
   };
-  
+
   return sizeMap[props.size] || 40;
 });
 
@@ -98,20 +85,33 @@ const containerStyle = computed(() => ({
 // 生成随机背景色（基于名字）
 const generateBackgroundColor = (name: string): string => {
   if (!name) return '#6b7280';
-  
+
   const colors = [
-    '#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16',
-    '#22c55e', '#10b981', '#14b8a6', '#06b6d4', '#0ea5e9',
-    '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef',
-    '#ec4899', '#f43f5e'
+    '#ef4444',
+    '#f97316',
+    '#f59e0b',
+    '#eab308',
+    '#84cc16',
+    '#22c55e',
+    '#10b981',
+    '#14b8a6',
+    '#06b6d4',
+    '#0ea5e9',
+    '#3b82f6',
+    '#6366f1',
+    '#8b5cf6',
+    '#a855f7',
+    '#d946ef',
+    '#ec4899',
+    '#f43f5e'
   ];
-  
+
   // 基于名字生成固定的颜色索引
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
   }
-  
+
   const index = Math.abs(hash) % colors.length;
   return colors[index];
 };
@@ -135,13 +135,17 @@ const handleImageLoad = () => {
 };
 
 // 监听 src 变化，重置状态
-watch(() => props.src, (newSrc) => {
-  if (!newSrc) {
-    showFallback.value = true;
-  } else {
-    showFallback.value = false;
-  }
-}, { immediate: true });
+watch(
+  () => props.src,
+  (newSrc) => {
+    if (!newSrc) {
+      showFallback.value = true;
+    } else {
+      showFallback.value = false;
+    }
+  },
+  { immediate: true }
+);
 </script>
 
 <style scoped>

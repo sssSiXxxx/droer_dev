@@ -199,12 +199,12 @@ export const todoApi = {
     return new Promise((resolve, reject) => {
       setTimeout(() => {
         const todos = todoStorage.getTodos();
-        const index = todos.findIndex(todo => todo.id === id);
+        const index = todos.findIndex((todo) => todo.id === id);
         if (index === -1) {
           reject(new Error('待办事项不存在'));
           return;
         }
-        
+
         const updatedTodo = {
           ...todos[index],
           ...updates,
@@ -222,12 +222,12 @@ export const todoApi = {
     return new Promise((resolve, reject) => {
       setTimeout(() => {
         const todos = todoStorage.getTodos();
-        const index = todos.findIndex(todo => todo.id === id);
+        const index = todos.findIndex((todo) => todo.id === id);
         if (index === -1) {
           reject(new Error('待办事项不存在'));
           return;
         }
-        
+
         todos.splice(index, 1);
         todoStorage.saveTodos(todos);
         resolve();
@@ -241,7 +241,7 @@ export const todoApi = {
       setTimeout(() => {
         const todos = todoStorage.getTodos();
         todoIds.forEach((id, index) => {
-          const todo = todos.find(t => t.id === id);
+          const todo = todos.find((t) => t.id === id);
           if (todo) {
             todo.order = index + 1;
             todo.updatedAt = new Date().toISOString();
@@ -258,12 +258,12 @@ export const todoApi = {
     return new Promise((resolve, reject) => {
       setTimeout(() => {
         const todos = todoStorage.getTodos();
-        const todo = todos.find(t => t.id === id);
+        const todo = todos.find((t) => t.id === id);
         if (!todo) {
           reject(new Error('待办事项不存在'));
           return;
         }
-        
+
         todo.completed = !todo.completed;
         todo.updatedAt = new Date().toISOString();
         todoStorage.saveTodos(todos);
@@ -304,64 +304,65 @@ export const todoApi = {
         const todos = todoStorage.getTodos();
         const now = new Date();
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        
+
         const stats: TodoStats = {
           total: todos.length,
-          completed: todos.filter(t => t.completed).length,
-          pending: todos.filter(t => !t.completed).length,
-          overdue: todos.filter(t => !t.completed && t.dueDate && new Date(t.dueDate) < now).length,
-          todayDue: todos.filter(t => !t.completed && t.dueDate && 
-            new Date(t.dueDate) >= today && 
-            new Date(t.dueDate) < new Date(today.getTime() + 24 * 60 * 60 * 1000)
+          completed: todos.filter((t) => t.completed).length,
+          pending: todos.filter((t) => !t.completed).length,
+          overdue: todos.filter((t) => !t.completed && t.dueDate && new Date(t.dueDate) < now).length,
+          todayDue: todos.filter(
+            (t) => !t.completed && t.dueDate && new Date(t.dueDate) >= today && new Date(t.dueDate) < new Date(today.getTime() + 24 * 60 * 60 * 1000)
           ).length,
-          completionRate: todos.length > 0 ? (todos.filter(t => t.completed).length / todos.length) * 100 : 0
+          completionRate: todos.length > 0 ? (todos.filter((t) => t.completed).length / todos.length) * 100 : 0
         };
-        
+
         resolve(stats);
       }, 100);
     });
   },
 
   // 搜索待办事项
-  async searchTodos(query: string, filters?: {
-    category?: string;
-    priority?: string;
-    completed?: boolean;
-    overdue?: boolean;
-  }): Promise<TodoItem[]> {
+  async searchTodos(
+    query: string,
+    filters?: {
+      category?: string;
+      priority?: string;
+      completed?: boolean;
+      overdue?: boolean;
+    }
+  ): Promise<TodoItem[]> {
     return new Promise((resolve) => {
       setTimeout(() => {
         let todos = todoStorage.getTodos();
-        
+
         // 文本搜索
         if (query.trim()) {
           const searchTerm = query.toLowerCase();
-          todos = todos.filter(todo => 
-            todo.title.toLowerCase().includes(searchTerm) ||
-            todo.description?.toLowerCase().includes(searchTerm) ||
-            todo.tags.some(tag => tag.toLowerCase().includes(searchTerm))
+          todos = todos.filter(
+            (todo) =>
+              todo.title.toLowerCase().includes(searchTerm) ||
+              todo.description?.toLowerCase().includes(searchTerm) ||
+              todo.tags.some((tag) => tag.toLowerCase().includes(searchTerm))
           );
         }
-        
+
         // 应用过滤器
         if (filters) {
           if (filters.category) {
-            todos = todos.filter(todo => todo.category === filters.category);
+            todos = todos.filter((todo) => todo.category === filters.category);
           }
           if (filters.priority) {
-            todos = todos.filter(todo => todo.priority === filters.priority);
+            todos = todos.filter((todo) => todo.priority === filters.priority);
           }
           if (filters.completed !== undefined) {
-            todos = todos.filter(todo => todo.completed === filters.completed);
+            todos = todos.filter((todo) => todo.completed === filters.completed);
           }
           if (filters.overdue) {
             const now = new Date();
-            todos = todos.filter(todo => 
-              !todo.completed && todo.dueDate && new Date(todo.dueDate) < now
-            );
+            todos = todos.filter((todo) => !todo.completed && todo.dueDate && new Date(todo.dueDate) < now);
           }
         }
-        
+
         resolve(todos.sort((a, b) => a.order - b.order));
       }, 100);
     });

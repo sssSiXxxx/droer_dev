@@ -7,31 +7,19 @@
         <p class="last-updated">最后更新: {{ formatTime(lastUpdated) }}</p>
       </div>
       <div class="stats-actions">
-        <el-button 
-          type="primary" 
-          :loading="loading" 
-          size="small" 
-          @click="refreshData"
-          :disabled="loading"
-        >
+        <el-button type="primary" :loading="loading" size="small" @click="refreshData" :disabled="loading">
           <el-icon><Refresh /></el-icon>
           {{ loading ? '更新中...' : '刷新数据' }}
         </el-button>
-        <el-switch
-          v-model="autoRefresh"
-          inline-prompt
-          active-text="自动"
-          inactive-text="手动"
-          @change="toggleAutoRefresh"
-        />
+        <el-switch v-model="autoRefresh" inline-prompt active-text="自动" inactive-text="手动" @change="toggleAutoRefresh" />
       </div>
     </div>
 
     <!-- 统计卡片网格 -->
     <div class="stats-grid" :class="{ 'compact': compact }">
-      <div 
-        class="stat-card" 
-        v-for="(stat, index) in statsData" 
+      <div
+        class="stat-card"
+        v-for="(stat, index) in statsData"
         :key="stat.key"
         :class="[stat.type, { 'loading': loading }]"
         :style="{ animationDelay: `${index * 0.1}s` }"
@@ -41,7 +29,7 @@
             <component :is="stat.icon" />
           </el-icon>
         </div>
-        
+
         <div class="stat-content">
           <div class="stat-value">
             <span v-if="!loading">{{ stat.value.toLocaleString() }}</span>
@@ -66,12 +54,7 @@
       <el-collapse v-model="activeCollapse" accordion>
         <el-collapse-item title="数据源状态" name="status">
           <div class="source-grid">
-            <div 
-              class="source-item" 
-              v-for="source in dataSources" 
-              :key="source.name"
-              :class="source.status"
-            >
+            <div class="source-item" v-for="source in dataSources" :key="source.name" :class="source.status">
               <div class="source-indicator" :class="source.status"></div>
               <div class="source-info">
                 <div class="source-name">{{ source.name }}</div>
@@ -90,17 +73,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
-import { 
-  Refresh, 
-  TrendCharts, 
-  Bottom, 
-  Connection,
-  User,
-  Star,
-  Share,
-  Download,
-  Warning
-} from '@element-plus/icons-vue';
+import { Refresh, TrendCharts, Bottom, Connection, User, Star, Share, Download, Warning } from '@element-plus/icons-vue';
 import { getDashboardData, refreshAllData, getDataUpdateStatus, type CommunityStats } from '@/api/community-enhanced';
 
 // Props
@@ -139,7 +112,7 @@ const stats = ref<CommunityStats>({
 const dataSources = ref([
   { name: 'Gitee API', status: 'active', lastUpdate: new Date(), cacheStatus: '5分钟' },
   { name: '项目统计', status: 'active', lastUpdate: new Date(), cacheStatus: '5分钟' },
-  { name: '贡献者数据', status: 'active', lastUpdate: new Date(), cacheStatus: '15分钟' },
+  { name: '贡献者数据', status: 'active', lastUpdate: new Date(), cacheStatus: '15分钟' }
 ]);
 
 // 自动刷新定时器
@@ -226,13 +199,13 @@ function generateTrendData(currentValue: number): number[] {
   const points = 7;
   const data = [];
   const baseValue = Math.max(0, currentValue - 100);
-  
+
   for (let i = 0; i < points; i++) {
     const variation = Math.random() * 40 - 20;
     const value = baseValue + (currentValue - baseValue) * (i / (points - 1)) + variation;
     data.push(Math.max(0, Math.floor(value)));
   }
-  
+
   return data;
 }
 
@@ -241,11 +214,11 @@ const loadData = async (forceRefresh = false) => {
   try {
     loading.value = true;
     console.log('🔄 正在加载社区统计数据...');
-    
+
     const data = forceRefresh ? await refreshAllData() : await getDashboardData();
     stats.value = data.stats;
     lastUpdated.value = new Date(data.stats.lastUpdated);
-    
+
     // 更新数据源状态
     const updateStatus = getDataUpdateStatus();
     dataSources.value = dataSources.value.map((source, index) => ({
@@ -254,12 +227,12 @@ const loadData = async (forceRefresh = false) => {
       lastUpdate: lastUpdated.value,
       cacheStatus: updateStatus[index] ? `${Math.floor(updateStatus[index].age / 1000)}秒前` : '未知'
     }));
-    
+
     console.log('✅ 社区统计数据加载完成');
   } catch (error) {
     console.error('❌ 加载统计数据失败:', error);
     // 更新数据源状态为错误
-    dataSources.value = dataSources.value.map(source => ({
+    dataSources.value = dataSources.value.map((source) => ({
       ...source,
       status: 'error'
     }));
@@ -280,7 +253,7 @@ const formatTime = (date: Date | string): string => {
   const diffMs = now.getTime() - d.getTime();
   const diffSeconds = Math.floor(diffMs / 1000);
   const diffMinutes = Math.floor(diffSeconds / 60);
-  
+
   if (diffSeconds < 60) {
     return `${diffSeconds}秒前`;
   } else if (diffMinutes < 60) {
@@ -304,11 +277,11 @@ const startAutoRefresh = () => {
   if (refreshTimer) {
     clearInterval(refreshTimer);
   }
-  
+
   refreshTimer = setInterval(() => {
     loadData();
   }, props.autoRefreshInterval);
-  
+
   console.log(`✅ 自动刷新已启用，间隔 ${props.autoRefreshInterval / 1000} 秒`);
 };
 
@@ -586,7 +559,7 @@ defineExpose({
     grid-template-columns: repeat(3, 1fr);
     gap: 14px;
   }
-  
+
   .stats-grid.compact {
     grid-template-columns: repeat(3, 1fr);
     gap: 12px;
@@ -598,36 +571,36 @@ defineExpose({
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
   }
-  
+
   .stats-grid.compact {
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
   }
-  
+
   .stat-card {
     padding: 16px;
     min-height: 100px;
   }
-  
+
   .stat-icon {
     width: 40px;
     height: 40px;
   }
-  
+
   .stat-icon .el-icon {
     font-size: 20px;
   }
-  
+
   .stat-value {
     font-size: 20px;
   }
-  
+
   .stats-header {
     flex-direction: column;
     gap: 16px;
     align-items: flex-start;
   }
-  
+
   .stats-actions {
     width: 100%;
     justify-content: space-between;

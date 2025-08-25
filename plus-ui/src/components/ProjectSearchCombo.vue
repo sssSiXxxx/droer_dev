@@ -17,14 +17,7 @@
             <el-icon><Search /></el-icon>
           </template>
           <template #suffix>
-            <el-button
-              type="primary"
-              :loading="searching"
-              @click="handleSearch"
-              size="small"
-            >
-              搜索
-            </el-button>
+            <el-button type="primary" :loading="searching" @click="handleSearch" size="small"> 搜索 </el-button>
           </template>
         </el-input>
 
@@ -37,12 +30,7 @@
             </el-button>
           </div>
           <div class="suggestions-list">
-            <div
-              v-for="suggestion in suggestions"
-              :key="suggestion"
-              class="suggestion-item"
-              @click="selectSuggestion(suggestion)"
-            >
+            <div v-for="suggestion in suggestions" :key="suggestion" class="suggestion-item" @click="selectSuggestion(suggestion)">
               <el-icon><Search /></el-icon>
               <span>{{ suggestion }}</span>
             </div>
@@ -52,37 +40,16 @@
 
       <!-- 快速筛选选择器 -->
       <div class="quick-filters">
-        <el-select
-          v-model="selectedLanguage"
-          placeholder="编程语言"
-          clearable
-          size="large"
-          @change="handleLanguageChange"
-          style="width: 140px"
-        >
-          <el-option
-            v-for="lang in availableLanguages"
-            :key="lang"
-            :label="lang"
-            :value="lang"
-          >
+        <el-select v-model="selectedLanguage" placeholder="编程语言" clearable size="large" @change="handleLanguageChange" style="width: 140px">
+          <el-option v-for="lang in availableLanguages" :key="lang" :label="lang" :value="lang">
             <div class="language-option">
-              <div 
-                class="language-dot" 
-                :style="{ backgroundColor: getLanguageColor(lang) }"
-              ></div>
+              <div class="language-dot" :style="{ backgroundColor: getLanguageColor(lang) }"></div>
               <span>{{ lang }}</span>
             </div>
           </el-option>
         </el-select>
 
-        <el-select
-          v-model="selectedSort"
-          placeholder="排序"
-          size="large"
-          @change="handleSortChange"
-          style="width: 120px"
-        >
+        <el-select v-model="selectedSort" placeholder="排序" size="large" @change="handleSortChange" style="width: 120px">
           <el-option label="Stars ↓" value="stars-desc" />
           <el-option label="Stars ↑" value="stars-asc" />
           <el-option label="Forks ↓" value="forks-desc" />
@@ -90,14 +57,7 @@
           <el-option label="名称" value="name-asc" />
         </el-select>
 
-        <el-select
-          v-model="selectedStarRange"
-          placeholder="Star范围"
-          clearable
-          size="large"
-          @change="handleStarRangeChange"
-          style="width: 140px"
-        >
+        <el-select v-model="selectedStarRange" placeholder="Star范围" clearable size="large" @change="handleStarRangeChange" style="width: 140px">
           <el-option label="1000+ Stars" value="1000+" />
           <el-option label="500+ Stars" value="500+" />
           <el-option label="100+ Stars" value="100+" />
@@ -110,15 +70,7 @@
     <!-- 热门推荐标签 -->
     <div class="hot-tags" v-if="!searchQuery && hotTags.length > 0">
       <span class="tags-label">热门搜索:</span>
-      <el-tag
-        v-for="tag in hotTags"
-        :key="tag"
-        type="info"
-        effect="plain"
-        size="small"
-        @click="quickSearch(tag)"
-        class="hot-tag"
-      >
+      <el-tag v-for="tag in hotTags" :key="tag" type="info" effect="plain" size="small" @click="quickSearch(tag)" class="hot-tag">
         {{ tag }}
       </el-tag>
     </div>
@@ -142,12 +94,7 @@
     <!-- 搜索结果展示 -->
     <div v-if="searchResults.length > 0" class="search-results" :class="viewMode">
       <transition-group name="fade" tag="div" class="results-container">
-        <div
-          v-for="project in displayResults"
-          :key="project.id"
-          class="result-item"
-          @click="openProject(project)"
-        >
+        <div v-for="project in displayResults" :key="project.id" class="result-item" @click="openProject(project)">
           <div class="project-info">
             <div class="project-header">
               <h4 class="project-name" v-html="highlightText(project.name)"></h4>
@@ -165,15 +112,10 @@
             <p class="project-desc" v-html="highlightText(project.description)"></p>
             <div class="project-meta">
               <span v-if="project.language" class="language">
-                <div 
-                  class="language-dot" 
-                  :style="{ backgroundColor: getLanguageColor(project.language) }"
-                ></div>
+                <div class="language-dot" :style="{ backgroundColor: getLanguageColor(project.language) }"></div>
                 {{ project.language }}
               </span>
-              <span class="update-time">
-                更新于 {{ formatTime(project.updated_at) }}
-              </span>
+              <span class="update-time"> 更新于 {{ formatTime(project.updated_at) }} </span>
             </div>
           </div>
         </div>
@@ -181,9 +123,7 @@
 
       <!-- 加载更多 -->
       <div v-if="hasMore" class="load-more">
-        <el-button @click="loadMore" :loading="loadingMore">
-          加载更多
-        </el-button>
+        <el-button @click="loadMore" :loading="loadingMore"> 加载更多 </el-button>
       </div>
     </div>
 
@@ -199,12 +139,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
 import { Search, Close, Star, Share } from '@element-plus/icons-vue';
-import { 
-  searchProjects, 
-  getProjectSuggestions, 
-  advancedSearchProjects,
-  type ProjectInfo 
-} from '@/api/community-enhanced';
+import { searchProjects, getProjectSuggestions, advancedSearchProjects, type ProjectInfo } from '@/api/community-enhanced';
 import { debounce } from 'lodash-es';
 
 // Props
@@ -250,9 +185,7 @@ const hotTags = ref(['hutool', 'Sa-Token', 'forest', 'MaxKey', 'LiteFlow', 'TLog
 const availableLanguages = ref(['Java', 'JavaScript', 'TypeScript', 'Python', 'Go', 'Vue', 'C++', 'C#', 'PHP']);
 
 // 计算属性
-const hasMore = computed(() => 
-  searchResults.value.length > displayResults.value.length
-);
+const hasMore = computed(() => searchResults.value.length > displayResults.value.length);
 
 // 防抖搜索输入
 const debouncedSearch = debounce(async (query: string) => {
@@ -305,17 +238,17 @@ const handleSearch = async () => {
 
   searching.value = true;
   closeSuggestions();
-  
+
   try {
     let results: ProjectInfo[] = [];
-    
+
     // 构建高级搜索选项
     const searchOptions = {
       query: searchQuery.value.trim(),
       language: selectedLanguage.value || undefined,
       limit: props.maxResults
     };
-    
+
     // 处理Star范围
     if (selectedStarRange.value) {
       if (selectedStarRange.value === '1000+') {
@@ -330,21 +263,21 @@ const handleSearch = async () => {
         searchOptions.maxStars = 9;
       }
     }
-    
+
     // 处理排序
     const [sortField, sortOrder] = selectedSort.value.split('-');
     searchOptions.sortBy = sortField as any;
     searchOptions.sortOrder = sortOrder as any;
-    
+
     // 执行高级搜索
     results = await advancedSearchProjects(searchOptions);
-    
+
     searchResults.value = results;
     currentPage.value = 1;
     updateDisplayResults();
-    
+
     emit('search', results, searchQuery.value);
-    
+
     console.log(`✅ 搜索完成: "${searchQuery.value}", 找到 ${results.length} 个结果`);
   } catch (error) {
     console.error('搜索失败:', error);
@@ -429,7 +362,7 @@ const formatTime = (dateStr: string): string => {
   const date = new Date(dateStr);
   const now = new Date();
   const diffDays = Math.floor((now.getTime() - date.getTime()) / (24 * 60 * 60 * 1000));
-  
+
   if (diffDays === 0) return '今天';
   if (diffDays === 1) return '昨天';
   if (diffDays < 7) return `${diffDays}天前`;
@@ -455,7 +388,7 @@ const getLanguageColor = (language: string): string => {
 
 const highlightText = (text: string): string => {
   if (!searchQuery.value.trim()) return text;
-  
+
   const query = searchQuery.value.trim();
   const regex = new RegExp(`(${query})`, 'gi');
   return text.replace(regex, '<mark class="highlight">$1</mark>');
@@ -707,27 +640,27 @@ watch(searchQuery, (newValue) => {
   .search-container {
     gap: 12px;
   }
-  
+
   .quick-filters {
     justify-content: center;
   }
-  
+
   .search-stats {
     flex-direction: column;
     gap: 12px;
     align-items: flex-start;
   }
-  
+
   .search-results.grid .results-container {
     grid-template-columns: 1fr;
   }
-  
+
   .project-header {
     flex-direction: column;
     gap: 8px;
     align-items: flex-start;
   }
-  
+
   .project-stats {
     align-self: flex-end;
   }

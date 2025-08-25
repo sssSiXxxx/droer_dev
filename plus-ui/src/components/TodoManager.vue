@@ -14,17 +14,10 @@
           <el-tag v-if="stats.overdue > 0" size="small" type="danger">{{ stats.overdue }} 过期</el-tag>
         </div>
       </div>
-      
+
       <div class="header-actions">
-        <el-button 
-          type="primary" 
-          size="small" 
-          @click="showAddDialog = true"
-          :icon="Plus"
-        >
-          新增任务
-        </el-button>
-        
+        <el-button type="primary" size="small" @click="showAddDialog = true" :icon="Plus"> 新增任务 </el-button>
+
         <el-dropdown @command="handleBatchAction">
           <el-button size="small">
             批量操作
@@ -44,38 +37,18 @@
     <!-- 搜索和过滤 -->
     <div class="todo-filters">
       <div class="search-section">
-        <el-input
-          v-model="searchQuery"
-          placeholder="搜索待办事项..."
-          clearable
-          @input="handleSearch"
-          class="search-input"
-        >
+        <el-input v-model="searchQuery" placeholder="搜索待办事项..." clearable @input="handleSearch" class="search-input">
           <template #prefix>
             <el-icon><Search /></el-icon>
           </template>
         </el-input>
       </div>
-      
+
       <div class="filter-section">
-        <el-select 
-          v-model="filterCategory" 
-          placeholder="分类" 
-          clearable 
-          size="small"
-          @change="applyFilters"
-        >
-          <el-option
-            v-for="category in categories"
-            :key="category.id"
-            :label="category.name"
-            :value="category.id"
-          >
+        <el-select v-model="filterCategory" placeholder="分类" clearable size="small" @change="applyFilters">
+          <el-option v-for="category in categories" :key="category.id" :label="category.name" :value="category.id">
             <div class="category-option">
-              <div 
-                class="category-color" 
-                :style="{ backgroundColor: category.color }"
-              ></div>
+              <div class="category-color" :style="{ backgroundColor: category.color }"></div>
               <el-icon :style="{ color: category.color }">
                 <component :is="category.icon" />
               </el-icon>
@@ -84,13 +57,7 @@
           </el-option>
         </el-select>
 
-        <el-select 
-          v-model="filterPriority" 
-          placeholder="优先级" 
-          clearable 
-          size="small"
-          @change="applyFilters"
-        >
+        <el-select v-model="filterPriority" placeholder="优先级" clearable size="small" @change="applyFilters">
           <el-option label="紧急" value="urgent">
             <div class="priority-option urgent">
               <el-icon><Warning /></el-icon>
@@ -117,13 +84,7 @@
           </el-option>
         </el-select>
 
-        <el-select 
-          v-model="filterStatus" 
-          placeholder="状态" 
-          clearable 
-          size="small"
-          @change="applyFilters"
-        >
+        <el-select v-model="filterStatus" placeholder="状态" clearable size="small" @change="applyFilters">
           <el-option label="待处理" value="pending" />
           <el-option label="已完成" value="completed" />
           <el-option label="已过期" value="overdue" />
@@ -146,19 +107,11 @@
           @click="selectTodo(todo.id)"
         >
           <div class="todo-checkbox">
-            <el-checkbox
-              :model-value="todo.completed"
-              @change="toggleComplete(todo.id)"
-              @click.stop
-            />
+            <el-checkbox :model-value="todo.completed" @change="toggleComplete(todo.id)" @click.stop />
           </div>
 
           <div class="todo-priority">
-            <div 
-              class="priority-indicator" 
-              :class="todo.priority"
-              :title="getPriorityText(todo.priority)"
-            >
+            <div class="priority-indicator" :class="todo.priority" :title="getPriorityText(todo.priority)">
               <el-icon>
                 <component :is="getPriorityIcon(todo.priority)" />
               </el-icon>
@@ -169,38 +122,29 @@
             <div class="todo-title">
               {{ todo.title }}
               <div class="todo-tags" v-if="todo.tags.length > 0">
-                <el-tag
-                  v-for="tag in todo.tags"
-                  :key="tag"
-                  size="small"
-                  type="info"
-                  effect="plain"
-                >
+                <el-tag v-for="tag in todo.tags" :key="tag" size="small" type="info" effect="plain">
                   {{ tag }}
                 </el-tag>
               </div>
             </div>
-            
+
             <div class="todo-description" v-if="todo.description">
               {{ todo.description }}
             </div>
-            
+
             <div class="todo-meta">
               <div class="meta-left">
                 <div class="todo-category">
-                  <div 
-                    class="category-dot" 
-                    :style="{ backgroundColor: getCategoryColor(todo.category) }"
-                  ></div>
+                  <div class="category-dot" :style="{ backgroundColor: getCategoryColor(todo.category) }"></div>
                   <span>{{ getCategoryName(todo.category) }}</span>
                 </div>
-                
+
                 <div class="todo-time" v-if="todo.dueDate">
                   <el-icon><Clock /></el-icon>
                   <span>{{ formatDueDate(todo.dueDate) }}</span>
                 </div>
               </div>
-              
+
               <div class="meta-right">
                 <span class="created-time">{{ formatCreatedTime(todo.createdAt) }}</span>
               </div>
@@ -211,11 +155,7 @@
             <el-button-group size="small">
               <el-button @click.stop="editTodo(todo)" :icon="Edit" />
               <el-button @click.stop="duplicateTodo(todo)" :icon="CopyDocument" />
-              <el-button 
-                @click.stop="deleteTodo(todo.id)" 
-                :icon="Delete" 
-                type="danger" 
-              />
+              <el-button @click.stop="deleteTodo(todo.id)" :icon="Delete" type="danger" />
             </el-button-group>
           </div>
         </div>
@@ -224,61 +164,29 @@
       <!-- 空状态 -->
       <div v-if="displayedTodos.length === 0 && !loading" class="empty-state">
         <el-empty :description="getEmptyDescription()">
-          <el-button type="primary" @click="showAddDialog = true">
-            创建第一个待办事项
-          </el-button>
+          <el-button type="primary" @click="showAddDialog = true"> 创建第一个待办事项 </el-button>
         </el-empty>
       </div>
     </div>
 
     <!-- 新增/编辑对话框 -->
-    <el-dialog
-      v-model="showAddDialog"
-      :title="editingTodo ? '编辑待办事项' : '新增待办事项'"
-      width="600px"
-      @close="resetForm"
-    >
-      <el-form
-        ref="todoFormRef"
-        :model="todoForm"
-        :rules="todoRules"
-        label-width="80px"
-      >
+    <el-dialog v-model="showAddDialog" :title="editingTodo ? '编辑待办事项' : '新增待办事项'" width="600px" @close="resetForm">
+      <el-form ref="todoFormRef" :model="todoForm" :rules="todoRules" label-width="80px">
         <el-form-item label="标题" prop="title">
-          <el-input
-            v-model="todoForm.title"
-            placeholder="请输入待办事项标题"
-            maxlength="100"
-            show-word-limit
-          />
+          <el-input v-model="todoForm.title" placeholder="请输入待办事项标题" maxlength="100" show-word-limit />
         </el-form-item>
 
         <el-form-item label="描述" prop="description">
-          <el-input
-            v-model="todoForm.description"
-            type="textarea"
-            placeholder="请输入详细描述（可选）"
-            :rows="3"
-            maxlength="500"
-            show-word-limit
-          />
+          <el-input v-model="todoForm.description" type="textarea" placeholder="请输入详细描述（可选）" :rows="3" maxlength="500" show-word-limit />
         </el-form-item>
 
         <el-row :gutter="16">
           <el-col :span="12">
             <el-form-item label="分类" prop="category">
               <el-select v-model="todoForm.category" placeholder="选择分类">
-                <el-option
-                  v-for="category in categories"
-                  :key="category.id"
-                  :label="category.name"
-                  :value="category.id"
-                >
+                <el-option v-for="category in categories" :key="category.id" :label="category.name" :value="category.id">
                   <div class="category-option">
-                    <div 
-                      class="category-color" 
-                      :style="{ backgroundColor: category.color }"
-                    ></div>
+                    <div class="category-color" :style="{ backgroundColor: category.color }"></div>
                     <el-icon :style="{ color: category.color }">
                       <component :is="category.icon" />
                     </el-icon>
@@ -332,30 +240,13 @@
         </el-form-item>
 
         <el-form-item label="标签">
-          <el-input
-            v-model="tagInput"
-            placeholder="输入标签，按回车添加"
-            @keyup.enter="addTag"
-          >
+          <el-input v-model="tagInput" placeholder="输入标签，按回车添加" @keyup.enter="addTag">
             <template #suffix>
-              <el-button 
-                size="small" 
-                text 
-                @click="addTag"
-                :disabled="!tagInput.trim()"
-              >
-                添加
-              </el-button>
+              <el-button size="small" text @click="addTag" :disabled="!tagInput.trim()"> 添加 </el-button>
             </template>
           </el-input>
           <div class="tags-display" v-if="todoForm.tags.length > 0">
-            <el-tag
-              v-for="(tag, index) in todoForm.tags"
-              :key="index"
-              closable
-              @close="removeTag(index)"
-              style="margin: 2px;"
-            >
+            <el-tag v-for="(tag, index) in todoForm.tags" :key="index" closable @close="removeTag(index)" style="margin: 2px">
               {{ tag }}
             </el-tag>
           </div>
@@ -365,11 +256,7 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="showAddDialog = false">取消</el-button>
-          <el-button 
-            type="primary" 
-            @click="saveTodo"
-            :loading="saving"
-          >
+          <el-button type="primary" @click="saveTodo" :loading="saving">
             {{ editingTodo ? '更新' : '创建' }}
           </el-button>
         </span>
@@ -380,9 +267,24 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue';
-import { 
-  List, Plus, Search, Edit, Delete, CopyDocument, Clock, Warning,
-  ArrowUp, ArrowDown, Minus, Briefcase, Code, Document, Users, Cog, User
+import {
+  List,
+  Plus,
+  Search,
+  Edit,
+  Delete,
+  CopyDocument,
+  Clock,
+  Warning,
+  ArrowUp,
+  ArrowDown,
+  Minus,
+  Briefcase,
+  Code,
+  Document,
+  Users,
+  Cog,
+  User
 } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
 import { todoApi, type TodoItem, type TodoCategory, type TodoStats } from '@/api/todo';
@@ -431,9 +333,7 @@ const todoRules: FormRules = {
     { required: true, message: '请输入待办事项标题', trigger: 'blur' },
     { min: 1, max: 100, message: '标题长度在 1 到 100 个字符', trigger: 'blur' }
   ],
-  category: [
-    { required: true, message: '请选择分类', trigger: 'change' }
-  ]
+  category: [{ required: true, message: '请选择分类', trigger: 'change' }]
 };
 
 // 计算属性
@@ -443,29 +343,30 @@ const displayedTodos = computed(() => {
   // 应用搜索
   if (searchQuery.value.trim()) {
     const query = searchQuery.value.toLowerCase();
-    filtered = filtered.filter(todo =>
-      todo.title.toLowerCase().includes(query) ||
-      todo.description?.toLowerCase().includes(query) ||
-      todo.tags.some(tag => tag.toLowerCase().includes(query))
+    filtered = filtered.filter(
+      (todo) =>
+        todo.title.toLowerCase().includes(query) ||
+        todo.description?.toLowerCase().includes(query) ||
+        todo.tags.some((tag) => tag.toLowerCase().includes(query))
     );
   }
 
   // 应用过滤器
   if (filterCategory.value) {
-    filtered = filtered.filter(todo => todo.category === filterCategory.value);
+    filtered = filtered.filter((todo) => todo.category === filterCategory.value);
   }
 
   if (filterPriority.value) {
-    filtered = filtered.filter(todo => todo.priority === filterPriority.value);
+    filtered = filtered.filter((todo) => todo.priority === filterPriority.value);
   }
 
   if (filterStatus.value) {
     if (filterStatus.value === 'completed') {
-      filtered = filtered.filter(todo => todo.completed);
+      filtered = filtered.filter((todo) => todo.completed);
     } else if (filterStatus.value === 'pending') {
-      filtered = filtered.filter(todo => !todo.completed);
+      filtered = filtered.filter((todo) => !todo.completed);
     } else if (filterStatus.value === 'overdue') {
-      filtered = filtered.filter(todo => isOverdue(todo));
+      filtered = filtered.filter((todo) => isOverdue(todo));
     }
   }
 
@@ -476,12 +377,8 @@ const displayedTodos = computed(() => {
 const loadData = async () => {
   loading.value = true;
   try {
-    const [todosData, categoriesData, statsData] = await Promise.all([
-      todoApi.getTodos(),
-      todoApi.getCategories(),
-      todoApi.getStats()
-    ]);
-    
+    const [todosData, categoriesData, statsData] = await Promise.all([todoApi.getTodos(), todoApi.getCategories(), todoApi.getStats()]);
+
     todos.value = todosData;
     categories.value = categoriesData;
     stats.value = statsData;
@@ -527,7 +424,7 @@ const duplicateTodo = async (todo: TodoItem) => {
       tags: [...todo.tags],
       order: todos.value.length + 1
     });
-    
+
     await loadData();
     ElMessage.success('待办事项已复制');
   } catch (error) {
@@ -543,7 +440,7 @@ const deleteTodo = async (id: string) => {
       cancelButtonText: '取消',
       type: 'warning'
     });
-    
+
     await todoApi.deleteTodo(id);
     await loadData();
     ElMessage.success('删除成功');
@@ -557,11 +454,11 @@ const deleteTodo = async (id: string) => {
 
 const saveTodo = async () => {
   if (!todoFormRef.value) return;
-  
+
   try {
     await todoFormRef.value.validate();
     saving.value = true;
-    
+
     const todoData = {
       title: todoForm.title,
       description: todoForm.description,
@@ -572,7 +469,7 @@ const saveTodo = async () => {
       completed: false,
       order: 0
     };
-    
+
     if (editingTodo.value) {
       await todoApi.updateTodo(editingTodo.value.id, todoData);
       ElMessage.success('更新成功');
@@ -580,7 +477,7 @@ const saveTodo = async () => {
       await todoApi.createTodo(todoData);
       ElMessage.success('创建成功');
     }
-    
+
     await loadData();
     showAddDialog.value = false;
     resetForm();
@@ -632,52 +529,52 @@ const handleBatchAction = async (command: string) => {
     ElMessage.warning('请先选择要操作的项目');
     return;
   }
-  
+
   try {
     switch (command) {
       case 'complete-selected':
         for (const id of selectedItems.value) {
-          const todo = todos.value.find(t => t.id === id);
+          const todo = todos.value.find((t) => t.id === id);
           if (todo && !todo.completed) {
             await todoApi.toggleComplete(id);
           }
         }
         ElMessage.success('批量完成成功');
         break;
-        
+
       case 'delete-selected':
         await ElMessageBox.confirm(`确定要删除选中的 ${selectedItems.value.length} 个待办事项吗？`, '确认删除', {
           confirmButtonText: '删除',
           cancelButtonText: '取消',
           type: 'warning'
         });
-        
+
         for (const id of selectedItems.value) {
           await todoApi.deleteTodo(id);
         }
         ElMessage.success('批量删除成功');
         break;
-        
+
       case 'clear-completed':
-        const completedTodos = todos.value.filter(t => t.completed);
+        const completedTodos = todos.value.filter((t) => t.completed);
         if (completedTodos.length === 0) {
           ElMessage.info('没有已完成的待办事项');
           return;
         }
-        
+
         await ElMessageBox.confirm(`确定要删除所有 ${completedTodos.length} 个已完成的待办事项吗？`, '确认删除', {
           confirmButtonText: '删除',
           cancelButtonText: '取消',
           type: 'warning'
         });
-        
+
         for (const todo of completedTodos) {
           await todoApi.deleteTodo(todo.id);
         }
         ElMessage.success('清空已完成项目成功');
         break;
     }
-    
+
     selectedItems.value = [];
     await loadData();
   } catch (error) {
@@ -703,12 +600,12 @@ const isOverdue = (todo: TodoItem): boolean => {
 };
 
 const getCategoryName = (categoryId: string): string => {
-  const category = categories.value.find(c => c.id === categoryId);
+  const category = categories.value.find((c) => c.id === categoryId);
   return category?.name || '未分类';
 };
 
 const getCategoryColor = (categoryId: string): string => {
-  const category = categories.value.find(c => c.id === categoryId);
+  const category = categories.value.find((c) => c.id === categoryId);
   return category?.color || '#666';
 };
 
@@ -737,7 +634,7 @@ const formatDueDate = (dateStr: string): string => {
   const now = new Date();
   const diffMs = date.getTime() - now.getTime();
   const diffDays = Math.ceil(diffMs / (24 * 60 * 60 * 1000));
-  
+
   if (diffDays < 0) {
     return `逾期 ${Math.abs(diffDays)} 天`;
   } else if (diffDays === 0) {
@@ -756,7 +653,7 @@ const formatCreatedTime = (dateStr: string): string => {
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffDays = Math.floor(diffMs / (24 * 60 * 60 * 1000));
-  
+
   if (diffDays === 0) {
     return '今天创建';
   } else if (diffDays === 1) {
@@ -1050,32 +947,32 @@ onMounted(() => {
     gap: 16px;
     align-items: stretch;
   }
-  
+
   .header-actions {
     justify-content: center;
   }
-  
+
   .todo-filters {
     flex-direction: column;
     gap: 12px;
   }
-  
+
   .filter-section {
     justify-content: center;
     flex-wrap: wrap;
   }
-  
+
   .todo-item {
     flex-direction: column;
     gap: 8px;
   }
-  
+
   .todo-meta {
     flex-direction: column;
     gap: 8px;
     align-items: flex-start;
   }
-  
+
   .meta-left {
     flex-direction: column;
     gap: 4px;

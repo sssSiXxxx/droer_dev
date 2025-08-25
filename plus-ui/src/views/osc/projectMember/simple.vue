@@ -7,18 +7,12 @@
           <el-button type="primary" @click="testLoad">测试加载</el-button>
         </div>
       </template>
-      
+
       <div class="test-content">
-        <el-alert
-          title="页面状态"
-          :description="`页面已加载，当前时间: ${currentTime}`"
-          type="info"
-          show-icon
-          :closable="false"
-        />
-        
+        <el-alert title="页面状态" :description="`页面已加载，当前时间: ${currentTime}`" type="info" show-icon :closable="false" />
+
         <el-divider />
-        
+
         <el-row :gutter="20">
           <el-col :span="12">
             <el-card>
@@ -30,7 +24,7 @@
               <p><strong>错误信息:</strong> {{ errorMessage || '无' }}</p>
             </el-card>
           </el-col>
-          
+
           <el-col :span="12">
             <el-card>
               <template #header>
@@ -41,19 +35,14 @@
             </el-card>
           </el-col>
         </el-row>
-        
+
         <el-divider />
-        
+
         <el-card>
           <template #header>
             <span>数据列表</span>
           </template>
-          <el-table
-            v-loading="loading"
-            :data="projectMemberList"
-            border
-            style="width: 100%"
-          >
+          <el-table v-loading="loading" :data="projectMemberList" border style="width: 100%">
             <el-table-column label="ID" prop="id" width="80" />
             <el-table-column label="项目ID" prop="projectId" width="100" />
             <el-table-column label="成员ID" prop="memberId" width="100" />
@@ -85,12 +74,12 @@ const apiResult = ref<string>('');
 async function testLoad() {
   loading.value = true;
   errorMessage.value = '';
-  
+
   try {
     console.log('开始加载数据...');
     const response = await listProjectMember();
     console.log('API响应:', response);
-    
+
     if (response && response.rows) {
       projectMemberList.value = response.rows;
       ElMessage.success(`数据加载成功，共 ${response.rows.length} 条记录`);

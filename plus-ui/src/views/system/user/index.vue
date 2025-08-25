@@ -31,14 +31,10 @@
             <el-button type="primary" plain icon="Plus" @click="handleAdd()">新增</el-button>
           </el-col>
           <el-col :span="1.5">
-            <el-button type="success" plain :disabled="single" icon="Edit" @click="handleUpdate()">
-              修改
-            </el-button>
+            <el-button type="success" plain :disabled="single" icon="Edit" @click="handleUpdate()"> 修改 </el-button>
           </el-col>
           <el-col :span="1.5">
-            <el-button type="danger" plain :disabled="multiple" icon="Delete" @click="handleDelete()">
-              删除
-            </el-button>
+            <el-button type="danger" plain :disabled="multiple" icon="Delete" @click="handleDelete()"> 删除 </el-button>
           </el-col>
         </el-row>
       </template>
@@ -73,13 +69,7 @@
         </el-table-column>
       </el-table>
 
-      <pagination
-        v-show="total > 0"
-        v-model:page="queryParams.pageNum"
-        v-model:limit="queryParams.pageSize"
-        :total="total"
-        @pagination="getList"
-      />
+      <pagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
     </el-card>
 
     <!-- 添加或修改用户配置对话框 -->

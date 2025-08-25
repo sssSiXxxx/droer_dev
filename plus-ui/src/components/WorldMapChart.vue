@@ -4,19 +4,16 @@
       <h3>全球访客分布</h3>
       <p>基于IP地址统计的访客数量分布</p>
     </div>
-    
+
     <div class="map-wrapper">
       <div ref="mapContainer" class="map-chart" :style="{ height: mapHeight }"></div>
-      
+
       <!-- 数据图例 -->
       <div class="map-legend">
         <div class="legend-title">访客数量</div>
         <div class="legend-items">
           <div v-for="item in legendData" :key="item.label" class="legend-item">
-            <div 
-              class="legend-color" 
-              :style="{ backgroundColor: item.color }"
-            ></div>
+            <div class="legend-color" :style="{ backgroundColor: item.color }"></div>
             <span class="legend-text">{{ item.label }}</span>
           </div>
         </div>
@@ -39,7 +36,7 @@
           <div class="stat-label">访问最多</div>
         </div>
         <div class="stat-item">
-          <div class="stat-value">{{ ((topCountry?.value || 0) / totalVisitors * 100).toFixed(1) }}%</div>
+          <div class="stat-value">{{ (((topCountry?.value || 0) / totalVisitors) * 100).toFixed(1) }}%</div>
           <div class="stat-label">占比最高</div>
         </div>
       </div>
@@ -89,12 +86,12 @@ const visitorData = ref([
   { name: 'Vietnam', value: 950, code: 'VN' },
   { name: 'Hong Kong', value: 890, code: 'HK' },
   { name: 'Taiwan', value: 780, code: 'TW' },
-  
+
   // 北美
   { name: 'United States', value: 26800, code: 'US' },
   { name: 'Canada', value: 6800, code: 'CA' },
   { name: 'Mexico', value: 1200, code: 'MX' },
-  
+
   // 欧洲
   { name: 'Germany', value: 11200, code: 'DE' },
   { name: 'United Kingdom', value: 8900, code: 'GB' },
@@ -114,22 +111,22 @@ const visitorData = ref([
   { name: 'Czech Republic', value: 420, code: 'CZ' },
   { name: 'Ireland', value: 350, code: 'IE' },
   { name: 'Portugal', value: 290, code: 'PT' },
-  
+
   // 大洋洲
   { name: 'Australia', value: 5600, code: 'AU' },
   { name: 'New Zealand', value: 650, code: 'NZ' },
-  
+
   // 南美
   { name: 'Brazil', value: 4800, code: 'BR' },
   { name: 'Argentina', value: 920, code: 'AR' },
   { name: 'Chile', value: 580, code: 'CL' },
   { name: 'Colombia', value: 420, code: 'CO' },
-  
+
   // 非洲
   { name: 'South Africa', value: 890, code: 'ZA' },
   { name: 'Egypt', value: 340, code: 'EG' },
   { name: 'Nigeria', value: 280, code: 'NG' },
-  
+
   // 中东
   { name: 'Israel', value: 680, code: 'IL' },
   { name: 'United Arab Emirates', value: 520, code: 'AE' },
@@ -138,17 +135,11 @@ const visitorData = ref([
 ]);
 
 // 计算统计数据
-const totalVisitors = computed(() => 
-  visitorData.value.reduce((sum, item) => sum + item.value, 0)
-);
+const totalVisitors = computed(() => visitorData.value.reduce((sum, item) => sum + item.value, 0));
 
 const countryCount = computed(() => visitorData.value.length);
 
-const topCountry = computed(() => 
-  visitorData.value.reduce((max, item) => 
-    item.value > max.value ? item : max, visitorData.value[0]
-  )
-);
+const topCountry = computed(() => visitorData.value.reduce((max, item) => (item.value > max.value ? item : max), visitorData.value[0]));
 
 // 图例数据
 const legendData = computed(() => [
@@ -173,191 +164,351 @@ const getColorForValue = (value: number): string => {
 // 简化的世界地图数据 - 使用虚拟坐标
 const getWorldMapData = () => {
   const worldGeoJson = {
-    type: "FeatureCollection",
+    type: 'FeatureCollection',
     features: [
       // 中国
       {
-        type: "Feature",
-        properties: { name: "China" },
+        type: 'Feature',
+        properties: { name: 'China' },
         geometry: {
-          type: "Polygon",
-          coordinates: [[[104, 30], [104, 40], [125, 40], [125, 30], [104, 30]]]
+          type: 'Polygon',
+          coordinates: [
+            [
+              [104, 30],
+              [104, 40],
+              [125, 40],
+              [125, 30],
+              [104, 30]
+            ]
+          ]
         }
       },
       // 美国
       {
-        type: "Feature", 
-        properties: { name: "United States" },
+        type: 'Feature',
+        properties: { name: 'United States' },
         geometry: {
-          type: "Polygon",
-          coordinates: [[[-125, 25], [-125, 49], [-66, 49], [-66, 25], [-125, 25]]]
+          type: 'Polygon',
+          coordinates: [
+            [
+              [-125, 25],
+              [-125, 49],
+              [-66, 49],
+              [-66, 25],
+              [-125, 25]
+            ]
+          ]
         }
       },
       // 日本
       {
-        type: "Feature",
-        properties: { name: "Japan" },
+        type: 'Feature',
+        properties: { name: 'Japan' },
         geometry: {
-          type: "Polygon", 
-          coordinates: [[[129, 30], [129, 46], [146, 46], [146, 30], [129, 30]]]
+          type: 'Polygon',
+          coordinates: [
+            [
+              [129, 30],
+              [129, 46],
+              [146, 46],
+              [146, 30],
+              [129, 30]
+            ]
+          ]
         }
       },
       // 德国
       {
-        type: "Feature",
-        properties: { name: "Germany" },
+        type: 'Feature',
+        properties: { name: 'Germany' },
         geometry: {
-          type: "Polygon",
-          coordinates: [[[5, 47], [5, 55], [15, 55], [15, 47], [5, 47]]]
+          type: 'Polygon',
+          coordinates: [
+            [
+              [5, 47],
+              [5, 55],
+              [15, 55],
+              [15, 47],
+              [5, 47]
+            ]
+          ]
         }
       },
-      // 韩国  
+      // 韩国
       {
-        type: "Feature",
-        properties: { name: "South Korea" },
+        type: 'Feature',
+        properties: { name: 'South Korea' },
         geometry: {
-          type: "Polygon",
-          coordinates: [[[124, 33], [124, 39], [132, 39], [132, 33], [124, 33]]]
+          type: 'Polygon',
+          coordinates: [
+            [
+              [124, 33],
+              [124, 39],
+              [132, 39],
+              [132, 33],
+              [124, 33]
+            ]
+          ]
         }
       },
       // 英国
       {
-        type: "Feature",
-        properties: { name: "United Kingdom" },
+        type: 'Feature',
+        properties: { name: 'United Kingdom' },
         geometry: {
-          type: "Polygon",
-          coordinates: [[[-8, 49], [-8, 61], [2, 61], [2, 49], [-8, 49]]]
+          type: 'Polygon',
+          coordinates: [
+            [
+              [-8, 49],
+              [-8, 61],
+              [2, 61],
+              [2, 49],
+              [-8, 49]
+            ]
+          ]
         }
       },
       // 法国
       {
-        type: "Feature",
-        properties: { name: "France" },
+        type: 'Feature',
+        properties: { name: 'France' },
         geometry: {
-          type: "Polygon",
-          coordinates: [[[-5, 42], [-5, 51], [8, 51], [8, 42], [-5, 42]]]
+          type: 'Polygon',
+          coordinates: [
+            [
+              [-5, 42],
+              [-5, 51],
+              [8, 51],
+              [8, 42],
+              [-5, 42]
+            ]
+          ]
         }
       },
       // 加拿大
       {
-        type: "Feature",
-        properties: { name: "Canada" },
+        type: 'Feature',
+        properties: { name: 'Canada' },
         geometry: {
-          type: "Polygon",
-          coordinates: [[[-141, 42], [-141, 83], [-52, 83], [-52, 42], [-141, 42]]]
+          type: 'Polygon',
+          coordinates: [
+            [
+              [-141, 42],
+              [-141, 83],
+              [-52, 83],
+              [-52, 42],
+              [-141, 42]
+            ]
+          ]
         }
       },
       // 澳大利亚
       {
-        type: "Feature",
-        properties: { name: "Australia" },
+        type: 'Feature',
+        properties: { name: 'Australia' },
         geometry: {
-          type: "Polygon",
-          coordinates: [[[113, -44], [113, -10], [154, -10], [154, -44], [113, -44]]]
+          type: 'Polygon',
+          coordinates: [
+            [
+              [113, -44],
+              [113, -10],
+              [154, -10],
+              [154, -44],
+              [113, -44]
+            ]
+          ]
         }
       },
       // 印度
       {
-        type: "Feature",
-        properties: { name: "India" },
+        type: 'Feature',
+        properties: { name: 'India' },
         geometry: {
-          type: "Polygon",
-          coordinates: [[[68, 6], [68, 37], [97, 37], [97, 6], [68, 6]]]
+          type: 'Polygon',
+          coordinates: [
+            [
+              [68, 6],
+              [68, 37],
+              [97, 37],
+              [97, 6],
+              [68, 6]
+            ]
+          ]
         }
       },
       // 巴西
       {
-        type: "Feature",
-        properties: { name: "Brazil" },
+        type: 'Feature',
+        properties: { name: 'Brazil' },
         geometry: {
-          type: "Polygon",
-          coordinates: [[[-74, -34], [-74, 5], [-32, 5], [-32, -34], [-74, -34]]]
+          type: 'Polygon',
+          coordinates: [
+            [
+              [-74, -34],
+              [-74, 5],
+              [-32, 5],
+              [-32, -34],
+              [-74, -34]
+            ]
+          ]
         }
       },
       // 新加坡
       {
-        type: "Feature",
-        properties: { name: "Singapore" },
+        type: 'Feature',
+        properties: { name: 'Singapore' },
         geometry: {
-          type: "Polygon",
-          coordinates: [[[103.6, 1.2], [103.6, 1.5], [104.0, 1.5], [104.0, 1.2], [103.6, 1.2]]]
+          type: 'Polygon',
+          coordinates: [
+            [
+              [103.6, 1.2],
+              [103.6, 1.5],
+              [104.0, 1.5],
+              [104.0, 1.2],
+              [103.6, 1.2]
+            ]
+          ]
         }
       },
       // 荷兰
       {
-        type: "Feature",
-        properties: { name: "Netherlands" },
+        type: 'Feature',
+        properties: { name: 'Netherlands' },
         geometry: {
-          type: "Polygon",
-          coordinates: [[[3, 50], [3, 54], [8, 54], [8, 50], [3, 50]]]
+          type: 'Polygon',
+          coordinates: [
+            [
+              [3, 50],
+              [3, 54],
+              [8, 54],
+              [8, 50],
+              [3, 50]
+            ]
+          ]
         }
       },
       // 瑞士
       {
-        type: "Feature",
-        properties: { name: "Switzerland" },
+        type: 'Feature',
+        properties: { name: 'Switzerland' },
         geometry: {
-          type: "Polygon",
-          coordinates: [[[5, 45], [5, 48], [11, 48], [11, 45], [5, 45]]]
+          type: 'Polygon',
+          coordinates: [
+            [
+              [5, 45],
+              [5, 48],
+              [11, 48],
+              [11, 45],
+              [5, 45]
+            ]
+          ]
         }
       },
       // 瑞典
       {
-        type: "Feature",
-        properties: { name: "Sweden" },
+        type: 'Feature',
+        properties: { name: 'Sweden' },
         geometry: {
-          type: "Polygon",
-          coordinates: [[[10, 55], [10, 69], [25, 69], [25, 55], [10, 55]]]
+          type: 'Polygon',
+          coordinates: [
+            [
+              [10, 55],
+              [10, 69],
+              [25, 69],
+              [25, 55],
+              [10, 55]
+            ]
+          ]
         }
       },
       // 意大利
       {
-        type: "Feature",
-        properties: { name: "Italy" },
+        type: 'Feature',
+        properties: { name: 'Italy' },
         geometry: {
-          type: "Polygon",
-          coordinates: [[[6, 35], [6, 47], [19, 47], [19, 35], [6, 35]]]
+          type: 'Polygon',
+          coordinates: [
+            [
+              [6, 35],
+              [6, 47],
+              [19, 47],
+              [19, 35],
+              [6, 35]
+            ]
+          ]
         }
       },
       // 西班牙
       {
-        type: "Feature",
-        properties: { name: "Spain" },
+        type: 'Feature',
+        properties: { name: 'Spain' },
         geometry: {
-          type: "Polygon",
-          coordinates: [[[-10, 35], [-10, 44], [5, 44], [5, 35], [-10, 35]]]
+          type: 'Polygon',
+          coordinates: [
+            [
+              [-10, 35],
+              [-10, 44],
+              [5, 44],
+              [5, 35],
+              [-10, 35]
+            ]
+          ]
         }
       },
       // 俄国
       {
-        type: "Feature",
-        properties: { name: "Russia" },
+        type: 'Feature',
+        properties: { name: 'Russia' },
         geometry: {
-          type: "Polygon",
-          coordinates: [[[19, 41], [19, 82], [169, 82], [169, 41], [19, 41]]]
+          type: 'Polygon',
+          coordinates: [
+            [
+              [19, 41],
+              [19, 82],
+              [169, 82],
+              [169, 41],
+              [19, 41]
+            ]
+          ]
         }
       },
       // 泰国
       {
-        type: "Feature",
-        properties: { name: "Thailand" },
+        type: 'Feature',
+        properties: { name: 'Thailand' },
         geometry: {
-          type: "Polygon",
-          coordinates: [[[97, 5], [97, 21], [106, 21], [106, 5], [97, 5]]]
+          type: 'Polygon',
+          coordinates: [
+            [
+              [97, 5],
+              [97, 21],
+              [106, 21],
+              [106, 5],
+              [97, 5]
+            ]
+          ]
         }
       },
       // 马来西亚
       {
-        type: "Feature",
-        properties: { name: "Malaysia" },
+        type: 'Feature',
+        properties: { name: 'Malaysia' },
         geometry: {
-          type: "Polygon",
-          coordinates: [[[99, 0], [99, 8], [120, 8], [120, 0], [99, 0]]]
+          type: 'Polygon',
+          coordinates: [
+            [
+              [99, 0],
+              [99, 8],
+              [120, 8],
+              [120, 0],
+              [99, 0]
+            ]
+          ]
         }
       }
     ]
   };
-  
+
   return worldGeoJson;
 };
 
@@ -367,11 +518,11 @@ const initMap = async () => {
 
   try {
     mapChart = echarts.init(mapContainer.value);
-    
+
     // 注册世界地图
     const worldGeoJson = getWorldMapData();
     echarts.registerMap('world', worldGeoJson as any);
-    
+
     const option: echarts.EChartsOption = {
       tooltip: {
         trigger: 'item',
@@ -398,7 +549,7 @@ const initMap = async () => {
       },
       visualMap: {
         min: 0,
-        max: Math.max(...visitorData.value.map(item => item.value)),
+        max: Math.max(...visitorData.value.map((item) => item.value)),
         text: ['高', '低'],
         realtime: false,
         calculable: true,
@@ -438,7 +589,7 @@ const initMap = async () => {
             borderColor: 'rgba(255, 255, 255, 0.8)',
             borderWidth: 1
           },
-          data: visitorData.value.map(item => ({
+          data: visitorData.value.map((item) => ({
             name: item.name,
             value: item.value
           }))
@@ -472,13 +623,13 @@ const updateMapData = () => {
   if (!mapChart) return;
 
   // 模拟数据更新（添加小幅随机变化）
-  visitorData.value = visitorData.value.map(item => ({
+  visitorData.value = visitorData.value.map((item) => ({
     ...item,
     value: Math.max(0, item.value + Math.floor((Math.random() - 0.5) * 100))
   }));
 
   const option = mapChart.getOption() as any;
-  option.series[0].data = visitorData.value.map(item => ({
+  option.series[0].data = visitorData.value.map((item) => ({
     name: item.name,
     value: item.value
   }));
@@ -492,7 +643,7 @@ const startAutoRefresh = () => {
   if (refreshTimer) {
     clearInterval(refreshTimer);
   }
-  
+
   refreshTimer = setInterval(() => {
     updateMapData();
   }, props.refreshInterval * 1000);
@@ -507,18 +658,21 @@ const stopAutoRefresh = () => {
 };
 
 // 监听自动刷新属性变化
-watch(() => props.autoRefresh, (newValue) => {
-  if (newValue) {
-    startAutoRefresh();
-  } else {
-    stopAutoRefresh();
+watch(
+  () => props.autoRefresh,
+  (newValue) => {
+    if (newValue) {
+      startAutoRefresh();
+    } else {
+      stopAutoRefresh();
+    }
   }
-});
+);
 
 // 生命周期
 onMounted(async () => {
   await initMap();
-  
+
   if (props.autoRefresh) {
     startAutoRefresh();
   }
@@ -682,11 +836,11 @@ defineExpose({
   .world-map-container {
     padding: 16px;
   }
-  
+
   .map-chart {
     height: 300px !important;
   }
-  
+
   .map-legend {
     position: relative;
     top: auto;
@@ -694,22 +848,22 @@ defineExpose({
     margin-top: 16px;
     width: 100%;
   }
-  
+
   .legend-items {
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: center;
   }
-  
+
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
   }
-  
+
   .stat-item {
     padding: 12px;
   }
-  
+
   .stat-value {
     font-size: 16px;
   }
@@ -719,7 +873,7 @@ defineExpose({
   .map-chart {
     height: 250px !important;
   }
-  
+
   .stats-grid {
     grid-template-columns: 1fr;
   }
@@ -739,7 +893,11 @@ defineExpose({
 }
 
 @keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 </style>

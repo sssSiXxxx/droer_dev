@@ -39,54 +39,34 @@
                   <el-tag :type="getPermissionType(permission)">
                     {{ getPermissionText(permission) }}
                   </el-tag>
-                  <el-button 
-                    v-if="permission !== 'granted'"
-                    @click="requestNotificationPermission" 
-                    size="small" 
-                    type="primary"
-                  >
-                    请求权限
-                  </el-button>
+                  <el-button v-if="permission !== 'granted'" @click="requestNotificationPermission" size="small" type="primary"> 请求权限 </el-button>
                 </div>
               </el-card>
             </el-col>
-            
+
             <el-col :span="8">
               <el-card>
                 <template #header>
                   <span>提醒设置</span>
                 </template>
                 <div class="settings-controls">
-                  <el-switch 
-                    v-model="settings.enabled" 
-                    @change="updateNotificationSettings"
-                  />
+                  <el-switch v-model="settings.enabled" @change="updateNotificationSettings" />
                   <span>启用提醒</span>
-                  
-                  <el-input-number
-                    v-model="settings.beforeMinutes"
-                    :min="1"
-                    :max="1440"
-                    size="small"
-                    @change="updateNotificationSettings"
-                  />
+
+                  <el-input-number v-model="settings.beforeMinutes" :min="1" :max="1440" size="small" @change="updateNotificationSettings" />
                   <span>分钟前提醒</span>
                 </div>
               </el-card>
             </el-col>
-            
+
             <el-col :span="8">
               <el-card>
                 <template #header>
                   <span>测试操作</span>
                 </template>
                 <div class="test-controls">
-                  <el-button @click="testNotification" type="success" size="small">
-                    测试通知
-                  </el-button>
-                  <el-button @click="checkReminders" type="info" size="small">
-                    检查提醒
-                  </el-button>
+                  <el-button @click="testNotification" type="success" size="small"> 测试通知 </el-button>
+                  <el-button @click="checkReminders" type="info" size="small"> 检查提醒 </el-button>
                 </div>
               </el-card>
             </el-col>
@@ -101,27 +81,19 @@
         <div class="api-controls">
           <el-row :gutter="16">
             <el-col :span="6">
-              <el-button @click="testCreateTodo" type="primary" :loading="apiLoading">
-                创建测试待办
-              </el-button>
+              <el-button @click="testCreateTodo" type="primary" :loading="apiLoading"> 创建测试待办 </el-button>
             </el-col>
             <el-col :span="6">
-              <el-button @click="testUpdateTodo" type="warning" :loading="apiLoading">
-                更新第一个待办
-              </el-button>
+              <el-button @click="testUpdateTodo" type="warning" :loading="apiLoading"> 更新第一个待办 </el-button>
             </el-col>
             <el-col :span="6">
-              <el-button @click="testSearchTodo" type="info" :loading="apiLoading">
-                搜索测试
-              </el-button>
+              <el-button @click="testSearchTodo" type="info" :loading="apiLoading"> 搜索测试 </el-button>
             </el-col>
             <el-col :span="6">
-              <el-button @click="testGetStats" type="success" :loading="apiLoading">
-                获取统计
-              </el-button>
+              <el-button @click="testGetStats" type="success" :loading="apiLoading"> 获取统计 </el-button>
             </el-col>
           </el-row>
-          
+
           <!-- API测试结果展示 -->
           <div v-if="apiResult" class="api-result">
             <h4>API测试结果：</h4>
@@ -142,14 +114,7 @@ import { useTodoNotifications } from '@/utils/todoNotification';
 import { todoApi, type TodoItem } from '@/api/todo';
 
 // 通知功能测试
-const {
-  permission,
-  settings,
-  requestPermission,
-  updateSettings,
-  checkNow,
-  testNotification
-} = useTodoNotifications();
+const { permission, settings, requestPermission, updateSettings, checkNow, testNotification } = useTodoNotifications();
 
 // API测试
 const apiLoading = ref(false);
@@ -258,17 +223,23 @@ const testGetStats = async () => {
 // 工具函数
 const getPermissionType = (perm: string) => {
   switch (perm) {
-    case 'granted': return 'success';
-    case 'denied': return 'danger';
-    default: return 'warning';
+    case 'granted':
+      return 'success';
+    case 'denied':
+      return 'danger';
+    default:
+      return 'warning';
   }
 };
 
 const getPermissionText = (perm: string) => {
   switch (perm) {
-    case 'granted': return '已授权';
-    case 'denied': return '已拒绝';
-    default: return '未设置';
+    case 'granted':
+      return '已授权';
+    case 'denied':
+      return '已拒绝';
+    default:
+      return '未设置';
   }
 };
 </script>

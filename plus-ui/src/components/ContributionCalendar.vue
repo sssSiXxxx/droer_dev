@@ -5,25 +5,16 @@
       <div class="flex items-center space-x-2 text-xs text-gray-500">
         <span>贡献度</span>
         <div class="flex items-center space-x-1">
-          <div 
-            v-for="level in 5" 
-            :key="level"
-            class="w-3 h-3 rounded-sm"
-            :class="getLevelClass(level)"
-          ></div>
+          <div v-for="level in 5" :key="level" class="w-3 h-3 rounded-sm" :class="getLevelClass(level)"></div>
         </div>
         <span>更多</span>
       </div>
     </div>
-    
+
     <div class="calendar-grid">
-      <div 
-        v-for="(week, weekIndex) in calendarData" 
-        :key="weekIndex"
-        class="calendar-week"
-      >
-        <div 
-          v-for="(day, dayIndex) in week" 
+      <div v-for="(week, weekIndex) in calendarData" :key="weekIndex" class="calendar-week">
+        <div
+          v-for="(day, dayIndex) in week"
           :key="dayIndex"
           class="calendar-day"
           :class="getDayClass(day)"
@@ -32,7 +23,7 @@
         ></div>
       </div>
     </div>
-    
+
     <div class="calendar-footer mt-2 text-xs text-gray-500">
       <span>{{ totalContributions }} 次贡献在过去 {{ daysCount }} 天</span>
     </div>
@@ -77,35 +68,35 @@ const calendarData = computed(() => {
   const today = new Date();
   const startDate = new Date(today);
   startDate.setDate(today.getDate() - props.daysCount + 1);
-  
+
   // 创建贡献数据映射
   const contributionMap = new Map();
-  props.contributions.forEach(contribution => {
+  props.contributions.forEach((contribution) => {
     contributionMap.set(contribution.date, contribution.count);
   });
-  
+
   let currentDate = new Date(startDate);
   let currentWeek = [];
-  
+
   while (currentDate <= today) {
     const dateStr = currentDate.toISOString().split('T')[0];
     const count = contributionMap.get(dateStr) || 0;
     const level = getContributionLevel(count);
-    
+
     currentWeek.push({
       date: dateStr,
       count,
       level
     });
-    
+
     if (currentWeek.length === 7) {
       weeks.push([...currentWeek]);
       currentWeek = [];
     }
-    
+
     currentDate.setDate(currentDate.getDate() + 1);
   }
-  
+
   // 补充最后一周
   if (currentWeek.length > 0) {
     while (currentWeek.length < 7) {
@@ -117,7 +108,7 @@ const calendarData = computed(() => {
     }
     weeks.push(currentWeek);
   }
-  
+
   return weeks;
 });
 
@@ -142,11 +133,7 @@ const getLevelClass = (level: number) => {
 // 获取日期样式
 const getDayClass = (day: ContributionDay) => {
   if (!day.date) return 'invisible';
-  return [
-    'w-3 h-3 rounded-sm cursor-pointer transition-colors',
-    getLevelClass(day.level),
-    'hover:ring-2 hover:ring-green-300'
-  ];
+  return ['w-3 h-3 rounded-sm cursor-pointer transition-colors', getLevelClass(day.level), 'hover:ring-2 hover:ring-green-300'];
 };
 
 // 获取日期提示

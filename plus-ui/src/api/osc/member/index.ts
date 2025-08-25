@@ -19,29 +19,29 @@ export const listMember = (query?: MemberQuery): AxiosPromise<TableDataInfo<Memb
 };
 
 export const getMember = (id: number | string) => {
-  return request.get({ url: `/osc/member/${id}` })
-}
+  return request.get({ url: `/osc/member/${id}` });
+};
 
 export const createMember = (data: MemberForm) => {
-  return request.post({ url: '/osc/member', data })
-}
+  return request.post({ url: '/osc/member', data });
+};
 
 export const updateMember = (data: MemberForm) => {
-  return request.put({ url: '/osc/member', data })
-}
+  return request.put({ url: '/osc/member', data });
+};
 
 export const deleteMember = (id: Array<number | string>) => {
-  return request.delete({ url: `/osc/member/${id.join(',')}` })
-}
+  return request.delete({ url: `/osc/member/${id.join(',')}` });
+};
 
 export const downloadMemberTemplate = () => {
-  return request.download({ url: '/osc/member/template' })
-}
+  return request.download({ url: '/osc/member/template' });
+};
 
 export const exportMember = (params) => {
-  return request.download({ url: '/osc/member/export', params })
-}
+  return request.download({ url: '/osc/member/export', params });
+};
 
 export const uploadMemberFile = (data: FormData) => {
-  return request.upload({ url: '/osc/member/importData', data })
-}
+  return request.upload({ url: '/osc/member/importData', data });
+};

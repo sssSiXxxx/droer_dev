@@ -98,7 +98,7 @@ export interface ProgressUpdateData {
 // 阶段状态枚举
 export enum PhaseStatus {
   NOT_STARTED = '0',
-  IN_PROGRESS = '1', 
+  IN_PROGRESS = '1',
   COMPLETED = '2',
   PAUSED = '3',
   DELAYED = '4'

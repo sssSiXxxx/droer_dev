@@ -19,7 +19,7 @@ class TodoNotificationService {
   private checkInterval: NodeJS.Timeout | null = null;
   private permission: NotificationPermission = 'default';
   private lastCheck = new Date();
-  
+
   private settings = reactive<ReminderSettings>({
     enabled: true,
     beforeMinutes: 30,
@@ -156,17 +156,17 @@ class TodoNotificationService {
       const reminderTime = new Date(now.getTime() + this.settings.beforeMinutes * 60 * 1000);
 
       // 检查即将到期的待办事项
-      const upcomingTodos = todos.filter(todo => {
+      const upcomingTodos = todos.filter((todo) => {
         if (todo.completed || !todo.dueDate || todo.isReminded) return false;
-        
+
         const dueDate = new Date(todo.dueDate);
         return dueDate <= reminderTime && dueDate > now;
       });
 
       // 检查已逾期的待办事项
-      const overdueTodos = todos.filter(todo => {
+      const overdueTodos = todos.filter((todo) => {
         if (todo.completed || !todo.dueDate) return false;
-        
+
         const dueDate = new Date(todo.dueDate);
         return dueDate < now;
       });
@@ -175,15 +175,15 @@ class TodoNotificationService {
       for (const todo of upcomingTodos) {
         const dueDate = new Date(todo.dueDate!);
         const minutesLeft = Math.floor((dueDate.getTime() - now.getTime()) / (60 * 1000));
-        
+
         const title = '待办事项提醒';
         const message = `"${todo.title}" 将在 ${minutesLeft} 分钟后到期`;
-        
+
         this.sendDesktopNotification(title, message, () => {
           // 点击通知时的处理
           console.log('点击了待办事项提醒');
         });
-        
+
         this.sendBrowserNotification(title, message, 'warning');
         this.playReminderSound();
 
@@ -195,11 +195,11 @@ class TodoNotificationService {
       if (overdueTodos.length > 0) {
         const today = now.toDateString();
         const lastOverdueNotify = localStorage.getItem('last_overdue_notify');
-        
+
         if (lastOverdueNotify !== today) {
           const title = '待办事项逾期提醒';
           const message = `您有 ${overdueTodos.length} 个待办事项已经逾期`;
-          
+
           this.sendBrowserNotification(title, message, 'error');
           localStorage.setItem('last_overdue_notify', today);
         }
@@ -251,7 +251,7 @@ class TodoNotificationService {
   updateSettings(newSettings: Partial<ReminderSettings>) {
     Object.assign(this.settings, newSettings);
     this.saveSettings();
-    
+
     if (newSettings.enabled === false) {
       this.stopPeriodicCheck();
     } else if (newSettings.enabled === true) {
@@ -268,11 +268,11 @@ class TodoNotificationService {
   testNotification() {
     const title = '测试通知';
     const message = '这是一个测试通知，用于验证通知功能是否正常工作。';
-    
+
     this.sendDesktopNotification(title, message);
     this.sendBrowserNotification(title, message, 'info');
     this.playReminderSound();
-    
+
     ElMessage.success('测试通知已发送');
   }
 

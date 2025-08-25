@@ -43,7 +43,6 @@ export interface ContributionVO {
    * 贡献点数
    */
   points: number;
-
 }
 
 export interface ContributionForm extends BaseEntity {
@@ -86,11 +85,9 @@ export interface ContributionForm extends BaseEntity {
    * 贡献点数
    */
   points?: number;
-
 }
 
 export interface ContributionQuery extends PageQuery {
-
   /**
    * 成员ID
    */
@@ -121,11 +118,8 @@ export interface ContributionQuery extends PageQuery {
    */
   content?: string;
 
-    /**
-     * 日期范围参数
-     */
-    params?: any;
+  /**
+   * 日期范围参数
+   */
+  params?: any;
 }
-
-
-

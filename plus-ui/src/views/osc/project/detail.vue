@@ -6,13 +6,13 @@
         <div class="card-header">
           <el-icon><Document /></el-icon>
           <span>项目基本信息</span>
-          <el-button type="primary" @click="router.back()" style="margin-left: auto;">
+          <el-button type="primary" @click="router.back()" style="margin-left: auto">
             <el-icon><ArrowLeft /></el-icon>
             返回
           </el-button>
         </div>
       </template>
-      
+
       <el-row :gutter="24">
         <el-col :span="8">
           <div class="info-item">
@@ -35,8 +35,8 @@
           </div>
         </el-col>
       </el-row>
-      
-      <el-row :gutter="24" style="margin-top: 16px;">
+
+      <el-row :gutter="24" style="margin-top: 16px">
         <el-col :span="24">
           <div class="info-item">
             <label>项目描述：</label>
@@ -44,8 +44,8 @@
           </div>
         </el-col>
       </el-row>
-      
-      <el-row :gutter="24" style="margin-top: 16px;">
+
+      <el-row :gutter="24" style="margin-top: 16px">
         <el-col :span="12">
           <div class="info-item">
             <label>代码仓库：</label>
@@ -68,12 +68,12 @@
     </el-card>
 
     <!-- 成员管理标签页 -->
-    <el-card class="member-card" shadow="never" style="margin-top: 16px;">
+    <el-card class="member-card" shadow="never" style="margin-top: 16px">
       <template #header>
         <div class="card-header">
           <el-icon><User /></el-icon>
           <span>项目成员管理</span>
-          <el-button type="primary" @click="handleAddMember" style="margin-left: auto;">
+          <el-button type="primary" @click="handleAddMember" style="margin-left: auto">
             <el-icon><Plus /></el-icon>
             添加成员
           </el-button>
@@ -121,7 +121,7 @@
             </el-row>
 
             <!-- 角色分布图 -->
-            <el-row :gutter="16" style="margin-top: 24px;">
+            <el-row :gutter="16" style="margin-top: 24px">
               <el-col :span="12">
                 <el-card class="chart-card" shadow="hover">
                   <template #header>
@@ -145,7 +145,7 @@
             </el-row>
 
             <!-- 成员关联图 -->
-            <el-row style="margin-top: 24px;">
+            <el-row style="margin-top: 24px">
               <el-col :span="24">
                 <el-card class="chart-card" shadow="hover">
                   <template #header>
@@ -187,8 +187,8 @@
               </el-table-column>
               <el-table-column label="贡献度评分" prop="contributionScore" width="120" align="center">
                 <template #default="scope">
-                  <el-progress 
-                    :percentage="scope.row.contributionScore || 0" 
+                  <el-progress
+                    :percentage="scope.row.contributionScore || 0"
                     :color="getContributionColor(scope.row.contributionScore)"
                     :stroke-width="8"
                   />
@@ -218,21 +218,11 @@
     </el-card>
 
     <!-- 添加/编辑成员对话框 -->
-    <el-dialog 
-      :title="memberDialog.title" 
-      v-model="memberDialog.visible" 
-      width="500px"
-      @close="resetMemberForm"
-    >
+    <el-dialog :title="memberDialog.title" v-model="memberDialog.visible" width="500px" @close="resetMemberForm">
       <el-form ref="memberFormRef" :model="memberForm" :rules="memberRules" label-width="100px">
         <el-form-item label="成员" prop="memberId" v-if="memberDialog.type === 'add'">
           <el-select v-model="memberForm.memberId" placeholder="请选择成员" style="width: 100%">
-            <el-option 
-              v-for="member in availableMembers" 
-              :key="member.memberId" 
-              :label="member.memberName" 
-              :value="member.memberId" 
-            />
+            <el-option v-for="member in availableMembers" :key="member.memberId" :label="member.memberName" :value="member.memberId" />
           </el-select>
         </el-form-item>
         <el-form-item label="角色" prop="role">
@@ -257,9 +247,7 @@
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="memberDialog.visible = false">取 消</el-button>
-          <el-button type="primary" @click="submitMemberForm" :loading="memberSubmitLoading">
-            确 定
-          </el-button>
+          <el-button type="primary" @click="submitMemberForm" :loading="memberSubmitLoading"> 确 定 </el-button>
         </div>
       </template>
     </el-dialog>
@@ -273,13 +261,7 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { Document, User, Plus, Edit, Delete, ArrowLeft } from '@element-plus/icons-vue';
 import * as echarts from 'echarts';
 import { getProject } from '@/api/osc/project';
-import { 
-  getProjectMembers, 
-  getProjectMemberVisualization,
-  addProjectMember,
-  updateMemberRole,
-  removeMember
-} from '@/api/osc/projectMember';
+import { getProjectMembers, getProjectMemberVisualization, addProjectMember, updateMemberRole, removeMember } from '@/api/osc/projectMember';
 import { ProjectVO } from '@/api/osc/project/types';
 import { ProjectMemberVO } from '@/api/osc/projectMember/types';
 import { parseTime } from '@/utils/ruoyi';
@@ -356,7 +338,7 @@ const getVisualizationData = async () => {
     const projectId = Number(route.params.id);
     const res = await getProjectMemberVisualization(projectId);
     memberStats.value = res.data;
-    
+
     // 初始化图表
     nextTick(() => {
       initPieChart();
@@ -371,10 +353,10 @@ const getVisualizationData = async () => {
 // 初始化饼图
 const initPieChart = () => {
   if (!pieChartRef.value) return;
-  
+
   const chart = echarts.init(pieChartRef.value);
   const roleData = memberStats.value.roleData || [];
-  
+
   const option = {
     tooltip: {
       trigger: 'item',
@@ -397,17 +379,17 @@ const initPieChart = () => {
       }
     ]
   };
-  
+
   chart.setOption(option);
 };
 
 // 初始化柱状图
 const initBarChart = () => {
   if (!barChartRef.value) return;
-  
+
   const chart = echarts.init(barChartRef.value);
   const roleData = memberStats.value.roleData || [];
-  
+
   const option = {
     tooltip: {
       trigger: 'axis'
@@ -430,21 +412,21 @@ const initBarChart = () => {
       }
     ]
   };
-  
+
   chart.setOption(option);
 };
 
 // 初始化网络图
 const initNetworkChart = () => {
   if (!networkChartRef.value) return;
-  
+
   const chart = echarts.init(networkChartRef.value);
   const roleData = memberStats.value.roleData || [];
-  
+
   // 构建节点和边数据
   const nodes: any[] = [];
   const links: any[] = [];
-  
+
   // 添加项目中心节点
   nodes.push({
     id: 'project',
@@ -453,7 +435,7 @@ const initNetworkChart = () => {
     category: 0,
     itemStyle: { color: '#409eff' }
   });
-  
+
   // 添加成员节点
   roleData.forEach((roleGroup: any) => {
     roleGroup.members.forEach((member: any) => {
@@ -464,7 +446,7 @@ const initNetworkChart = () => {
         category: parseInt(roleGroup.roleCode) + 1,
         itemStyle: { color: roleGroup.color }
       });
-      
+
       // 添加与项目的连接
       links.push({
         source: 'project',
@@ -473,10 +455,10 @@ const initNetworkChart = () => {
       });
     });
   });
-  
+
   const option = {
     tooltip: {
-      formatter: function(params: any) {
+      formatter: function (params: any) {
         if (params.dataType === 'node') {
           return params.data.name;
         }
@@ -492,14 +474,7 @@ const initNetworkChart = () => {
         layout: 'force',
         data: nodes,
         links: links,
-        categories: [
-          { name: '项目' },
-          { name: '项目负责人' },
-          { name: '核心开发者' },
-          { name: '维护者' },
-          { name: '贡献者' },
-          { name: '普通成员' }
-        ],
+        categories: [{ name: '项目' }, { name: '项目负责人' }, { name: '核心开发者' }, { name: '维护者' }, { name: '贡献者' }, { name: '普通成员' }],
         roam: true,
         label: {
           show: true,
@@ -511,7 +486,7 @@ const initNetworkChart = () => {
       }
     ]
   };
-  
+
   chart.setOption(option);
 };
 
@@ -575,12 +550,12 @@ const getContributionColor = (score: number) => {
 
 // 获取负责人数量
 const getLeaderCount = () => {
-  return memberList.value.filter(member => member.role === '1').length;
+  return memberList.value.filter((member) => member.role === '1').length;
 };
 
 // 获取核心开发者数量
 const getCoreDeveloperCount = () => {
-  return memberList.value.filter(member => member.role === '2').length;
+  return memberList.value.filter((member) => member.role === '2').length;
 };
 
 // 添加成员
@@ -609,7 +584,7 @@ const handleRemoveMember = async (row: ProjectMemberVO) => {
       cancelButtonText: '取消',
       type: 'warning'
     });
-    
+
     await removeMember(Number(route.params.id), row.memberId!);
     ElMessage.success('移除成功');
     await getMembers();
@@ -626,7 +601,7 @@ const submitMemberForm = async () => {
   try {
     await memberFormRef.value.validate();
     memberSubmitLoading.value = true;
-    
+
     if (memberDialog.type === 'add') {
       await addProjectMember(memberForm);
       ElMessage.success('添加成功');
@@ -634,7 +609,7 @@ const submitMemberForm = async () => {
       await updateMemberRole(memberForm.projectId, memberForm.memberId!, memberForm.role);
       ElMessage.success('更新成功');
     }
-    
+
     memberDialog.visible = false;
     await getMembers();
     await getVisualizationData();

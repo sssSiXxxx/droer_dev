@@ -14,13 +14,7 @@
       <!-- 搜索区域 -->
       <el-form :model="queryParams" ref="queryRef" :inline="true" label-width="80px" class="search-form">
         <el-form-item label="项目名称" prop="projectName">
-          <el-input
-            v-model="queryParams.projectName"
-            placeholder="请输入项目名称"
-            clearable
-            style="width: 200px"
-            @keyup.enter="handleQuery"
-          />
+          <el-input v-model="queryParams.projectName" placeholder="请输入项目名称" clearable style="width: 200px" @keyup.enter="handleQuery" />
         </el-form-item>
         <el-form-item label="项目状态" prop="status">
           <el-select v-model="queryParams.status" placeholder="请选择状态" clearable style="width: 150px">
@@ -36,14 +30,9 @@
       </el-form>
 
       <!-- 项目列表 -->
-      <el-table 
-        v-loading="loading" 
-        :data="projectList" 
-        class="project-table"
-        :header-cell-style="{ background: '#f8f9fa', color: '#606266' }"
-      >
+      <el-table v-loading="loading" :data="projectList" class="project-table" :header-cell-style="{ background: '#f8f9fa', color: '#606266' }">
         <el-table-column label="序号" type="index" width="60" align="center" />
-        
+
         <el-table-column label="项目名称" prop="projectName" min-width="200">
           <template #default="scope">
             <div class="project-info">
@@ -68,25 +57,15 @@
           <template #default="scope">
             <div class="member-visualization">
               <div class="role-groups">
-                <div 
-                  v-for="roleGroup in scope.row.roleGroups" 
-                  :key="roleGroup.roleCode"
-                  class="role-group"
-                  :class="`role-${roleGroup.roleCode}`"
-                >
+                <div v-for="roleGroup in scope.row.roleGroups" :key="roleGroup.roleCode" class="role-group" :class="`role-${roleGroup.roleCode}`">
                   <div class="role-header">
-                    <el-tag 
-                      :color="roleGroup.color" 
-                      effect="dark" 
-                      size="small"
-                      class="role-tag"
-                    >
+                    <el-tag :color="roleGroup.color" effect="dark" size="small" class="role-tag">
                       {{ roleGroup.roleName }} ({{ roleGroup.memberCount }})
                     </el-tag>
                   </div>
                   <div class="members-container">
-                    <div 
-                      v-for="member in roleGroup.members.slice(0, 5)" 
+                    <div
+                      v-for="member in roleGroup.members.slice(0, 5)"
                       :key="member.memberId"
                       class="member-avatar"
                       :title="`${member.memberName} - ${member.memberEmail}`"
@@ -95,17 +74,13 @@
                         {{ getMemberInitial(member) }}
                       </el-avatar>
                     </div>
-                    <div 
-                      v-if="roleGroup.memberCount > 5" 
-                      class="more-members"
-                      :title="`还有 ${roleGroup.memberCount - 5} 人`"
-                    >
+                    <div v-if="roleGroup.memberCount > 5" class="more-members" :title="`还有 ${roleGroup.memberCount - 5} 人`">
                       +{{ roleGroup.memberCount - 5 }}
                     </div>
                   </div>
                 </div>
               </div>
-              
+
               <!-- 统计信息 -->
               <div class="stats-info">
                 <el-tooltip content="总人数" placement="top">
@@ -121,12 +96,7 @@
                   </el-tag>
                 </el-tooltip>
                 <el-tooltip content="查看关联图" placement="top">
-                  <el-button 
-                    type="primary" 
-                    size="small" 
-                    circle
-                    @click="viewRelationChart(scope.row)"
-                  >
+                  <el-button type="primary" size="small" circle @click="viewRelationChart(scope.row)">
                     <el-icon><Share /></el-icon>
                   </el-button>
                 </el-tooltip>
@@ -138,36 +108,16 @@
         <el-table-column label="操作" width="200" align="center" fixed="right">
           <template #default="scope">
             <el-button-group>
-              <el-button 
-                type="primary" 
-                size="small" 
-                @click="viewDetails(scope.row)"
-                title="查看详情"
-              >
+              <el-button type="primary" size="small" @click="viewDetails(scope.row)" title="查看详情">
                 <el-icon><View /></el-icon>
               </el-button>
-              <el-button 
-                type="success" 
-                size="small" 
-                @click="manageMembers(scope.row)"
-                title="管理成员"
-              >
+              <el-button type="success" size="small" @click="manageMembers(scope.row)" title="管理成员">
                 <el-icon><User /></el-icon>
               </el-button>
-              <el-button 
-                type="warning" 
-                size="small" 
-                @click="viewChart(scope.row)"
-                title="图表分析"
-              >
+              <el-button type="warning" size="small" @click="viewChart(scope.row)" title="图表分析">
                 <el-icon><TrendCharts /></el-icon>
               </el-button>
-              <el-button 
-                type="info" 
-                size="small" 
-                @click="exportData(scope.row)"
-                title="导出数据"
-              >
+              <el-button type="info" size="small" @click="exportData(scope.row)" title="导出数据">
                 <el-icon><Download /></el-icon>
               </el-button>
             </el-button-group>
@@ -176,13 +126,7 @@
       </el-table>
 
       <!-- 分页 -->
-      <pagination
-        v-show="total > 0"
-        :total="total"
-        v-model:page="queryParams.pageNum"
-        v-model:limit="queryParams.pageSize"
-        @pagination="getList"
-      />
+      <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" @pagination="getList" />
     </el-card>
 
     <!-- 详情对话框 -->
@@ -208,7 +152,7 @@
           <template #header>
             <span>角色分布</span>
           </template>
-          <div ref="roleChartRef" style="width: 100%; height: 300px;"></div>
+          <div ref="roleChartRef" style="width: 100%; height: 300px"></div>
         </el-card>
 
         <!-- 人员列表 -->
@@ -235,13 +179,7 @@
             </el-table-column>
             <el-table-column label="权限级别" prop="permissionLevel" width="120" align="center">
               <template #default="scope">
-                <el-rate
-                  v-model="scope.row.permissionLevel"
-                  :max="5"
-                  disabled
-                  show-score
-                  text-color="#ff9900"
-                />
+                <el-rate v-model="scope.row.permissionLevel" :max="5" disabled show-score text-color="#ff9900" />
               </template>
             </el-table-column>
             <el-table-column label="活跃状态" prop="isActive" width="100" align="center">
@@ -274,7 +212,7 @@
               <template #header>
                 <span>角色分布饼图</span>
               </template>
-              <div ref="pieChartRef" style="width: 100%; height: 300px;"></div>
+              <div ref="pieChartRef" style="width: 100%; height: 300px"></div>
             </el-card>
           </el-col>
           <el-col :span="12">
@@ -282,7 +220,7 @@
               <template #header>
                 <span>贡献度分布</span>
               </template>
-              <div ref="barChartRef" style="width: 100%; height: 300px;"></div>
+              <div ref="barChartRef" style="width: 100%; height: 300px"></div>
             </el-card>
           </el-col>
         </el-row>
@@ -305,13 +243,9 @@
 </template>
 
 <script setup name="ProjectVisualization" lang="ts">
-import { 
-  listProjectMember, 
-  getProjectMemberVisualization, 
-  getProjectMembers 
-} from "@/api/osc/projectMember";
-import { listProject } from "@/api/osc/project";
-import { parseTime } from "@/utils/ruoyi";
+import { listProjectMember, getProjectMemberVisualization, getProjectMembers } from '@/api/osc/projectMember';
+import { listProject } from '@/api/osc/project';
+import { parseTime } from '@/utils/ruoyi';
 import * as echarts from 'echarts';
 import MemberRelationChart from '@/components/MemberRelationChart/index.vue';
 
@@ -355,25 +289,25 @@ async function getList() {
   try {
     const response = await listProject(queryParams.value);
     const projects = response.rows || [];
-    
+
     // 为每个项目获取人员数据
     const projectsWithMembers = await Promise.all(
       projects.map(async (project) => {
         try {
           const visualization = await getProjectMemberVisualization(project.id);
           const members = await getProjectMembers(project.id);
-          
+
           // 处理角色分组数据
           const roleGroups = visualization.data?.roleData || [];
           const processedRoleGroups = roleGroups
-            .filter(group => group.memberCount > 0)
-            .map(group => ({
+            .filter((group) => group.memberCount > 0)
+            .map((group) => ({
               ...group,
               color: roleConfig[group.roleCode]?.color || '#909399'
             }));
 
           // 找出项目负责人
-          const leader = members.data?.find(member => member.role === '1');
+          const leader = members.data?.find((member) => member.role === '1');
 
           return {
             ...project,
@@ -394,7 +328,7 @@ async function getList() {
         }
       })
     );
-    
+
     projectList.value = projectsWithMembers;
     total.value = response.total;
   } catch (error) {
@@ -413,7 +347,7 @@ function handleQuery() {
 
 /** 重置按钮操作 */
 function resetQuery() {
-  proxy.resetForm("queryRef");
+  proxy.resetForm('queryRef');
   handleQuery();
 }
 
@@ -429,7 +363,7 @@ async function viewDetails(row) {
     const response = await getProjectMembers(row.id);
     currentProjectMembers.value = response.data || [];
     detailVisible.value = true;
-    
+
     // 延迟渲染图表
     nextTick(() => {
       renderRoleChart();
@@ -468,7 +402,7 @@ async function viewChart(row) {
     const response = await getProjectMembers(row.id);
     currentProjectMembers.value = response.data || [];
     chartVisible.value = true;
-    
+
     // 延迟渲染图表
     nextTick(() => {
       renderPieChart();
@@ -482,9 +416,13 @@ async function viewChart(row) {
 
 /** 导出数据 */
 function exportData(row) {
-  proxy.download('osc/projectMember/export', {
-    projectId: row.id
-  }, `project_${row.projectCode}_members_${new Date().getTime()}.xlsx`);
+  proxy.download(
+    'osc/projectMember/export',
+    {
+      projectId: row.id
+    },
+    `project_${row.projectCode}_members_${new Date().getTime()}.xlsx`
+  );
 }
 
 /** 获取成员头像 */
@@ -525,10 +463,10 @@ function getContributionColor(score) {
 /** 渲染角色分布图表 */
 function renderRoleChart() {
   if (!roleChartRef.value || !currentProject.value) return;
-  
+
   const chart = echarts.init(roleChartRef.value);
   const roleGroups = currentProject.value.roleGroups || [];
-  
+
   const option = {
     tooltip: {
       trigger: 'item',
@@ -544,7 +482,7 @@ function renderRoleChart() {
         type: 'pie',
         radius: ['40%', '70%'],
         center: ['60%', '50%'],
-        data: roleGroups.map(group => ({
+        data: roleGroups.map((group) => ({
           value: group.memberCount,
           name: group.roleName,
           itemStyle: { color: group.color }
@@ -559,7 +497,7 @@ function renderRoleChart() {
       }
     ]
   };
-  
+
   chart.setOption(option);
 }
 
@@ -572,10 +510,10 @@ function renderPieChart() {
 /** 渲染柱状图 */
 function renderBarChart() {
   if (!barChartRef.value || !currentProjectMembers.value) return;
-  
+
   const chart = echarts.init(barChartRef.value);
   const members = currentProjectMembers.value;
-  
+
   // 按贡献度分段统计
   const scoreRanges = [
     { name: '0-20', min: 0, max: 20, count: 0 },
@@ -584,16 +522,16 @@ function renderBarChart() {
     { name: '61-80', min: 61, max: 80, count: 0 },
     { name: '81-100', min: 81, max: 100, count: 0 }
   ];
-  
-  members.forEach(member => {
+
+  members.forEach((member) => {
     const score = member.contributionScore || 0;
-    scoreRanges.forEach(range => {
+    scoreRanges.forEach((range) => {
       if (score >= range.min && score <= range.max) {
         range.count++;
       }
     });
   });
-  
+
   const option = {
     tooltip: {
       trigger: 'axis',
@@ -601,7 +539,7 @@ function renderBarChart() {
     },
     xAxis: {
       type: 'category',
-      data: scoreRanges.map(range => range.name)
+      data: scoreRanges.map((range) => range.name)
     },
     yAxis: {
       type: 'value',
@@ -611,7 +549,7 @@ function renderBarChart() {
       {
         name: '贡献度分布',
         type: 'bar',
-        data: scoreRanges.map(range => ({
+        data: scoreRanges.map((range) => ({
           value: range.count,
           itemStyle: { color: getContributionColor((range.min + range.max) / 2) }
         })),
@@ -625,7 +563,7 @@ function renderBarChart() {
       }
     ]
   };
-  
+
   chart.setOption(option);
 }
 
@@ -802,7 +740,7 @@ onMounted(() => {
   .role-groups {
     flex-direction: column;
   }
-  
+
   .member-visualization {
     padding: 8px;
   }

@@ -11,8 +11,8 @@
               <el-input v-model="queryParams.projectName" placeholder="请输入项目名称" clearable @keyup.enter="handleQuery" />
             </el-form-item>
             <el-form-item label="贡献类型" prop="contributionType">
-              <el-select v-model="queryParams.contributionType" placeholder="请选择贡献类型" clearable >
-                <el-option v-for="dict in osc_user_cbt" :key="dict.value" :label="dict.label" :value="dict.value"/>
+              <el-select v-model="queryParams.contributionType" placeholder="请选择贡献类型" clearable>
+                <el-option v-for="dict in osc_user_cbt" :key="dict.value" :label="dict.label" :value="dict.value" />
               </el-select>
             </el-form-item>
             <el-form-item>
@@ -31,10 +31,14 @@
             <el-button type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="['osc:contribution:add']">新增</el-button>
           </el-col>
           <el-col :span="1.5">
-            <el-button type="success" plain icon="Edit" :disabled="single" @click="handleUpdate()" v-hasPermi="['osc:contribution:edit']">修改</el-button>
+            <el-button type="success" plain icon="Edit" :disabled="single" @click="handleUpdate()" v-hasPermi="['osc:contribution:edit']"
+              >修改</el-button
+            >
           </el-col>
           <el-col :span="1.5">
-            <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete()" v-hasPermi="['osc:contribution:remove']">删除</el-button>
+            <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete()" v-hasPermi="['osc:contribution:remove']"
+              >删除</el-button
+            >
           </el-col>
           <el-col :span="1.5">
             <el-button type="warning" plain icon="Download" @click="handleExport" v-hasPermi="['osc:contribution:export']">导出</el-button>
@@ -50,7 +54,7 @@
         <el-table-column label="项目名称" align="center" prop="projectName" />
         <el-table-column label="贡献类型" align="center" prop="contributionType">
           <template #default="scope">
-            <dict-tag :options="osc_user_cbt" :value="scope.row.contributionType"/>
+            <dict-tag :options="osc_user_cbt" :value="scope.row.contributionType" />
           </template>
         </el-table-column>
         <el-table-column label="贡献内容" align="center" prop="content" />
@@ -89,26 +93,17 @@
         </el-form-item>
         <el-form-item label="贡献类型" prop="contributionType">
           <el-select v-model="form.contributionType" placeholder="请选择贡献类型">
-            <el-option
-                v-for="dict in osc_user_cbt"
-                :key="dict.value"
-                :label="dict.label"
-                :value="dict.value"
-            ></el-option>
+            <el-option v-for="dict in osc_user_cbt" :key="dict.value" :label="dict.label" :value="dict.value"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="贡献内容">
-          <editor v-model="form.content" :min-height="192"/>
+          <editor v-model="form.content" :min-height="192" />
         </el-form-item>
         <el-form-item label="相关链接" prop="url">
           <el-input v-model="form.url" placeholder="请输入相关链接" />
         </el-form-item>
         <el-form-item label="贡献时间" prop="contributionTime">
-          <el-date-picker clearable
-            v-model="form.contributionTime"
-            type="datetime"
-            value-format="YYYY-MM-DD HH:mm:ss"
-            placeholder="请选择贡献时间">
+          <el-date-picker clearable v-model="form.contributionTime" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" placeholder="请选择贡献时间">
           </el-date-picker>
         </el-form-item>
         <el-form-item label="贡献点数" prop="points">
@@ -159,10 +154,10 @@ const initFormData: ContributionForm = {
   content: undefined,
   url: undefined,
   contributionTime: undefined,
-  points: undefined,
-}
+  points: undefined
+};
 const data = reactive<PageData<ContributionForm, ContributionQuery>>({
-  form: {...initFormData},
+  form: { ...initFormData },
   queryParams: {
     pageNum: 1,
     pageSize: 10,
@@ -170,22 +165,13 @@ const data = reactive<PageData<ContributionForm, ContributionQuery>>({
     projectId: undefined,
     contributionType: undefined,
     content: undefined,
-    params: {
-    }
+    params: {}
   },
   rules: {
-    memberId: [
-      { required: true, message: "成员ID不能为空", trigger: "blur" }
-    ],
-    projectId: [
-      { required: true, message: "项目ID不能为空", trigger: "blur" }
-    ],
-    contributionType: [
-      { required: true, message: "贡献类型不能为空", trigger: "change" }
-    ],
-    content: [
-      { required: true, message: "贡献内容不能为空", trigger: "blur" }
-    ],
+    memberId: [{ required: true, message: '成员ID不能为空', trigger: 'blur' }],
+    projectId: [{ required: true, message: '项目ID不能为空', trigger: 'blur' }],
+    contributionType: [{ required: true, message: '贡献类型不能为空', trigger: 'change' }],
+    content: [{ required: true, message: '贡献内容不能为空', trigger: 'blur' }]
   }
 });
 
@@ -198,7 +184,7 @@ const getList = async () => {
   contributionList.value = res.rows;
   total.value = res.total;
   loading.value = false;
-}
+};
 
 /** 获取成员列表 */
 const getMemberList = async () => {
@@ -214,7 +200,7 @@ const getMemberList = async () => {
   } catch (error) {
     console.error('获取成员列表失败:', error);
   }
-}
+};
 
 /** 获取项目列表 */
 const getProjectList = async () => {
@@ -232,55 +218,55 @@ const getProjectList = async () => {
       { projectId: 5, projectName: 'Dynamic-Tp' }
     ];
   }
-}
+};
 
 /** 取消按钮 */
 const cancel = () => {
   reset();
   dialog.visible = false;
-}
+};
 
 /** 表单重置 */
 const reset = () => {
-  form.value = {...initFormData};
+  form.value = { ...initFormData };
   contributionFormRef.value?.resetFields();
-}
+};
 
 /** 搜索按钮操作 */
 const handleQuery = () => {
   queryParams.value.pageNum = 1;
   getList();
-}
+};
 
 /** 重置按钮操作 */
 const resetQuery = () => {
   queryFormRef.value?.resetFields();
   handleQuery();
-}
+};
 
 /** 多选框选中数据 */
 const handleSelectionChange = (selection: ContributionVO[]) => {
-  ids.value = selection.map(item => item.contributionId);
+  ids.value = selection.map((item) => item.contributionId);
   single.value = selection.length != 1;
   multiple.value = !selection.length;
-}
+};
 
 /** 新增按钮操作 */
 const handleAdd = () => {
   reset();
   dialog.visible = true;
-  dialog.title = "添加贡献统计";
-}
+  dialog.title = '添加贡献统计';
+};
 
 /** 修改按钮操作 */
 const handleUpdate = async (row?: ContributionVO) => {
   reset();
-  const _contributionId = row?.contributionId || ids.value[0]
+  const _contributionId = row?.contributionId || ids.value[0];
   const res = await getContribution(_contributionId);
   Object.assign(form.value, res.data);
   dialog.visible = true;
-  dialog.title = "修改贡献统计";
-}
+  dialog.title = '修改贡献统计';
+};
 
 /** 提交按钮 */
 const submitForm = () => {
@@ -288,32 +274,36 @@ const submitForm = () => {
     if (valid) {
       buttonLoading.value = true;
       if (form.value.contributionId) {
-        await updateContribution(form.value).finally(() =>  buttonLoading.value = false);
+        await updateContribution(form.value).finally(() => (buttonLoading.value = false));
       } else {
-        await addContribution(form.value).finally(() =>  buttonLoading.value = false);
+        await addContribution(form.value).finally(() => (buttonLoading.value = false));
       }
-      proxy?.$modal.msgSuccess("操作成功");
+      proxy?.$modal.msgSuccess('操作成功');
       dialog.visible = false;
       await getList();
     }
   });
-}
+};
 
 /** 删除按钮操作 */
 const handleDelete = async (row?: ContributionVO) => {
   const _contributionIds = row?.contributionId || ids.value;
-  await proxy?.$modal.confirm('是否确认删除贡献统计编号为"' + _contributionIds + '"的数据项？').finally(() => loading.value = false);
+  await proxy?.$modal.confirm('是否确认删除贡献统计编号为"' + _contributionIds + '"的数据项？').finally(() => (loading.value = false));
   await delContribution(_contributionIds);
-  proxy?.$modal.msgSuccess("删除成功");
+  proxy?.$modal.msgSuccess('删除成功');
   await getList();
-}
+};
 
 /** 导出按钮操作 */
 const handleExport = () => {
-  proxy?.download('osc/contribution/export', {
-    ...queryParams.value
-  }, `contribution_${new Date().getTime()}.xlsx`)
-}
+  proxy?.download(
+    'osc/contribution/export',
+    {
+      ...queryParams.value
+    },
+    `contribution_${new Date().getTime()}.xlsx`
+  );
+};
 
 onMounted(() => {
   getList();

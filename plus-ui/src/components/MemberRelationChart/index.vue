@@ -14,18 +14,13 @@
       </div>
 
       <!-- 角色环 -->
-      <div 
-        v-for="(roleGroup, index) in roleGroups" 
-        :key="roleGroup.roleCode"
-        class="role-ring"
-        :style="getRingStyle(index)"
-      >
+      <div v-for="(roleGroup, index) in roleGroups" :key="roleGroup.roleCode" class="role-ring" :style="getRingStyle(index)">
         <div class="role-label">
           <el-tag :color="roleGroup.color" effect="dark" size="small">
             {{ roleGroup.roleName }}
           </el-tag>
         </div>
-        
+
         <!-- 成员节点 -->
         <div
           v-for="(member, memberIndex) in roleGroup.members"
@@ -39,13 +34,13 @@
             {{ getMemberInitial(member) }}
           </el-avatar>
           <div class="member-name">{{ member.memberName }}</div>
-          
+
           <!-- 连接线 -->
           <div class="connection-line" :style="getConnectionLineStyle(index, memberIndex, roleGroup.members.length)"></div>
         </div>
       </div>
     </div>
-    
+
     <!-- 图例 -->
     <div class="chart-legend">
       <div class="legend-title">角色说明</div>
@@ -127,7 +122,7 @@ function getMemberNodeStyle(ringIndex: number, memberIndex: number, totalMembers
   const angle = (memberIndex / totalMembers) * 2 * Math.PI;
   const x = Math.cos(angle) * radius;
   const y = Math.sin(angle) * radius;
-  
+
   return {
     position: 'absolute',
     left: '50%',
@@ -142,7 +137,7 @@ function getConnectionLineStyle(ringIndex: number, memberIndex: number, totalMem
   const radius = 120 + ringIndex * 80;
   const angle = (memberIndex / totalMembers) * 2 * Math.PI;
   const length = radius - 30; // 连接线长度
-  
+
   return {
     position: 'absolute',
     left: '50%',
@@ -305,11 +300,11 @@ function getMemberInitial(member: Member) {
     width: 400px;
     height: 400px;
   }
-  
+
   .member-node {
     transform: scale(0.8);
   }
-  
+
   .project-node {
     transform: scale(0.9);
   }
