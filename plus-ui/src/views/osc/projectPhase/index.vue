@@ -66,8 +66,28 @@
     <el-card class="mb-4">
       <el-form :model="queryParams" ref="queryRef" :inline="true">
         <el-form-item label="项目" prop="projectId">
-          <el-select v-model="queryParams.projectId" placeholder="请选择项目" clearable style="width: 240px" @change="handleProjectChange">
-            <el-option v-for="item in projectOptions" :key="item.projectId" :label="item.projectName" :value="item.projectId" />
+          <el-select 
+            v-model="queryParams.projectId" 
+            placeholder="请选择或搜索项目" 
+            clearable 
+            filterable
+            remote
+            :remote-method="handleProjectSearch"
+            :loading="projectSearchLoading"
+            style="width: 240px" 
+            @change="handleProjectChange"
+          >
+            <el-option v-for="item in filteredProjectOptions" :key="item.projectId" :label="item.projectName" :value="item.projectId">
+              <div class="project-option">
+                <div class="project-name">{{ item.projectName }}</div>
+                <div class="project-desc" v-if="item.description">{{ item.description }}</div>
+              </div>
+            </el-option>
+            <template #empty>
+              <div class="empty-option">
+                <span>暂无项目数据</span>
+              </div>
+            </template>
           </el-select>
         </el-form-item>
         <el-form-item label="阶段名称" prop="phaseName">
@@ -305,6 +325,19 @@ import GanttChart from './components/GanttChart.vue';
 import { parseTime } from '@/utils/ruoyi';
 import { download } from '@/utils/request';
 
+// 防抖函数
+const debounce = (func: Function, wait: number) => {
+  let timeout: NodeJS.Timeout;
+  return function executedFunction(...args: any[]) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+};
+
 const { proxy } = getCurrentInstance() as any;
 
 // 遍历器
@@ -318,6 +351,8 @@ const selectedRows = ref([]);
 
 // 项目选项
 const projectOptions = ref([]);
+const filteredProjectOptions = ref([]);
+const projectSearchLoading = ref(false);
 
 // 状态选项
 const statusOptions = [
@@ -393,8 +428,31 @@ const phaseFormRef = ref<FormInstance>();
 /** 查询项目列表 */
 const loadProjects = async () => {
   try {
+    projectSearchLoading.value = true;
     const res = await listProject();
-    projectOptions.value = res.rows;
+    projectOptions.value = res.rows || [];
+    filteredProjectOptions.value = [...projectOptions.value];
+    
+    // 如果没有数据，提供模拟数据
+    if (projectOptions.value.length === 0) {
+      projectOptions.value = [
+        {
+          projectId: 1,
+          projectName: 'RuoYi-Vue-Plus项目',
+          projectCode: 'RVP001',
+          description: '基于RuoYi-Vue-Plus的企业级管理系统',
+          status: '1'
+        },
+        {
+          projectId: 2,
+          projectName: 'Dromara社区管理系统',
+          projectCode: 'DCS001',
+          description: 'Dromara开源社区管理平台',
+          status: '1'
+        }
+      ];
+      filteredProjectOptions.value = [...projectOptions.value];
+    }
   } catch (error) {
     console.error('获取项目列表失败:', error);
     // 提供模拟项目数据
@@ -403,17 +461,48 @@ const loadProjects = async () => {
         projectId: 1,
         projectName: 'RuoYi-Vue-Plus项目',
         projectCode: 'RVP001',
+        description: '基于RuoYi-Vue-Plus的企业级管理系统',
         status: '1'
       },
       {
         projectId: 2,
         projectName: 'Dromara社区管理系统',
         projectCode: 'DCS001',
+        description: 'Dromara开源社区管理平台',
         status: '1'
       }
     ];
+    filteredProjectOptions.value = [...projectOptions.value];
+  } finally {
+    projectSearchLoading.value = false;
   }
 };
+
+/** 项目搜索处理（防抖优化） */
+const handleProjectSearch = debounce(async (query: string) => {
+  if (query !== '') {
+    projectSearchLoading.value = true;
+    try {
+      // 如果项目列表为空，先加载所有项目
+      if (projectOptions.value.length === 0) {
+        await loadProjects();
+      }
+      
+      // 本地过滤项目
+      filteredProjectOptions.value = projectOptions.value.filter(
+        (item) =>
+          item.projectName.toLowerCase().includes(query.toLowerCase()) ||
+          (item.description && item.description.toLowerCase().includes(query.toLowerCase())) ||
+          (item.projectCode && item.projectCode.toLowerCase().includes(query.toLowerCase()))
+      );
+    } finally {
+      projectSearchLoading.value = false;
+    }
+  } else {
+    // 如果搜索词为空，显示所有项目
+    filteredProjectOptions.value = [...projectOptions.value];
+  }
+}, 300);
 
 /** 查询阶段列表 */
 const getList = async () => {
@@ -1071,5 +1160,30 @@ onMounted(() => {
     flex-direction: column;
     align-items: flex-start;
   }
+}
+
+.project-option {
+  .project-name {
+    font-weight: 500;
+    color: var(--el-text-color-primary);
+    font-size: 14px;
+    margin-bottom: 2px;
+  }
+  
+  .project-desc {
+    font-size: 12px;
+    color: var(--el-text-color-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.2;
+  }
+}
+
+.empty-option {
+  padding: 12px;
+  text-align: center;
+  color: var(--el-text-color-secondary);
+  font-size: 13px;
 }
 </style>

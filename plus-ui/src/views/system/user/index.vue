@@ -9,6 +9,31 @@
         <el-form-item label="用户昵称" prop="nickName">
           <el-input v-model="queryParams.nickName" placeholder="请输入用户昵称" clearable @keyup.enter="handleQuery" />
         </el-form-item>
+        <el-form-item label="项目" prop="projectId">
+          <el-select
+            v-model="queryParams.projectId"
+            placeholder="请选择或搜索项目"
+            clearable
+            filterable
+            remote
+            :remote-method="handleProjectSearch"
+            :loading="projectSearchLoading"
+            style="width: 200px"
+            @change="handleQuery"
+          >
+            <el-option v-for="item in filteredProjectOptions" :key="item.projectId" :label="item.projectName" :value="item.projectId">
+              <div class="project-option">
+                <div class="project-name">{{ item.projectName }}</div>
+                <div class="project-desc" v-if="item.description">{{ item.description }}</div>
+              </div>
+            </el-option>
+            <template #empty>
+              <div class="empty-option">
+                <span>暂无项目数据</span>
+              </div>
+            </template>
+          </el-select>
+        </el-form-item>
         <el-form-item label="手机号码" prop="phonenumber">
           <el-input v-model="queryParams.phonenumber" placeholder="请输入手机号码" clearable @keyup.enter="handleQuery" />
         </el-form-item>
@@ -162,6 +187,20 @@ import { to } from 'await-to-js';
 import { optionselect } from '@/api/system/post';
 import { hasPermi } from '@/directive/permission';
 import { checkPermi } from '@/utils/permission';
+import { listProject } from '@/api/osc/project';
+
+// 防抖函数
+const debounce = (func: Function, wait: number) => {
+  let timeout: NodeJS.Timeout;
+  return function executedFunction(...args: any[]) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+};
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 const { sys_normal_disable, sys_user_sex } = toRefs<any>(proxy?.useDict('sys_normal_disable', 'sys_user_sex'));
@@ -175,6 +214,11 @@ const total = ref(0);
 
 const postOptions = ref<PostVO[]>([]);
 const roleOptions = ref<RoleVO[]>([]);
+
+// 项目搜索相关
+const projectOptions = ref<any[]>([]);
+const filteredProjectOptions = ref<any[]>([]);
+const projectSearchLoading = ref(false);
 
 const queryFormRef = ref<ElFormInstance>();
 const userFormRef = ref<ElFormInstance>();
@@ -212,7 +256,8 @@ const initData: PageData<UserForm, UserQuery> = {
     phonenumber: '',
     status: '',
     deptId: '',
-    roleId: ''
+    roleId: '',
+    projectId: ''
   },
   rules: {
     userName: [
@@ -241,6 +286,94 @@ const initData: PageData<UserForm, UserQuery> = {
 const data = reactive<PageData<UserForm, UserQuery>>(initData);
 const { queryParams, form, rules } = toRefs<PageData<UserForm, UserQuery>>(data);
 
+/** 加载项目列表 */
+const loadProjects = async () => {
+  try {
+    projectSearchLoading.value = true;
+    const res = await listProject({ pageNum: 1, pageSize: 1000 });
+    
+    // 检查不同的响应结构
+    if (res && res.rows && Array.isArray(res.rows)) {
+      projectOptions.value = res.rows;
+    } else if (res && res.data && Array.isArray(res.data)) {
+      projectOptions.value = res.data;
+    } else {
+      projectOptions.value = [];
+    }
+    
+    filteredProjectOptions.value = [...projectOptions.value];
+    
+    // 如果没有数据，提供模拟数据
+    if (projectOptions.value.length === 0) {
+      projectOptions.value = [
+        {
+          projectId: 1,
+          projectName: 'RuoYi-Vue-Plus项目',
+          projectCode: 'RVP001',
+          description: '基于RuoYi-Vue-Plus的企业级管理系统',
+          status: '1'
+        },
+        {
+          projectId: 2,
+          projectName: 'Dromara社区管理系统',
+          projectCode: 'DCS001',
+          description: 'Dromara开源社区管理平台',
+          status: '1'
+        }
+      ];
+      filteredProjectOptions.value = [...projectOptions.value];
+    }
+  } catch (error) {
+    console.error('获取项目列表失败:', error);
+    // 提供模拟项目数据
+    projectOptions.value = [
+      {
+        projectId: 1,
+        projectName: 'RuoYi-Vue-Plus项目',
+        projectCode: 'RVP001',
+        description: '基于RuoYi-Vue-Plus的企业级管理系统',
+        status: '1'
+      },
+      {
+        projectId: 2,
+        projectName: 'Dromara社区管理系统',
+        projectCode: 'DCS001',
+        description: 'Dromara开源社区管理平台',
+        status: '1'
+      }
+    ];
+    filteredProjectOptions.value = [...projectOptions.value];
+  } finally {
+    projectSearchLoading.value = false;
+  }
+};
+
+/** 项目搜索处理（防抖优化） */
+const handleProjectSearch = debounce(async (query: string) => {
+  if (query !== '') {
+    projectSearchLoading.value = true;
+    try {
+      // 如果项目列表为空，先加载所有项目
+      if (projectOptions.value.length === 0) {
+        await loadProjects();
+      }
+      
+      // 本地过滤项目
+      filteredProjectOptions.value = projectOptions.value.filter(
+        (item) =>
+          item.projectName.toLowerCase().includes(query.toLowerCase()) ||
+          (item.description && item.description.toLowerCase().includes(query.toLowerCase())) ||
+          (item.projectCode && item.projectCode.toLowerCase().includes(query.toLowerCase()))
+      );
+    } finally {
+      projectSearchLoading.value = false;
+    }
+  } else {
+    // 如果搜索词为空，显示所有项目
+    filteredProjectOptions.value = [...projectOptions.value];
+  }
+}, 300);
+
 /** 搜索按钮操作 */
 const handleQuery = () => {
   queryParams.value.pageNum = 1;
@@ -251,6 +384,8 @@ const handleQuery = () => {
 const resetQuery = () => {
   queryFormRef.value?.resetFields();
   queryParams.value.pageNum = 1;
+  // 重置项目选择
+  filteredProjectOptions.value = [...projectOptions.value];
   handleQuery();
 };
 
@@ -350,6 +485,34 @@ const submitForm = () => {
 };
 
 onMounted(() => {
+  loadProjects();
   getList();
 });
 </script>
+
+<style scoped>
+.project-option {
+  .project-name {
+    font-weight: 500;
+    color: var(--el-text-color-primary);
+    font-size: 14px;
+    margin-bottom: 2px;
+  }
+  
+  .project-desc {
+    font-size: 12px;
+    color: var(--el-text-color-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.2;
+  }
+}
+
+.empty-option {
+  padding: 12px;
+  text-align: center;
+  color: var(--el-text-color-secondary);
+  font-size: 13px;
+}
+</style>

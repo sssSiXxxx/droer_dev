@@ -249,13 +249,13 @@ const trendingData = ref({
 // 错误信息
 const errorMessage = ref('');
 
-// 技术栈数据 - 更新为浅绿色调
+// 技术栈数据 - 恢复为真实的技术栈颜色
 const techStack = ref([
-  { name: 'Java', value: 45, color: '#22c55e' }, // 主绿色
-  { name: 'JavaScript', value: 25, color: '#16a34a' }, // 深绿色
-  { name: 'Go', value: 15, color: '#15803d' }, // 更深绿色
-  { name: 'Python', value: 10, color: '#84cc16' }, // 黄绿色
-  { name: 'Others', value: 5, color: '#65a30d' } // 橄榄绿
+  { name: 'Java', value: 45, color: '#ed8936' }, // Java橙色
+  { name: 'JavaScript', value: 25, color: '#f7df1e' }, // JS黄色
+  { name: 'Go', value: 15, color: '#00add8' }, // Go蓝色
+  { name: 'Python', value: 10, color: '#3776ab' }, // Python蓝色
+  { name: 'Others', value: 5, color: '#6b7280' } // 灰色
 ]);
 
 // 时间范围选择
@@ -289,15 +289,15 @@ const formatDateLabel = (dateStr: string): string => {
   return date.toLocaleDateString('zh-CN', { month: 'short', day: '2-digit' });
 };
 
-// 技术栈饼图配置 - 更新为浅绿色调
+// 技术栈饼图配置 - 恢复为真实颜色
 const techChartOption = computed(() => ({
   tooltip: {
     trigger: 'item',
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderColor: '#10b981',
+    borderColor: '#ddd',
     borderWidth: 1,
     textStyle: {
-      color: '#374151'
+      color: '#333'
     },
     formatter: '{a} <br/>{b}: {c} ({d}%)'
   },
@@ -322,7 +322,7 @@ const techChartOption = computed(() => ({
           show: true,
           fontSize: '18',
           fontWeight: 'bold',
-          color: '#10b981'
+          color: '#333'
         }
       },
       labelLine: {
@@ -339,15 +339,15 @@ const techChartOption = computed(() => ({
   ]
 }));
 
-// 社区活跃度图表配置 - 更新为浅绿色调
+// 社区活跃度图表配置 - 恢复为原来的多彩配置
 const chartOption = computed(() => ({
   tooltip: {
     trigger: 'axis',
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderColor: '#10b981',
+    borderColor: '#ddd',
     borderWidth: 1,
     textStyle: {
-      color: '#374151'
+      color: '#333'
     },
     formatter: function (params: any) {
       let result = params[0].name + '<br/>';
@@ -360,7 +360,7 @@ const chartOption = computed(() => ({
   legend: {
     data: ['提交数', 'Issue数', 'PR数'],
     textStyle: {
-      color: '#6B7280'
+      color: '#666'
     },
     top: 10,
     bottom: 'auto'
@@ -377,26 +377,26 @@ const chartOption = computed(() => ({
     data: communityActivity.value.map((item) => item.name),
     axisLine: {
       lineStyle: {
-        color: '#d1fae5'
+        color: '#e6e8eb'
       }
     },
     axisLabel: {
-      color: '#6b7280'
+      color: '#666'
     }
   },
   yAxis: {
     type: 'value',
     axisLine: {
       lineStyle: {
-        color: '#d1fae5'
+        color: '#e6e8eb'
       }
     },
     axisLabel: {
-      color: '#6b7280'
+      color: '#666'
     },
     splitLine: {
       lineStyle: {
-        color: '#f0fdf4'
+        color: '#f5f5f5'
       }
     }
   },
@@ -413,17 +413,17 @@ const chartOption = computed(() => ({
           x2: 0,
           y2: 1,
           colorStops: [
-            { offset: 0, color: 'rgba(34, 197, 94, 0.8)' }, // 主绿色
-            { offset: 1, color: 'rgba(34, 197, 94, 0.1)' }
+            { offset: 0, color: 'rgba(24, 144, 255, 0.6)' },
+            { offset: 1, color: 'rgba(24, 144, 255, 0.1)' }
           ]
         }
       },
       lineStyle: {
-        color: '#22c55e',
+        color: '#1890ff',
         width: 3
       },
       itemStyle: {
-        color: '#22c55e'
+        color: '#1890ff'
       },
       data: communityActivity.value.map((item) => item.commits),
       smooth: true
@@ -440,17 +440,17 @@ const chartOption = computed(() => ({
           x2: 0,
           y2: 1,
           colorStops: [
-            { offset: 0, color: 'rgba(22, 163, 74, 0.8)' }, // 深绿色
-            { offset: 1, color: 'rgba(22, 163, 74, 0.1)' }
+            { offset: 0, color: 'rgba(82, 196, 26, 0.6)' },
+            { offset: 1, color: 'rgba(82, 196, 26, 0.1)' }
           ]
         }
       },
       lineStyle: {
-        color: '#16a34a',
+        color: '#52c41a',
         width: 3
       },
       itemStyle: {
-        color: '#16a34a'
+        color: '#52c41a'
       },
       data: communityActivity.value.map((item) => item.issues),
       smooth: true
@@ -467,17 +467,17 @@ const chartOption = computed(() => ({
           x2: 0,
           y2: 1,
           colorStops: [
-            { offset: 0, color: 'rgba(21, 128, 61, 0.8)' }, // 更深绿色
-            { offset: 1, color: 'rgba(21, 128, 61, 0.1)' }
+            { offset: 0, color: 'rgba(250, 173, 20, 0.6)' },
+            { offset: 1, color: 'rgba(250, 173, 20, 0.1)' }
           ]
         }
       },
       lineStyle: {
-        color: '#15803d',
+        color: '#faad14',
         width: 3
       },
       itemStyle: {
-        color: '#15803d'
+        color: '#faad14'
       },
       data: communityActivity.value.map((item) => item.prs),
       smooth: true
@@ -577,7 +577,7 @@ const refreshTechStats = async () => {
       techStack.value = data.techStack.map((item: any) => ({
         name: item.name,
         value: item.value,
-        color: getGreenColor(item.name) // 使用浅绿色调
+        color: getLanguageColor(item.name) // 使用真实语言颜色
       }));
     }
     console.log('✅ 技术栈统计数据刷新完成');
@@ -588,19 +588,22 @@ const refreshTechStats = async () => {
   }
 };
 
-// 获取浅绿色调
-const getGreenColor = (tech: string): string => {
-  const greenColors: Record<string, string> = {
-    'Java': '#22c55e', // 主绿色
-    'JavaScript': '#16a34a', // 深绿色
-    'TypeScript': '#15803d', // 更深绿色
-    'Go': '#84cc16', // 黄绿色
-    'Python': '#65a30d', // 橄榄绿
-    'Vue': '#059669', // 翠绿色
-    'React': '#047857', // 深翠绿色
-    'Others': '#10b981' // 默认绿色
+// 获取真实语言颜色
+const getLanguageColor = (language: string): string => {
+  const colors: Record<string, string> = {
+    'Java': '#ed8936',
+    'JavaScript': '#f7df1e',
+    'TypeScript': '#3178c6',
+    'Python': '#3776ab',
+    'Go': '#00add8',
+    'C++': '#00599c',
+    'C#': '#239120',
+    'PHP': '#777bb4',
+    'Vue': '#4fc08d',
+    'React': '#61dafb',
+    'Shell': '#89e051'
   };
-  return greenColors[tech] || '#10b981';
+  return colors[language] || '#6b7280';
 };
 
 // 时间范围变化处理
@@ -663,23 +666,6 @@ const formatNumber = (num: number): string => {
   return num.toString();
 };
 
-// 获取编程语言颜色 - 更新为浅绿色调
-const getLanguageColor = (language: string): string => {
-  const colors: Record<string, string> = {
-    'Java': '#22c55e',
-    'JavaScript': '#16a34a',
-    'TypeScript': '#15803d',
-    'Python': '#84cc16',
-    'Go': '#65a30d',
-    'C++': '#059669',
-    'C#': '#047857',
-    'PHP': '#10b981',
-    'Vue': '#059669',
-    'React': '#047857'
-  };
-  return colors[language] || '#10b981';
-};
-
 // 获取排名样式
 const getRankClass = (index: number): string => {
   if (index === 0) return 'gold';
@@ -704,7 +690,13 @@ onMounted(async () => {
   console.log('🚀 首页开始加载...');
 
   // 并行加载所有数据以提高性能
-  await Promise.all([fetchDashboardData(), refreshHotProjects(), refreshContributors(), refreshTechStats()]);
+  await Promise.all([
+    fetchDashboardData(), 
+    refreshHotProjects(), 
+    refreshContributors(), 
+    refreshTechStats(),
+    refreshChartData() // 添加图表数据加载
+  ]);
 
   console.log('✅ 首页数据加载完成');
 

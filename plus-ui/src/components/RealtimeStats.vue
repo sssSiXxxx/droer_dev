@@ -11,6 +11,10 @@
           <el-icon><Refresh /></el-icon>
           {{ loading ? '更新中...' : '刷新数据' }}
         </el-button>
+        <el-button type="success" :loading="syncing" size="small" @click="syncGiteeData" :disabled="syncing || loading">
+          <el-icon><Upload /></el-icon>
+          {{ syncing ? '同步中...' : '同步Gitee' }}
+        </el-button>
         <el-switch v-model="autoRefresh" inline-prompt active-text="自动" inactive-text="手动" @change="toggleAutoRefresh" />
       </div>
     </div>
@@ -73,8 +77,9 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
-import { Refresh, TrendCharts, Bottom, Connection, User, Star, Share, Download, Warning } from '@element-plus/icons-vue';
-import { getDashboardData, refreshAllData, getDataUpdateStatus, type CommunityStats } from '@/api/community-enhanced';
+import { ElMessage } from 'element-plus';
+import { Refresh, TrendCharts, Bottom, Connection, User, Star, Share, Download, Warning, Upload } from '@element-plus/icons-vue';
+import { getDashboardData, refreshAllData, getDataUpdateStatus, type CommunityStats, syncGiteeActivityData, getGiteeSyncStatus } from '@/api/community-enhanced';
 
 // Props
 interface Props {
@@ -93,9 +98,11 @@ const props = withDefaults(defineProps<Props>(), {
 
 // 响应式数据
 const loading = ref(false);
+const syncing = ref(false);
 const lastUpdated = ref(new Date());
 const autoRefresh = ref(false);
 const activeCollapse = ref('');
+const syncStatus = ref<any>(null);
 
 // 统计数据
 const stats = ref<CommunityStats>({
@@ -112,13 +119,14 @@ const stats = ref<CommunityStats>({
 const dataSources = ref([
   { name: 'Gitee API', status: 'active', lastUpdate: new Date(), cacheStatus: '5分钟' },
   { name: '项目统计', status: 'active', lastUpdate: new Date(), cacheStatus: '5分钟' },
-  { name: '贡献者数据', status: 'active', lastUpdate: new Date(), cacheStatus: '15分钟' }
+  { name: '贡献者数据', status: 'active', lastUpdate: new Date(), cacheStatus: '15分钟' },
+  { name: 'Gitee同步', status: 'active', lastUpdate: new Date(), cacheStatus: '实时' }
 ]);
 
 // 自动刷新定时器
 let refreshTimer: NodeJS.Timeout | null = null;
 
-// 计算统计数据显示
+// 计算统计数据显示 - 使用更平衡的颜色配置
 const statsData = computed(() => [
   {
     key: 'projects',
@@ -127,8 +135,8 @@ const statsData = computed(() => [
     change: `+${stats.value.newProjects} 新增`,
     changeType: 'increase',
     icon: 'Connection',
-    color: '#10b981',
-    gradient: 'linear-gradient(135deg, #10b981, #059669)',
+    color: '#1890ff', // 蓝色
+    gradient: 'linear-gradient(135deg, #1890ff, #096dd9)',
     type: 'primary',
     trend: generateTrendData(stats.value.totalProjects)
   },
@@ -139,8 +147,8 @@ const statsData = computed(() => [
     change: `${stats.value.totalContributors > 1000 ? '+8%' : '+5%'} 本周`,
     changeType: 'increase',
     icon: 'User',
-    color: '#22c55e',
-    gradient: 'linear-gradient(135deg, #22c55e, #16a34a)',
+    color: '#52c41a', // 绿色
+    gradient: 'linear-gradient(135deg, #52c41a, #389e0d)',
     type: 'success',
     trend: generateTrendData(stats.value.totalContributors)
   },
@@ -151,8 +159,8 @@ const statsData = computed(() => [
     change: '+12% 本周',
     changeType: 'increase',
     icon: 'Star',
-    color: '#84cc16',
-    gradient: 'linear-gradient(135deg, #84cc16, #65a30d)',
+    color: '#faad14', // 橙黄色
+    gradient: 'linear-gradient(135deg, #faad14, #d48806)',
     type: 'warning',
     trend: generateTrendData(stats.value.totalStars)
   },
@@ -163,8 +171,8 @@ const statsData = computed(() => [
     change: '+15% 本周',
     changeType: 'increase',
     icon: 'Share',
-    color: '#16a34a',
-    gradient: 'linear-gradient(135deg, #16a34a, #15803d)',
+    color: '#722ed1', // 紫色
+    gradient: 'linear-gradient(135deg, #722ed1, #531dab)',
     type: 'info',
     trend: generateTrendData(stats.value.totalForks)
   },
@@ -175,8 +183,8 @@ const statsData = computed(() => [
     change: `${stats.value.activeProjects > stats.value.totalProjects * 0.7 ? '高活跃度' : '正常'}`,
     changeType: stats.value.activeProjects > stats.value.totalProjects * 0.7 ? 'increase' : 'stable',
     icon: 'Download',
-    color: '#059669',
-    gradient: 'linear-gradient(135deg, #059669, #047857)',
+    color: '#13c2c2', // 青色
+    gradient: 'linear-gradient(135deg, #13c2c2, #08979c)',
     type: 'primary',
     trend: generateTrendData(stats.value.activeProjects)
   },
@@ -187,8 +195,8 @@ const statsData = computed(() => [
     change: '+2% 本周',
     changeType: 'increase',
     icon: 'Warning',
-    color: '#dc2626',
-    gradient: 'linear-gradient(135deg, #dc2626, #b91c1c)',
+    color: '#f5222d', // 红色
+    gradient: 'linear-gradient(135deg, #f5222d, #cf1322)',
     type: 'danger',
     trend: generateTrendData(Math.floor(stats.value.totalProjects * 25.6))
   }
@@ -221,12 +229,26 @@ const loadData = async (forceRefresh = false) => {
 
     // 更新数据源状态
     const updateStatus = getDataUpdateStatus();
-    dataSources.value = dataSources.value.map((source, index) => ({
-      ...source,
-      status: 'active',
-      lastUpdate: lastUpdated.value,
-      cacheStatus: updateStatus[index] ? `${Math.floor(updateStatus[index].age / 1000)}秒前` : '未知'
-    }));
+    dataSources.value = dataSources.value.map((source, index) => {
+      if (source.name === 'Gitee同步') {
+        // 特殊处理Gitee同步状态
+        return {
+          ...source,
+          status: syncStatus.value?.healthLevel === '异常' ? 'error' : 'active',
+          lastUpdate: lastUpdated.value,
+          cacheStatus: syncStatus.value ? `健康度: ${syncStatus.value.syncHealth || 0}%` : '未知'
+        };
+      } else {
+        // 其他数据源使用默认状态或updateStatus中的数据
+        const statusIndex = Math.min(index, updateStatus.length - 1);
+        return {
+          ...source,
+          status: 'active',
+          lastUpdate: lastUpdated.value,
+          cacheStatus: updateStatus[statusIndex] ? `${Math.floor(updateStatus[statusIndex].age / 1000)}秒前` : '5分钟'
+        };
+      }
+    });
 
     console.log('✅ 社区统计数据加载完成');
   } catch (error) {
@@ -244,6 +266,61 @@ const loadData = async (forceRefresh = false) => {
 // 刷新数据
 const refreshData = async () => {
   await loadData(true);
+};
+
+// 同步Gitee数据
+const syncGiteeData = async () => {
+  try {
+    syncing.value = true;
+    console.log('🔄 开始同步Gitee数据...');
+
+    const syncResult = await syncGiteeActivityData();
+    console.log('📊 同步结果:', syncResult);
+    
+    // 同步后刷新统计数据
+    await loadData(true);
+    
+    // 更新同步状态
+    try {
+      syncStatus.value = await getGiteeSyncStatus();
+    } catch (statusError) {
+      console.warn('获取同步状态失败:', statusError);
+    }
+    
+    // 显示结果消息
+    if (syncResult && syncResult.success !== false) {
+      const updatedProjects = syncResult.stats?.updatedProjects || 0;
+      const message = updatedProjects > 0 ? 
+        `同步完成！更新了 ${updatedProjects} 个项目` : 
+        '同步完成';
+      ElMessage.success(message);
+    } else {
+      ElMessage.warning(`同步完成，但可能存在问题：${syncResult?.message || '未知错误'}`);
+    }
+    
+    console.log('✅ Gitee数据同步操作完成');
+  } catch (error: any) {
+    console.error('❌ 同步Gitee数据时发生错误:', error);
+    ElMessage.error('同步失败：请检查网络连接或联系管理员');
+  } finally {
+    syncing.value = false;
+  }
+};
+
+// 获取同步状态
+const loadSyncStatus = async () => {
+  try {
+    syncStatus.value = await getGiteeSyncStatus();
+    console.log('✅ 同步状态获取成功:', syncStatus.value);
+  } catch (error) {
+    console.warn('⚠️ 获取同步状态失败，使用默认值:', error);
+    syncStatus.value = {
+      syncHealth: 0,
+      healthLevel: '未知',
+      totalProjects: 0,
+      activeContributors: 0
+    };
+  }
 };
 
 // 格式化时间
@@ -302,6 +379,7 @@ watch(autoRefresh, (newValue) => {
 // 页面加载时获取数据
 onMounted(async () => {
   await loadData();
+  await loadSyncStatus(); // 加载同步状态
 });
 
 // 清理定时器
@@ -369,8 +447,8 @@ defineExpose({
   background: white;
   border-radius: 12px;
   padding: 16px;
-  box-shadow: 0 2px 8px rgba(180, 228, 217, 0.1);
-  border: 1px solid rgba(180, 228, 217, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
   overflow: hidden;
   animation: fadeInUp 0.6s ease-out;
@@ -379,8 +457,8 @@ defineExpose({
 
 .stat-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(180, 228, 217, 0.2);
-  border-color: rgba(180, 228, 217, 0.4);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  border-color: rgba(24, 144, 255, 0.2);
 }
 
 .stat-card.loading {
@@ -395,7 +473,7 @@ defineExpose({
   left: 0;
   right: 0;
   height: 3px;
-  background: var(--gradient, linear-gradient(90deg, #b4e4d9, #8fd3c7));
+  background: var(--gradient, linear-gradient(90deg, #1890ff, #722ed1));
   border-radius: 12px 12px 0 0;
 }
 
@@ -462,7 +540,7 @@ defineExpose({
 }
 
 .stat-change.increase {
-  color: #10b981;
+  color: #52c41a;
 }
 
 .stat-change.decrease {
@@ -515,8 +593,8 @@ defineExpose({
 }
 
 .source-indicator.active {
-  background: #10b981;
-  box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+  background: #52c41a;
+  box-shadow: 0 0 8px rgba(82, 196, 26, 0.4);
 }
 
 .source-indicator.error {

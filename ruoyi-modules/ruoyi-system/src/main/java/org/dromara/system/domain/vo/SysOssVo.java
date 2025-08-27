@@ -105,6 +105,7 @@ public class SysOssVo implements Serializable {
      */
     private Long updateBy;
 
+
     /**
      * 更新时间
      */

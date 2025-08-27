@@ -33,11 +33,11 @@
     <!-- 文件列表 -->
     <transition-group class="upload-file-list el-upload-list el-upload-list--text" name="el-fade-in-linear" tag="ul">
       <li v-for="(file, index) in fileList" :key="file.uid" class="el-upload-list__item ele-upload-list__item-content">
-        <el-link :href="`${file.url}`" :underline="false" target="_blank">
-          <span class="el-icon-document"> {{ getFileName(file.name) }} </span>
+        <el-link :href="`${file.url}`" :underline="false" target="_blank" class="file-link">
+          <span class="el-icon-document file-icon"> {{ getFileName(file.name) }} </span>
         </el-link>
         <div class="ele-upload-list__item-content-action">
-          <el-button type="danger" v-if="!disabled" link @click="handleDelete(index)">删除</el-button>
+          <el-button type="danger" v-if="!disabled" link @click="handleDelete(index)" size="small">删除</el-button>
         </div>
       </li>
     </transition-group>
@@ -234,6 +234,28 @@ const listToString = (list: any[], separator?: string) => {
   justify-content: space-between;
   align-items: center;
   color: inherit;
+  padding: 8px 12px;
+  min-height: 42px;
+}
+
+.file-link {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  margin-right: 12px;
+}
+
+.file-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  word-break: break-all;
+  white-space: normal;
+  line-height: 1.4;
+}
+
+.ele-upload-list__item-content-action {
+  flex-shrink: 0;
 }
 
 .ele-upload-list__item-content-action .el-link {

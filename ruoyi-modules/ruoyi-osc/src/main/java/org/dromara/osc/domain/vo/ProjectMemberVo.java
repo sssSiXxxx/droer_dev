@@ -1,6 +1,8 @@
 package org.dromara.osc.domain.vo;
 
+import io.github.linpeilie.annotations.AutoMapper;
 import lombok.Data;
+import org.dromara.osc.domain.ProjectMember;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -13,6 +15,7 @@ import java.time.LocalDateTime;
  * @date 2025-08-17
  */
 @Data
+@AutoMapper(target = ProjectMember.class)
 public class ProjectMemberVo implements Serializable {
 
     @Serial

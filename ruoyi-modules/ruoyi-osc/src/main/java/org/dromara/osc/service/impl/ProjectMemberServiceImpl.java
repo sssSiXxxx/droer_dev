@@ -43,7 +43,16 @@ public class ProjectMemberServiceImpl implements IProjectMemberService {
      */
     @Override
     public ProjectMemberVo queryById(Long id) {
-        return baseMapper.selectVoById(id);
+        try {
+            return baseMapper.selectVoById(id);
+        } catch (Exception e) {
+            // 如果selectVoById失败，使用原始查询并手动转换
+            ProjectMember entity = baseMapper.selectById(id);
+            if (entity != null) {
+                return convertToVo(entity);
+            }
+            return null;
+        }
     }
 
     /**
@@ -51,15 +60,28 @@ public class ProjectMemberServiceImpl implements IProjectMemberService {
      */
     @Override
     public TableDataInfo<ProjectMemberVo> queryPageList(ProjectMemberBo bo, PageQuery pageQuery) {
-        LambdaQueryWrapper<ProjectMember> lqw = Wrappers.lambdaQuery(ProjectMember.class);
-        lqw.eq(bo.getProjectId() != null, ProjectMember::getProjectId, bo.getProjectId());
-        lqw.eq(bo.getMemberId() != null, ProjectMember::getMemberId, bo.getMemberId());
-        lqw.eq(StringUtils.isNotBlank(bo.getRole()), ProjectMember::getRole, bo.getRole());
-        lqw.eq(StringUtils.isNotBlank(bo.getIsActive()), ProjectMember::getIsActive, bo.getIsActive());
-        lqw.orderByDesc(ProjectMember::getCreateTime);
-
-        Page<ProjectMemberVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
-        return TableDataInfo.build(result);
+        try {
+            LambdaQueryWrapper<ProjectMember> lqw = buildQueryWrapper(bo);
+            Page<ProjectMemberVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
+            return TableDataInfo.build(result);
+        } catch (Exception e) {
+            // 如果出现类型转换异常，使用原始查询方式
+            LambdaQueryWrapper<ProjectMember> lqw = buildQueryWrapper(bo);
+            Page<ProjectMember> entityPage = baseMapper.selectPage(pageQuery.build(), lqw);
+            
+            // 手动转换为VO对象
+            List<ProjectMemberVo> voList = entityPage.getRecords().stream()
+                .map(this::convertToVo)
+                .toList();
+                
+            Page<ProjectMemberVo> result = new Page<>();
+            result.setRecords(voList);
+            result.setTotal(entityPage.getTotal());
+            result.setCurrent(entityPage.getCurrent());
+            result.setSize(entityPage.getSize());
+            
+            return TableDataInfo.build(result);
+        }
     }
 
     /**
@@ -67,14 +89,17 @@ public class ProjectMemberServiceImpl implements IProjectMemberService {
      */
     @Override
     public List<ProjectMemberVo> queryList(ProjectMemberBo bo) {
-        LambdaQueryWrapper<ProjectMember> lqw = Wrappers.lambdaQuery(ProjectMember.class);
-        lqw.eq(bo.getProjectId() != null, ProjectMember::getProjectId, bo.getProjectId());
-        lqw.eq(bo.getMemberId() != null, ProjectMember::getMemberId, bo.getMemberId());
-        lqw.eq(StringUtils.isNotBlank(bo.getRole()), ProjectMember::getRole, bo.getRole());
-        lqw.eq(StringUtils.isNotBlank(bo.getIsActive()), ProjectMember::getIsActive, bo.getIsActive());
-        lqw.orderByDesc(ProjectMember::getCreateTime);
-
-        return baseMapper.selectVoList(lqw);
+        try {
+            LambdaQueryWrapper<ProjectMember> lqw = buildQueryWrapper(bo);
+            return baseMapper.selectVoList(lqw);
+        } catch (Exception e) {
+            // 如果查询失败，使用原始查询并手动转换
+            LambdaQueryWrapper<ProjectMember> lqw = buildQueryWrapper(bo);
+            List<ProjectMember> entityList = baseMapper.selectList(lqw);
+            return entityList.stream()
+                .map(this::convertToVo)
+                .toList();
+        }
     }
 
     /**
@@ -348,6 +373,88 @@ public class ProjectMemberServiceImpl implements IProjectMemberService {
             case "3": return 2; // 测试人员
             case "4": return 1; // 观察者
             default: return 1;
+        }
+    }
+
+    /**
+     * 构建查询条件
+     */
+    private LambdaQueryWrapper<ProjectMember> buildQueryWrapper(ProjectMemberBo bo) {
+        Map<String, Object> params = bo.getParams();
+        LambdaQueryWrapper<ProjectMember> lqw = Wrappers.lambdaQuery();
+        lqw.eq(bo.getProjectId() != null, ProjectMember::getProjectId, bo.getProjectId());
+        lqw.eq(bo.getMemberId() != null, ProjectMember::getMemberId, bo.getMemberId());
+        lqw.eq(StringUtils.isNotBlank(bo.getRole()), ProjectMember::getRole, bo.getRole());
+        lqw.eq(bo.getPermissionLevel() != null, ProjectMember::getPermissionLevel, bo.getPermissionLevel());
+        lqw.eq(StringUtils.isNotBlank(bo.getIsActive()), ProjectMember::getIsActive, bo.getIsActive());
+        lqw.eq(bo.getContributionScore() != null, ProjectMember::getContributionScore, bo.getContributionScore());
+        lqw.eq(bo.getJoinTime() != null, ProjectMember::getJoinTime, bo.getJoinTime());
+        lqw.orderByDesc(ProjectMember::getCreateTime);
+        return lqw;
+    }
+
+    /**
+     * 手动转换为VO对象
+     */
+    private ProjectMemberVo convertToVo(ProjectMember entity) {
+        if (entity == null) {
+            return null;
+        }
+        try {
+            ProjectMemberVo vo = MapstructUtils.convert(entity, ProjectMemberVo.class);
+            if (vo != null) {
+                // 设置默认的项目名称（如果缺失）
+                if (vo.getProjectId() != null && StringUtils.isBlank(vo.getProjectName())) {
+                    vo.setProjectName("项目-" + vo.getProjectId());
+                }
+                // 设置默认的成员名称（如果缺失）
+                if (vo.getMemberId() != null && StringUtils.isBlank(vo.getMemberName())) {
+                    vo.setMemberName("成员-" + vo.getMemberId());
+                }
+                // 设置角色名称
+                vo.setRoleName(getRoleName(vo.getRole()));
+            }
+            return vo;
+        } catch (Exception e) {
+            // 如果自动转换失败，手动创建VO对象
+            ProjectMemberVo vo = new ProjectMemberVo();
+            vo.setId(entity.getId());
+            vo.setProjectId(entity.getProjectId());
+            vo.setMemberId(entity.getMemberId());
+            vo.setRole(entity.getRole());
+            vo.setPermissionLevel(entity.getPermissionLevel());
+            vo.setIsActive(entity.getIsActive());
+            vo.setContributionScore(entity.getContributionScore());
+            vo.setJoinTime(entity.getJoinTime());
+            vo.setRemark(entity.getRemark());
+            
+            // 设置默认名称
+            if (entity.getProjectId() != null) {
+                vo.setProjectName("项目-" + entity.getProjectId());
+            }
+            if (entity.getMemberId() != null) {
+                vo.setMemberName("成员-" + entity.getMemberId());
+            }
+            vo.setRoleName(getRoleName(entity.getRole()));
+            
+            return vo;
+        }
+    }
+
+    /**
+     * 获取角色名称
+     */
+    private String getRoleName(String role) {
+        if (StringUtils.isBlank(role)) {
+            return "未知";
+        }
+        switch (role) {
+            case "0": return "项目负责人";
+            case "1": return "开发负责人";
+            case "2": return "开发人员";
+            case "3": return "测试人员";
+            case "4": return "观察者";
+            default: return "普通成员";
         }
     }
 }
