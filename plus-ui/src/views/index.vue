@@ -128,10 +128,13 @@
                   {{ index + 1 }}
                 </div>
                 <div class="contributor-avatar">
-                  <img :src="contributor.avatar_url" :alt="contributor.name" @error="handleAvatarError" />
+                  <!-- 强制显示首字母头像 -->
+                  <div class="avatar-letter" :style="getAvatarStyle(contributor)">
+                    {{ getInitials(contributor.name || contributor.login || 'U') }}
+                  </div>
                 </div>
                 <div class="contributor-info">
-                  <div class="contributor-name">{{ contributor.name }}</div>
+                  <div class="contributor-name">{{ contributor.name || contributor.login }}</div>
                   <div class="contributor-project">{{ contributor.login }}</div>
                   <div class="contribution-count">
                     <el-icon><Trophy /></el-icon>
@@ -249,13 +252,14 @@ const trendingData = ref({
 // 错误信息
 const errorMessage = ref('');
 
-// 技术栈数据 - 恢复为真实的技术栈颜色
+// 技术栈数据 - 使用正确的编程语言颜色（GitHub官方色值）
 const techStack = ref([
-  { name: 'Java', value: 45, color: '#ed8936' }, // Java橙色
-  { name: 'JavaScript', value: 25, color: '#f7df1e' }, // JS黄色
-  { name: 'Go', value: 15, color: '#00add8' }, // Go蓝色
-  { name: 'Python', value: 10, color: '#3776ab' }, // Python蓝色
-  { name: 'Others', value: 5, color: '#6b7280' } // 灰色
+  { name: 'Java', value: 65, color: '#b07219' }, // Java官方颜色
+  { name: 'JavaScript', value: 15, color: '#f1e05a' }, // JS官方颜色
+  { name: 'TypeScript', value: 8, color: '#3178c6' }, // TS官方颜色
+  { name: 'Go', value: 5, color: '#00ADD8' }, // Go官方颜色
+  { name: 'Vue', value: 4, color: '#41b883' }, // Vue官方颜色
+  { name: 'Python', value: 3, color: '#3572A5' } // Python官方颜色
 ]);
 
 // 时间范围选择
@@ -497,7 +501,11 @@ const fetchDashboardData = async () => {
 
     // 更新各个数据项
     hotProjects.value = data.hotProjects;
-    weeklyContributors.value = data.weeklyContributors;
+    weeklyContributors.value = (data.weeklyContributors || []).map((contributor: any) => ({
+      ...contributor,
+      avatarError: false, // 初始化头像错误状态
+      forceInitials: false // 初始化强制首字母状态
+    }));
     trendingData.value = data.trendingData;
 
     // 更新统计数据
@@ -522,7 +530,11 @@ const refreshAllDataAndUI = async () => {
     dashboardData.value = data;
 
     hotProjects.value = data.hotProjects;
-    weeklyContributors.value = data.weeklyContributors;
+    weeklyContributors.value = (data.weeklyContributors || []).map((contributor: any) => ({
+      ...contributor,
+      avatarError: false, // 初始化头像错误状态
+      forceInitials: false // 初始化强制首字母状态
+    }));
     trendingData.value = data.trendingData;
 
     totalProjects.value = data.stats.totalProjects;
@@ -559,7 +571,11 @@ const refreshContributors = async () => {
   contributorsLoading.value = true;
   try {
     const data = await getContributorStats();
-    weeklyContributors.value = data.weeklyContributors || [];
+    weeklyContributors.value = (data.weeklyContributors || []).map((contributor: any) => ({
+      ...contributor,
+      avatarError: false, // 初始化头像错误状态
+      forceInitials: false // 初始化强制首字母状态
+    }));
     console.log('✅ 贡献者排行数据刷新完成');
   } catch (error) {
     console.error('❌ 刷新贡献者排行失败:', error);
@@ -577,7 +593,7 @@ const refreshTechStats = async () => {
       techStack.value = data.techStack.map((item: any) => ({
         name: item.name,
         value: item.value,
-        color: getLanguageColor(item.name) // 使用真实语言颜色
+        color: item.color || getLanguageColor(item.name) // 优先使用API返回的颜色，备用本地计算
       }));
     }
     console.log('✅ 技术栈统计数据刷新完成');
@@ -588,18 +604,18 @@ const refreshTechStats = async () => {
   }
 };
 
-// 获取真实语言颜色
+// 获取真实语言颜色 - 与techStack数据保持一致
 const getLanguageColor = (language: string): string => {
   const colors: Record<string, string> = {
-    'Java': '#ed8936',
-    'JavaScript': '#f7df1e',
-    'TypeScript': '#3178c6',
-    'Python': '#3776ab',
-    'Go': '#00add8',
+    'Java': '#b07219', // Java官方颜色
+    'JavaScript': '#f1e05a', // JS官方颜色
+    'TypeScript': '#3178c6', // TS官方颜色
+    'Go': '#00ADD8', // Go官方颜色
+    'Vue': '#41b883', // Vue官方颜色
+    'Python': '#3572A5', // Python官方颜色
     'C++': '#00599c',
     'C#': '#239120',
     'PHP': '#777bb4',
-    'Vue': '#4fc08d',
     'React': '#61dafb',
     'Shell': '#89e051'
   };
@@ -674,10 +690,103 @@ const getRankClass = (index: number): string => {
   return '';
 };
 
+// 验证头像 URL 是否有效 - 简化版本，更宽松的验证
+const isValidAvatarUrl = (url: string): boolean => {
+  if (!url || url.trim() === '') return false;
+  
+  // 简化验证：只要不是明显无效的URL就认为有效
+  const trimmedUrl = url.trim();
+  
+  // 检查基本的URL格式
+  return trimmedUrl.startsWith('http://') || 
+         trimmedUrl.startsWith('https://') || 
+         trimmedUrl.startsWith('/') ||
+         trimmedUrl.includes('avatar') ||
+         trimmedUrl.includes('gitee.com');
+};
+
 // 处理头像加载失败
-const handleAvatarError = (event: Event) => {
-  const target = event.target as HTMLImageElement;
-  target.src = 'https://gitee.com/assets/no_portrait-2b772d6b.png';
+const handleAvatarError = (contributor: any, index?: number) => {
+  console.log('头像加载失败:', contributor.name || contributor.login, contributor.avatar_url);
+  // 标记头像加载失败，触发响应式更新
+  contributor.avatarError = true;
+  
+  // 强制触发响应式更新
+  if (index !== undefined) {
+    // 更新特定索引的贡献者
+    weeklyContributors.value[index] = { ...contributor, avatarError: true };
+  } else {
+    // 强制更新整个列表
+    weeklyContributors.value = [...weeklyContributors.value];
+  }
+  
+  // 强制重新渲染
+  nextTick(() => {
+    console.log('头像错误状态更新完成，将显示首字母头像');
+  });
+};
+
+// 获取用户名首字母
+const getInitials = (name: string): string => {
+  if (!name || name.trim() === '') return '?';
+  
+  const trimmedName = name.trim();
+  
+  // 处理中文名
+  if (/[\u4e00-\u9fa5]/.test(trimmedName)) {
+    // 中文名取第一个字
+    return trimmedName.charAt(0);
+  }
+  
+  // 处理英文名或其他字符
+  const words = trimmedName.split(/[\s\-_.]+/).filter(word => word.length > 0);
+  
+  if (words.length === 0) {
+    return trimmedName.charAt(0).toUpperCase();
+  } else if (words.length === 1) {
+    // 单个单词，取第一个字符
+    return words[0].charAt(0).toUpperCase();
+  } else {
+    // 多个单词，取前两个单词的首字母
+    const firstChar = words[0].charAt(0).toUpperCase();
+    const secondChar = words[1].charAt(0).toUpperCase();
+    return firstChar + secondChar;
+  }
+};
+
+// 获取头像样式（基于用户名生成颜色）
+const getAvatarStyle = (contributor: any) => {
+  const name = contributor.name || contributor.login || '';
+  
+  // 预定义的颜色组合（使用柔和的渐变色）
+  const colorCombinations = [
+    { bg: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: '#fff' },
+    { bg: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', color: '#fff' },
+    { bg: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', color: '#fff' },
+    { bg: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', color: '#fff' },
+    { bg: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', color: '#fff' },
+    { bg: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)', color: '#666' },
+    { bg: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)', color: '#666' },
+    { bg: 'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)', color: '#fff' },
+    { bg: 'linear-gradient(135deg, #fad0c4 0%, #ffd1ff 100%)', color: '#666' },
+    { bg: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)', color: '#666' }
+  ];
+  
+  // 基于用户名计算哈希值选择颜色
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    const char = name.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // 转换为32位整数
+  }
+  
+  const colorIndex = Math.abs(hash) % colorCombinations.length;
+  const colors = colorCombinations[colorIndex];
+  
+  return {
+    background: colors.bg,
+    color: colors.color
+  };
 };
 
 // 监听时间范围变化
@@ -1720,23 +1829,32 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 800;
   color: white;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, #64748b, #475569);
 }
 
 .contributor-rank.gold {
   background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 3px 10px rgba(245, 158, 11, 0.4);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .contributor-rank.silver {
-  background: linear-gradient(135deg, #6b7280, #4b5563);
+  background: linear-gradient(135deg, #94a3b8, #64748b);
+  box-shadow: 0 3px 10px rgba(148, 163, 184, 0.4);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .contributor-rank.bronze {
-  background: linear-gradient(135deg, #d97706, #b45309);
+  background: linear-gradient(135deg, #ea580c, #c2410c);
+  box-shadow: 0 3px 10px rgba(234, 88, 12, 0.4);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .contributor-avatar {
@@ -1761,6 +1879,24 @@ onUnmounted(() => {
 }
 
 .contributor-avatar:hover img {
+  transform: scale(1.1);
+}
+
+.contributor-avatar .avatar-letter {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 50%;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: transform 0.3s ease;
+}
+
+.contributor-avatar:hover .avatar-letter {
   transform: scale(1.1);
 }
 

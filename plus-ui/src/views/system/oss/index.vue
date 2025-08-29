@@ -65,14 +65,6 @@
         <div class="card-header">
           <span class="card-title">文档列表</span>
           <div class="right-content">
-            <el-radio-group v-model="viewMode" size="small" class="mr-4">
-              <el-radio-button label="grid">
-                <el-icon><Grid /></el-icon>
-              </el-radio-button>
-              <el-radio-button label="table">
-                <el-icon><List /></el-icon>
-              </el-radio-button>
-            </el-radio-group>
             <el-button type="primary" plain icon="Upload" @click="handleUpload" v-hasPermi="['system:oss:upload']"> 上传文档 </el-button>
             <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete" v-hasPermi="['system:oss:remove']">
               删除
@@ -81,126 +73,52 @@
         </div>
       </template>
 
-      <!-- 网格视图 -->
-      <template v-if="viewMode === 'grid'">
-        <el-row :gutter="20">
-          <el-col :span="6" v-for="item in fileList" :key="item.ossId" class="mb-4">
-            <el-card
-              :body-style="{ padding: '0px' }"
-              shadow="hover"
-              class="file-card"
-              :class="{ selected: selection.includes(item.ossId) }"
-              @click="toggleSelection(item)"
-            >
-              <!-- 文件预览 -->
-              <div class="file-preview">
-                <template v-if="isImage(item.fileName)">
-                  <el-image
-                    :src="item.url"
-                    fit="cover"
-                    :preview-src-list="[item.url]"
-                    :initial-index="0"
-                    @error="handleImageError"
-                    @load="handleImageLoad"
-                  >
-                    <template #error>
-                      <div class="image-error">
-                        <el-icon :size="40"><Picture /></el-icon>
-                        <span>图片加载失败</span>
-                      </div>
-                    </template>
-                    <template #placeholder>
-                      <div class="image-loading">
-                        <el-icon :size="40" class="is-loading"><Loading /></el-icon>
-                        <span>加载中...</span>
-                      </div>
-                    </template>
-                  </el-image>
-                </template>
-                <template v-else>
-                  <div class="file-icon">
-                    <el-icon :size="40">
-                      <Document v-if="isDocument(item.fileName)" />
-                      <VideoPlay v-else-if="isVideo(item.fileName)" />
-                      <Headset v-else-if="isAudio(item.fileName)" />
-                      <Files v-else />
-                    </el-icon>
-                  </div>
-                </template>
-              </div>
-              <!-- 文件信息 -->
-              <div class="file-info">
-                <div class="file-name" :title="item.fileName">
-                  {{ getDisplayFileName(item) }}
-                </div>
-                <div class="file-project" v-if="item.projectName">
-                  <el-tag size="small" type="info">{{ item.projectName }}</el-tag>
-                </div>
-                <div class="file-meta">
-                  <span>{{ formatSize(item.size) }}</span>
-                  <span>{{ parseTime(item.createTime) }}</span>
-                </div>
-                <!-- 操作按钮 -->
-                <div class="file-actions">
-                  <el-button link type="primary" icon="Download" @click.stop="handleDownload(item)" v-hasPermi="['system:oss:download']">
-                    下载
-                  </el-button>
-                  <el-button link type="danger" icon="Delete" @click.stop="handleDelete(item)" v-hasPermi="['system:oss:remove']"> 删除 </el-button>
-                </div>
-              </div>
-            </el-card>
-          </el-col>
-        </el-row>
-      </template>
-
       <!-- 表格视图 -->
-      <template v-else>
-        <el-table v-loading="loading" :data="fileList" @selection-change="handleSelectionChange">
-          <el-table-column type="selection" width="55" align="center" />
-          <el-table-column label="文件名" align="center" prop="fileName" min-width="200">
-            <template #default="{ row }">
-              <div class="file-name-cell">
-                <el-icon :size="20" class="mr-2">
-                  <Document v-if="isDocument(row.fileName)" />
-                  <VideoPlay v-else-if="isVideo(row.fileName)" />
-                  <Headset v-else-if="isAudio(row.fileName)" />
-                  <Files v-else />
-                </el-icon>
-                <span :title="row.fileName">{{ getDisplayFileName(row) }}</span>
-              </div>
-            </template>
-          </el-table-column>
-          <el-table-column label="所属项目" align="center" prop="projectName" min-width="120">
-            <template #default="{ row }">
-              <span v-if="row.projectName">{{ row.projectName }}</span>
-              <span v-else class="text-muted">未分配项目</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="文档类型" align="center" prop="fileType" min-width="100">
-            <template #default="{ row }">
-              <dict-tag :options="fileTypeOptions" :value="row.fileType" />
-            </template>
-          </el-table-column>
-          <el-table-column label="文件大小" align="center" prop="size" min-width="100">
-            <template #default="{ row }">
-              {{ formatSize(row.size) }}
-            </template>
-          </el-table-column>
-          <el-table-column label="上传时间" align="center" prop="createTime" width="180">
-            <template #default="{ row }">
-              <span>{{ parseTime(row.createTime) }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" align="center" width="150" class-name="small-padding fixed-width">
-            <template #default="{ row }">
-              <el-button link type="primary" icon="Download" @click="handleDownload(row)" v-hasPermi="['system:oss:download']"> 下载 </el-button>
-              <el-button link type="danger" icon="Delete" @click="handleDelete(row)" v-hasPermi="['system:oss:remove']"> 删除 </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+      <el-table v-loading="loading" :data="fileList" @selection-change="handleSelectionChange">
+        <el-table-column type="selection" width="55" align="center" />
+        <el-table-column label="文件名" align="center" prop="fileName" min-width="200">
+          <template #default="{ row }">
+            <div class="file-name-cell">
+              <el-icon :size="20" class="mr-2">
+                <Document v-if="isDocument(row.fileName)" />
+                <VideoPlay v-else-if="isVideo(row.fileName)" />
+                <Headset v-else-if="isAudio(row.fileName)" />
+                <Files v-else />
+              </el-icon>
+              <span :title="row.fileName">{{ getDisplayFileName(row) }}</span>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="所属项目" align="center" prop="projectName" min-width="120">
+          <template #default="{ row }">
+            <span v-if="row.projectName">{{ row.projectName }}</span>
+            <span v-else class="text-muted">未分配项目</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="文档类型" align="center" prop="fileType" min-width="100">
+          <template #default="{ row }">
+            <dict-tag :options="fileTypeOptions" :value="row.fileType" />
+          </template>
+        </el-table-column>
+        <el-table-column label="文件大小" align="center" prop="size" min-width="100">
+          <template #default="{ row }">
+            {{ formatSize(row.size) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="上传时间" align="center" prop="createTime" width="180">
+          <template #default="{ row }">
+            <span>{{ parseTime(row.createTime) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" align="center" width="150" class-name="small-padding fixed-width">
+          <template #default="{ row }">
+            <el-button link type="primary" icon="Download" @click="handleDownload(row)" v-hasPermi="['system:oss:download']"> 下载 </el-button>
+            <el-button link type="danger" icon="Delete" @click="handleDelete(row)" v-hasPermi="['system:oss:remove']"> 删除 </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
 
-        <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" @pagination="getList" />
-      </template>
+      <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" @pagination="getList" />
     </el-card>
 
     <!-- 上传对话框 -->
@@ -209,29 +127,64 @@
         <el-form-item label="所属项目" prop="projectId">
           <el-select
             v-model="upload.form.projectId"
-            placeholder="请选择项目"
+            placeholder="请选择项目或输入搜索"
             style="width: 100%"
             filterable
             clearable
             remote
+            reserve-keyword
             :remote-method="handleProjectSearch"
             :loading="projectSearchLoading"
             @change="handleProjectChange"
+            @visible-change="handleSelectVisibleChange"
+            no-data-text="暂无匹配项目"
           >
-            <el-option v-for="item in filteredProjectOptions" :key="item.projectId" :label="item.projectName" :value="item.projectId">
-              <div class="project-option">
-                <div class="project-name">{{ item.projectName }}</div>
-                <div class="project-desc" v-if="item.description">{{ item.description }}</div>
+            <el-option 
+              v-for="item in filteredProjectOptions" 
+              :key="item.projectId" 
+              :label="getProjectLabel(item)" 
+              :value="item.projectId"
+              class="custom-project-option"
+            >
+              <div class="project-option-content">
+                <div class="project-header">
+                  <span class="project-name">{{ item.projectName }}</span>
+                </div>
+                <div class="project-desc" v-if="item.description" :title="item.description">
+                  {{ truncateText(item.description, 50) }}
+                </div>
+                <div class="project-meta" v-if="item.status || item.createTime">
+                  <span v-if="item.status === '1'" class="status-active">• 活跃</span>
+                  <span v-else-if="item.status === '0'" class="status-inactive">• 暂停</span>
+                  <span v-if="item.createTime" class="create-time">创建于 {{ formatDate(item.createTime) }}</span>
+                </div>
               </div>
             </el-option>
             <template #empty>
               <div class="empty-option">
-                <el-empty description="暂无项目数据" :image-size="60">
-                  <div class="empty-actions">
-                    <el-button type="primary" size="small" @click="loadProjects">重新加载</el-button>
-                    <el-button type="success" size="small" @click="goToProjectManagement">去创建项目</el-button>
-                  </div>
-                </el-empty>
+                <div v-if="projectSearchLoading" class="loading-state">
+                  <el-icon class="is-loading"><Loading /></el-icon>
+                  <span>搜索项目中...</span>
+                </div>
+                <div v-else-if="filteredProjectOptions.length === 0 && projectOptions.length === 0" class="no-data-state">
+                  <el-empty description="暂无项目数据" :image-size="60">
+                    <div class="empty-actions">
+                      <el-button type="primary" size="small" @click="loadProjects" :loading="projectSearchLoading">
+                        <el-icon><Refresh /></el-icon>
+                        重新加载
+                      </el-button>
+                      <el-button type="success" size="small" @click="goToProjectManagement">
+                        <el-icon><Plus /></el-icon>
+                        创建项目
+                      </el-button>
+                    </div>
+                  </el-empty>
+                </div>
+                <div v-else class="no-match-state">
+                  <el-icon><Search /></el-icon>
+                  <span>未找到匹配的项目</span>
+                  <el-button type="text" size="small" @click="clearSearch">清除搜索</el-button>
+                </div>
               </div>
             </template>
           </el-select>
@@ -285,7 +238,7 @@ import { getToken } from '@/utils/auth';
 import { listProjectForOss } from '@/api/osc/project';
 import { parseTime } from '@/utils/ruoyi';
 import { getCurrentInstance, ref, onMounted, ComponentInternalInstance } from 'vue';
-import { Document, Grid, List, Upload, UploadFilled, VideoPlay, Headset, Files, Picture, Loading } from '@element-plus/icons-vue';
+import { Document, Upload, UploadFilled, VideoPlay, Headset, Files, Picture, Loading, Refresh, Plus, Search } from '@element-plus/icons-vue';
 import router from '@/router';
 
 // 防抖函数
@@ -313,10 +266,6 @@ const single = ref(true);
 const multiple = ref(true);
 // 总条数
 const total = ref(0);
-// 查看模式：grid/table
-const viewMode = ref('grid');
-// 选中的文件ID
-const selection = ref<Array<string | number>>([]);
 
 // 项目选项
 const projectOptions = ref([]);
@@ -370,7 +319,7 @@ const upload = ref({
     };
   },
   // 上传的地址
-  url: import.meta.env.VITE_APP_BASE_API + '/resource/oss/upload',
+  url: import.meta.env.VITE_APP_BASE_API + '/system/oss/upload',
   // 上传的文件列表
   fileList: [],
   // 上传文件大小限制
@@ -418,18 +367,18 @@ const getList = async () => {
     fileList.value = [
       {
         ossId: 1,
-        fileName: 'RuoYi-Vue-Plus_Logo.png',
+        fileName: 'random-generated-uuid.png',
         originalName: 'project-logo.png',
         projectId: 1,
         projectName: 'RuoYi-Vue-Plus项目',
         fileType: 'logo',
         size: 1024000,
-        url: '/static/images/default-logo.png',
+        url: 'https://via.placeholder.com/300x200/409eff/ffffff?text=Logo', // 测试图片URL
         createTime: '2024-01-01 09:00:00'
       },
       {
         ossId: 2,
-        fileName: 'Dromara社区_需求文档.pdf',
+        fileName: 'random-generated-uuid.pdf',
         originalName: 'requirements.pdf',
         projectId: 2,
         projectName: 'Dromara社区管理系统',
@@ -440,7 +389,7 @@ const getList = async () => {
       },
       {
         ossId: 3,
-        fileName: 'RuoYi-Vue-Plus_接口文档.md',
+        fileName: 'random-generated-uuid.md',
         originalName: 'api-docs.md',
         projectId: 1,
         projectName: 'RuoYi-Vue-Plus项目',
@@ -448,6 +397,17 @@ const getList = async () => {
         size: 512000,
         url: '/static/docs/api-docs.md',
         createTime: '2024-01-03 14:00:00'
+      },
+      {
+        ossId: 4,
+        fileName: 'random-generated-uuid.jpg',
+        originalName: 'screenshot.jpg',
+        projectId: 2,
+        projectName: 'Dromara社区管理系统',
+        fileType: 'design',
+        size: 3024000,
+        url: 'https://via.placeholder.com/400x300/67c23a/ffffff?text=Design', // 测试图片URL
+        createTime: '2024-01-04 15:30:00'
       }
     ];
     total.value = fileList.value.length;
@@ -457,79 +417,115 @@ const getList = async () => {
   }
 };
 
-/** 加载项目列表 */
-const loadProjects = async () => {
+/** 加载项目列表 - 修复版 */
+const loadProjects = async (showLoading = true) => {
   try {
-    projectSearchLoading.value = true;
+    if (showLoading) {
+      projectSearchLoading.value = true;
+    }
     console.log('开始加载项目列表...');
-    const res = await listProjectForOss({ pageNum: 1, pageSize: 1000 });
+    
+    // 移除status过滤，加载所有项目
+    const res = await listProjectForOss({ 
+      pageNum: 1, 
+      pageSize: 1000
+      // 不再过滤status，加载所有项目
+    });
+    
     console.log('项目列表响应:', res);
 
     // 检查响应结构
-    console.log('完整响应对象:', res);
-    console.log('res.data:', res?.data);
-    console.log('res.data.rows:', res?.data?.rows);
-    console.log('res.data.rows类型:', typeof res?.data?.rows);
-    console.log('res.data.rows是否为数组:', Array.isArray(res?.data?.rows));
-
-    // 检查响应结构 - 尝试多种可能的数据结构
+    let projectData = [];
     if (res && res.data && res.data.rows && Array.isArray(res.data.rows)) {
-      // 标准响应格式：{data: {code: 200, msg: "success", rows: [...], total: 10}}
-      projectOptions.value = res.data.rows;
-      console.log('成功加载项目列表（res.data.rows），数量:', res.data.rows.length);
-      console.log('项目列表内容:', res.data.rows);
+      projectData = res.data.rows;
+      console.log('成功加载项目列表（res.data.rows），数量:', projectData.length);
     } else if (res && res.rows && Array.isArray(res.rows)) {
-      // 直接响应格式：{rows: [...], total: 10}
-      projectOptions.value = res.rows;
-      console.log('成功加载项目列表（res.rows），数量:', res.rows.length);
-      console.log('项目列表内容:', res.rows);
+      projectData = res.rows;
+      console.log('成功加载项目列表（res.rows），数量:', projectData.length);
     } else if (res && res.data && Array.isArray(res.data)) {
-      // 直接数组格式：{data: [...]}
-      projectOptions.value = res.data;
-      console.log('成功加载项目列表（res.data），数量:', res.data.length);
-      console.log('项目列表内容:', res.data);
+      projectData = res.data;
+      console.log('成功加载项目列表（res.data），数量:', projectData.length);
     } else {
       console.warn('响应数据结构异常:', res);
-      console.warn('res.data:', res?.data);
-      console.warn('res.rows:', res?.rows);
-      projectOptions.value = [];
+      projectData = [];
     }
 
-    filteredProjectOptions.value = [...projectOptions.value]; // 初始化过滤后的选项
-    console.log('最终projectOptions.value:', projectOptions.value);
-    console.log('最终filteredProjectOptions.value:', filteredProjectOptions.value);
+    // 按项目状态和创建时间排序（活跃项目优先，但不过滤非活跃项目）
+    projectData.sort((a, b) => {
+      // 活跃项目优先显示
+      if (a.status === '1' && b.status !== '1') return -1;
+      if (a.status !== '1' && b.status === '1') return 1;
+      
+      // 然后按创建时间倒序（最新的在前）
+      const timeA = new Date(a.createTime || 0).getTime();
+      const timeB = new Date(b.createTime || 0).getTime();
+      return timeB - timeA;
+    });
 
-    // 如果没有数据，显示提示
-    if (projectOptions.value.length === 0) {
+    projectOptions.value = projectData;
+    filteredProjectOptions.value = [...projectData];
+    
+    console.log('最终projectOptions.value:', projectOptions.value);
+
+    // 数据统计和提示
+    const activeCount = projectData.filter(p => p.status === '1').length;
+    const totalCount = projectData.length;
+    
+    if (totalCount === 0) {
       console.warn('项目列表为空，显示提示信息');
-      proxy?.$modal.msgWarning('暂无项目数据，请先创建项目或联系管理员');
+      if (showLoading) {
+        proxy?.$modal.msgWarning('暂无项目数据，请先创建项目或联系管理员');
+      }
     } else {
-      console.log('项目列表加载成功，共', projectOptions.value.length, '个项目');
+      console.log(`项目列表加载成功，共 ${totalCount} 个项目，其中 ${activeCount} 个活跃`);
+      if (showLoading && totalCount > 0) {
+        proxy?.$modal.msgSuccess(`成功加载 ${totalCount} 个项目（${activeCount} 个活跃）`);
+      }
     }
   } catch (error: any) {
     console.error('获取项目列表失败:', error);
-    console.error('错误详情:', {
-      message: error.message,
-      response: error.response,
-      status: error.response?.status,
-      data: error.response?.data
-    });
-
-    // 提供模拟项目数据
+    
+    // 更丰富的模拟数据，包含不同状态的项目
     projectOptions.value = [
       {
         projectId: 1,
         projectName: 'RuoYi-Vue-Plus项目',
         projectCode: 'RVP001',
-        description: '基于RuoYi-Vue-Plus的企业级管理系统',
-        status: '1'
+        description: '基于RuoYi-Vue-Plus的企业级管理系统，提供完整的权限管理和业务功能',
+        status: '1',
+        createTime: '2024-01-15 10:00:00'
       },
       {
         projectId: 2,
         projectName: 'Dromara社区管理系统',
         projectCode: 'DCS001',
-        description: 'Dromara开源社区管理平台',
-        status: '1'
+        description: 'Dromara开源社区管理平台，支持项目管理、成员管理等功能',
+        status: '1',
+        createTime: '2024-02-20 14:30:00'
+      },
+      {
+        projectId: 3,
+        projectName: '文档管理系统',
+        projectCode: 'DMS001',
+        description: '企业级文档管理系统，支持文档上传、分类、权限控制',
+        status: '1',
+        createTime: '2024-03-10 09:15:00'
+      },
+      {
+        projectId: 4,
+        projectName: '用户权限管理',
+        projectCode: 'UPM001',
+        description: '统一的用户权限管理平台，支持RBAC权限模型',
+        status: '0', // 包含非活跃项目
+        createTime: '2024-01-05 16:20:00'
+      },
+      {
+        projectId: 5,
+        projectName: '数据分析平台',
+        projectCode: 'DAP001',
+        description: '企业数据分析和可视化平台，支持多维度数据展示',
+        status: '1',
+        createTime: '2024-03-25 11:45:00'
       }
     ];
     filteredProjectOptions.value = [...projectOptions.value];
@@ -542,35 +538,109 @@ const loadProjects = async () => {
     } else if (error.response?.status >= 500) {
       proxy?.$modal.msgError('服务器内部错误，请稍后重试');
     } else {
-      proxy?.$modal.msgWarning('获取项目列表失败，显示模拟数据');
+      if (showLoading) {
+        proxy?.$modal.msgWarning('获取项目列表失败，使用模拟数据');
+      }
     }
   } finally {
-    projectSearchLoading.value = false;
+    if (showLoading) {
+      projectSearchLoading.value = false;
+    }
   }
 };
 
-/** 项目搜索处理（防抖优化） */
+/** 项目搜索处理（防抖优化） - 修复版 */
 const handleProjectSearch = debounce(async (query: string) => {
-  if (query !== '') {
-    projectSearchLoading.value = true;
-    try {
-      // 如果项目列表为空，先加载所有项目
-      if (projectOptions.value.length === 0) {
-        await loadProjects();
-      }
-
-      // 本地过滤项目
-      filteredProjectOptions.value = projectOptions.value.filter(
-        (item) =>
-          item.projectName.toLowerCase().includes(query.toLowerCase()) ||
-          (item.description && item.description.toLowerCase().includes(query.toLowerCase()))
-      );
-    } finally {
-      projectSearchLoading.value = false;
-    }
-  } else {
-    // 如果搜索词为空，显示所有项目
+  console.log('项目搜索查询:', query);
+  
+  // 如果查询为空，显示所有项目
+  if (!query || query.trim() === '') {
+    console.log('空查询，显示所有项目');
     filteredProjectOptions.value = [...projectOptions.value];
+    return;
+  }
+  
+  projectSearchLoading.value = true;
+  try {
+    // 如果项目列表为空，先加载所有项目
+    if (projectOptions.value.length === 0) {
+      console.log('项目列表为空，先加载所有项目');
+      await loadProjects(false);
+    }
+
+    // 智能搜索：支持项目名称、项目编码、描述搜索（不区分大小写）
+    const searchQuery = query.toLowerCase().trim();
+    const filtered = projectOptions.value.filter((item: any) => {
+      // 安全获取字段值，防止null或undefined
+      const projectName = (item.projectName || '').toString().toLowerCase();
+      const projectCode = (item.projectCode || '').toString().toLowerCase();
+      const description = (item.description || '').toString().toLowerCase();
+      
+      // 支持多关键词搜索（用空格分隔）
+      const searchKeywords = searchQuery.split(/\s+/).filter(keyword => keyword.length > 0);
+      
+      // 每个关键词都需要在某个字段中出现
+      return searchKeywords.every(keyword => {
+        return projectName.includes(keyword) || 
+               projectCode.includes(keyword) || 
+               description.includes(keyword);
+      });
+    });
+
+    console.log(`原始项目数量: ${projectOptions.value.length}, 过滤后数量: ${filtered.length}`);
+
+    // 按相关度排序（项目名称匹配 > 项目编码匹配 > 描述匹配）
+    filtered.sort((a: any, b: any) => {
+      const aName = (a.projectName || '').toString().toLowerCase();
+      const bName = (b.projectName || '').toString().toLowerCase();
+      const aCode = (a.projectCode || '').toString().toLowerCase();
+      const bCode = (b.projectCode || '').toString().toLowerCase();
+      
+      // 项目名称完全匹配优先级最高
+      const aNameExact = aName === searchQuery;
+      const bNameExact = bName === searchQuery;
+      if (aNameExact && !bNameExact) return -1;
+      if (!aNameExact && bNameExact) return 1;
+      
+      // 项目编码完全匹配次之
+      const aCodeExact = aCode === searchQuery;
+      const bCodeExact = bCode === searchQuery;
+      if (aCodeExact && !bCodeExact) return -1;
+      if (!aCodeExact && bCodeExact) return 1;
+      
+      // 项目名称开头匹配
+      const aNameStarts = aName.startsWith(searchQuery);
+      const bNameStarts = bName.startsWith(searchQuery);
+      if (aNameStarts && !bNameStarts) return -1;
+      if (!aNameStarts && bNameStarts) return 1;
+      
+      // 最后按项目状态和创建时间排序
+      if (a.status === '1' && b.status !== '1') return -1;
+      if (a.status !== '1' && b.status === '1') return 1;
+      
+      const timeA = new Date(a.createTime || 0).getTime();
+      const timeB = new Date(b.createTime || 0).getTime();
+      return timeB - timeA;
+    });
+
+    filteredProjectOptions.value = filtered;
+    console.log(`项目搜索完成："${query}" 找到 ${filtered.length} 个匹配项目`);
+    
+    // 输出搜索结果详情以便调试
+    if (filtered.length > 0) {
+      console.log('搜索结果:', filtered.map(p => ({ 
+        name: p.projectName, 
+        code: p.projectCode, 
+        status: p.status 
+      })));
+    }
+    
+  } catch (error) {
+    console.error('项目搜索失败:', error);
+    proxy?.$modal.msgError('搜索项目失败，请稍后重试');
+    // 错误时保持当前的过滤结果，不清空
+  } finally {
+    projectSearchLoading.value = false;
   }
 }, 300);
 
@@ -600,7 +670,42 @@ const handleProjectFilterChange = (query: string) => {
 /** 项目选择变化处理 */
 const handleProjectChange = (projectId: number) => {
   console.log('选择的项目ID:', projectId);
-  // 可以在这里添加其他逻辑
+  const selectedProject = projectOptions.value.find(p => p.projectId === projectId);
+  if (selectedProject) {
+    console.log('选择的项目:', selectedProject.projectName);
+    // 可以在这里添加项目选择后的逻辑，比如自动设置文档类型等
+  }
+};
+
+/** 下拉框显示状态变化处理 */
+const handleSelectVisibleChange = async (visible: boolean) => {
+  if (visible && projectOptions.value.length === 0) {
+    console.log('下拉框打开时自动加载项目列表');
+    await loadProjects();
+  }
+};
+
+/** 获取项目显示标签 */
+const getProjectLabel = (item: any) => {
+  return item.projectName || item.name || `项目-${item.projectId}`;
+};
+
+/** 截断文本 */
+const truncateText = (text: string, maxLength: number) => {
+  if (!text) return '';
+  return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+};
+
+/** 格式化日期 */
+const formatDate = (dateStr: string) => {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+};
+
+/** 清除搜索 */
+const clearSearch = () => {
+  filteredProjectOptions.value = [...projectOptions.value];
 };
 
 /** 跳转到项目管理页面 */
@@ -623,9 +728,38 @@ const resetQuery = () => {
 
 /** 删除按钮操作 */
 const handleDelete = async (row?: any) => {
-  const ossIds = row?.ossId || ids.value;
   try {
-    await proxy?.$modal.confirm('是否确认删除OSS对象存储编号为"' + ossIds + '"的数据项？');
+    let confirmMessage = '';
+    
+    if (row) {
+      // 单个文件删除
+      const fileName = getDisplayFileName(row);
+      confirmMessage = `是否确认删除文件"${fileName}"？`;
+    } else {
+      // 批量删除
+      if (ids.value.length === 0) {
+        proxy?.$modal.msgWarning('请选择要删除的文件');
+        return;
+      }
+      
+      // 获取选中文件的名称列表
+      const selectedFiles = fileList.value
+        .filter((item: any) => ids.value.includes(item.ossId))
+        .map((item: any) => getDisplayFileName(item))
+        .slice(0, 3); // 最多显示3个文件名
+      
+      if (ids.value.length === 1) {
+        confirmMessage = `是否确认删除文件"${selectedFiles[0]}"？`;
+      } else if (ids.value.length <= 3) {
+        confirmMessage = `是否确认删除以下文件：\n${selectedFiles.join('\n')}`;
+      } else {
+        confirmMessage = `是否确认删除以下文件：\n${selectedFiles.join('\n')}\n...等共${ids.value.length}个文件？`;
+      }
+    }
+    
+    await proxy?.$modal.confirm(confirmMessage);
+    
+    const ossIds = row?.ossId || ids.value;
     await delOss(ossIds);
     await getList();
     proxy?.$modal.msgSuccess('删除成功');
@@ -634,12 +768,24 @@ const handleDelete = async (row?: any) => {
   }
 };
 
-/** 上传按钮操作 */
-const handleUpload = () => {
+/** 上传按钮操作 - 优化版 */
+const handleUpload = async () => {
+  // 重置表单
   upload.value.open = true;
   upload.value.fileList = [];
-  // 重新加载项目列表，确保数据是最新的
-  loadProjects();
+  upload.value.form = {
+    projectId: undefined,
+    fileType: undefined
+  };
+  
+  // 如果项目列表为空，预先加载
+  if (projectOptions.value.length === 0) {
+    console.log('预先加载项目列表以便用户选择');
+    // 使用不显示加载状态的方式预加载
+    loadProjects(false).catch(error => {
+      console.warn('预加载项目列表失败:', error);
+    });
+  }
 };
 
 /** 提交上传文件 */
@@ -653,7 +799,7 @@ const handleFileUploadProgress = (event: any, file: any) => {
 };
 
 /** 文件上传成功处理 */
-const handleFileSuccess = (response: any, file: any) => {
+const handleFileSuccess = async (response: any, file: any) => {
   upload.value.isUploading = false;
   console.log('文件上传响应:', response);
   console.log('文件信息:', file);
@@ -661,7 +807,14 @@ const handleFileSuccess = (response: any, file: any) => {
   if (response.code === 200) {
     proxy?.$modal.msgSuccess('上传成功');
     upload.value.open = false;
-    getList();
+    // 重置上传表单
+    upload.value.fileList = [];
+    upload.value.form = {
+      projectId: undefined,
+      fileType: undefined
+    };
+    // 刷新文件列表
+    await getList();
   } else {
     console.error('上传失败响应:', response);
     proxy?.$modal.msgError(`上传失败: ${response.msg || '未知错误'}`);
@@ -707,7 +860,9 @@ const handleBeforeUpload = (file: any) => {
 
 /** 下载按钮操作 */
 const handleDownload = (row: any) => {
-  proxy?.download('/system/oss/download/' + row.ossId, {}, row.fileName);
+  console.log('下载文件:', row);
+  const fileName = row.originalName || row.fileName || '下载文件';
+  proxy?.download('/system/oss/download/' + row.ossId, {}, fileName);
 };
 
 /** 多选框选中数据 */
@@ -717,40 +872,47 @@ const handleSelectionChange = (selection: any) => {
   multiple.value = !selection.length;
 };
 
-/** 网格视图选中切换 */
-const toggleSelection = (item: any) => {
-  const index = selection.value.indexOf(item.ossId);
-  if (index === -1) {
-    selection.value.push(item.ossId);
-  } else {
-    selection.value.splice(index, 1);
-  }
-};
 
 /** 文件类型判断 */
 const isImage = (fileName: string) => {
+  if (!fileName) return false;
   return /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(fileName);
 };
 
 const isDocument = (fileName: string) => {
+  if (!fileName) return false;
   return /\.(doc|docx|xls|xlsx|ppt|pptx|pdf|txt|md)$/i.test(fileName);
 };
 
 const isVideo = (fileName: string) => {
+  if (!fileName) return false;
   return /\.(mp4|webm|ogg|mov|avi)$/i.test(fileName);
 };
 
 const isAudio = (fileName: string) => {
+  if (!fileName) return false;
   return /\.(mp3|wav|ogg|m4a)$/i.test(fileName);
+};
+
+/** 获取文件URL */
+const getFileUrl = (item: any) => {
+  // 优先使用item.url，如果不存在则构建默认URL
+  if (item.url) {
+    // 如果是相对路径，添加基础URL
+    if (item.url.startsWith('/')) {
+      return import.meta.env.VITE_APP_BASE_API + item.url;
+    }
+    return item.url;
+  }
+  
+  // 如果没有URL，返回占位符
+  return '/static/images/file-placeholder.png';
 };
 
 /** 获取显示的文件名 */
 const getDisplayFileName = (item: any) => {
-  // 生成格式：项目名_文件类型
-  const projectName = item.projectName || '未分配项目';
-  const fileTypeLabel = getFileTypeLabel(item.fileType);
-
-  return `${projectName}_${fileTypeLabel}`;
+  // 优先显示原始文件名，如果没有则显示系统生成的文件名
+  return item.originalName || item.fileName || '未知文件';
 };
 
 /** 获取文件类型的中文标签 */
@@ -923,6 +1085,15 @@ onMounted(() => {
       .is-loading {
         animation: spin 1s linear infinite;
       }
+      
+      .error-detail {
+        font-size: 10px;
+        color: var(--el-text-color-placeholder);
+        margin-top: 8px;
+        text-align: center;
+        word-break: break-all;
+        max-width: 120px;
+      }
     }
   }
 
@@ -1051,5 +1222,157 @@ onMounted(() => {
 .text-muted {
   color: var(--el-text-color-secondary);
   font-style: italic;
+}
+
+/* ==== 项目下拉框选项样式优化 ==== */
+.custom-project-option {
+  padding: 0 !important;
+}
+
+.project-option-content {
+  padding: 12px 16px;
+  transition: all 0.2s ease;
+  border-radius: 6px;
+  margin: 2px 4px;
+}
+
+.custom-project-option:hover .project-option-content {
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
+}
+
+.project-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.project-name {
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+
+.project-desc {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+  line-height: 1.4;
+  margin-bottom: 6px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.project-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--el-text-color-placeholder);
+  margin-top: 6px;
+}
+
+.status-active {
+  color: #16a34a;
+  font-weight: 500;
+}
+
+.status-inactive {
+  color: #dc2626;
+  font-weight: 500;
+}
+
+.create-time {
+  font-size: 10px;
+  color: var(--el-text-color-placeholder);
+}
+
+/* 空状态样式优化 */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--el-color-primary);
+  font-size: 13px;
+  padding: 20px;
+}
+
+.loading-state .el-icon {
+  font-size: 20px;
+  animation: spin 1s linear infinite;
+}
+
+.no-data-state {
+  padding: 10px;
+}
+
+.no-match-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--el-text-color-secondary);
+  font-size: 13px;
+  padding: 20px;
+}
+
+.no-match-state .el-icon {
+  font-size: 24px;
+  color: var(--el-text-color-placeholder);
+}
+
+.empty-actions .el-button {
+  font-size: 12px;
+  padding: 6px 12px;
+}
+
+/* 项目选项悬浮效果 */
+:deep(.el-select-dropdown__item) {
+  padding: 0 !important;
+  margin: 2px 0;
+  border-radius: 6px;
+}
+
+:deep(.el-select-dropdown__item.hover) {
+  background-color: transparent !important;
+}
+
+/* 下拉框本身的样式优化 */
+:deep(.el-select) {
+  .el-input__inner {
+    border-radius: 6px;
+    transition: all 0.2s ease;
+  }
+  
+  .el-input__inner:focus {
+    border-color: var(--el-color-primary);
+    box-shadow: 0 0 0 2px rgba(var(--el-color-primary-rgb), 0.2);
+  }
+}
+
+/* 下拉面板样式 */
+:deep(.el-select-dropdown) {
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--el-border-color-light);
+  margin-top: 4px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* 搜索时的加载状态 */
+:deep(.el-select .el-input.is-focus .el-input__suffix) {
+  .el-icon {
+    animation: none;
+  }
+  
+  .is-loading {
+    animation: spin 1s linear infinite;
+  }
 }
 </style>

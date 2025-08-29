@@ -50,4 +50,69 @@ public class SysUserProfileBo extends BaseEntity {
      */
     private String sex;
 
+    /**
+     * Gitee账号
+     */
+    @Size(max = 50, message = "Gitee账号长度不能超过{max}个字符")
+    private String giteeAccount;
+
+    /**
+     * GitHub用户名
+     */
+    @Size(max = 100, message = "GitHub用户名长度不能超过{max}个字符")
+    private String githubUsername;
+
+    /**
+     * 微信号
+     */
+    @Size(max = 50, message = "微信号长度不能超过{max}个字符")
+    private String wechat;
+
+    /**
+     * QQ号
+     */
+    @Size(max = 20, message = "QQ号长度不能超过{max}个字符")
+    private String qq;
+
+    /**
+     * 个人博客
+     */
+    @Size(max = 255, message = "个人博客链接长度不能超过{max}个字符")
+    private String blog;
+
+    /**
+     * 公司/组织
+     */
+    @Size(max = 100, message = "公司名称长度不能超过{max}个字符")
+    private String company;
+
+    /**
+     * 职位
+     */
+    @Size(max = 100, message = "职位名称长度不能超过{max}个字符")
+    private String position;
+
+    /**
+     * 地区
+     */
+    @Size(max = 100, message = "地区名称长度不能超过{max}个字符")
+    private String location;
+
+    /**
+     * 个人简介
+     */
+    @Size(max = 500, message = "个人简介长度不能超过{max}个字符")
+    private String bio;
+
+    /**
+     * 技能标签
+     */
+    @Size(max = 500, message = "技能标签长度不能超过{max}个字符")
+    private String skills;
+
+    /**
+     * 工作年限
+     */
+    private Integer experienceYears;
+
 }

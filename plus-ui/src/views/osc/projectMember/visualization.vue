@@ -294,8 +294,9 @@ async function getList() {
     const projectsWithMembers = await Promise.all(
       projects.map(async (project) => {
         try {
-          const visualization = await getProjectMemberVisualization(project.id);
-          const members = await getProjectMembers(project.id);
+          const projectId = project.projectId || project.id;
+          const visualization = await getProjectMemberVisualization(projectId);
+          const members = await getProjectMembers(projectId);
 
           // 处理角色分组数据
           const roleGroups = visualization.data?.roleData || [];
@@ -317,7 +318,7 @@ async function getList() {
             leader: leader
           };
         } catch (error) {
-          console.error(`获取项目 ${project.id} 的人员数据失败:`, error);
+          console.error(`获取项目 ${project.projectId || project.id} 的人员数据失败:`, error);
           return {
             ...project,
             roleGroups: [],
@@ -360,7 +361,8 @@ function refreshData() {
 async function viewDetails(row) {
   currentProject.value = row;
   try {
-    const response = await getProjectMembers(row.id);
+    const projectId = row.projectId || row.id;
+    const response = await getProjectMembers(projectId);
     currentProjectMembers.value = response.data || [];
     detailVisible.value = true;
 
@@ -377,9 +379,10 @@ async function viewDetails(row) {
 /** 管理成员 */
 function manageMembers(row) {
   // 跳转到成员管理页面
+  const projectId = row.projectId || row.id;
   proxy.$router.push({
     path: '/osc/projectMember',
-    query: { projectId: row.id }
+    query: { projectId: projectId }
   });
 }
 
@@ -399,7 +402,8 @@ function handleMemberClick(member) {
 async function viewChart(row) {
   currentProject.value = row;
   try {
-    const response = await getProjectMembers(row.id);
+    const projectId = row.projectId || row.id;
+    const response = await getProjectMembers(projectId);
     currentProjectMembers.value = response.data || [];
     chartVisible.value = true;
 
@@ -416,10 +420,11 @@ async function viewChart(row) {
 
 /** 导出数据 */
 function exportData(row) {
+  const projectId = row.projectId || row.id;
   proxy.download(
     'osc/projectMember/export',
     {
-      projectId: row.id
+      projectId: projectId
     },
     `project_${row.projectCode}_members_${new Date().getTime()}.xlsx`
   );

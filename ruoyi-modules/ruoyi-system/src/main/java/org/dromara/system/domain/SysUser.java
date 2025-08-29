@@ -110,6 +110,56 @@ public class SysUser extends BaseEntity {
      */
     private String remark;
 
+    /**
+     * GitHub用户名
+     */
+    private String githubUsername;
+
+    /**
+     * 微信号
+     */
+    private String wechat;
+
+    /**
+     * QQ号
+     */
+    private String qq;
+
+    /**
+     * 个人博客
+     */
+    private String blog;
+
+    /**
+     * 公司/组织
+     */
+    private String company;
+
+    /**
+     * 职位
+     */
+    private String position;
+
+    /**
+     * 地区
+     */
+    private String location;
+
+    /**
+     * 个人简介
+     */
+    private String bio;
+
+    /**
+     * 技能标签
+     */
+    private String skills;
+
+    /**
+     * 工作年限
+     */
+    private Integer experienceYears;
+
 
     public SysUser(Long userId) {
         this.userId = userId;

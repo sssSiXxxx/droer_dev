@@ -209,7 +209,7 @@ public class ProjectMemberController extends BaseController {
      * 获取成员项目统计信息
      */
     @SaCheckPermission("osc:projectMember:query")
-    @GetMapping("/memberStats/{memberId}")
+    @GetMapping("/member/stats/{memberId}")
     public R<Map<String, Object>> getMemberProjectStats(@NotNull(message = "成员ID不能为空")
                                                         @PathVariable Long memberId) {
         return R.ok(projectMemberService.getMemberProjectStats(memberId));

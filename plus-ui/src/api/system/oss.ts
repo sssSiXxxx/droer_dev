@@ -3,7 +3,7 @@ import request from '@/utils/request';
 // 查询OSS对象存储列表
 export function listOss(query?: any) {
   return request({
-    url: '/resource/oss/list',
+    url: '/system/oss/list',
     method: 'get',
     params: query
   });
@@ -12,7 +12,7 @@ export function listOss(query?: any) {
 // 删除OSS对象存储
 export function delOss(ossId: string | number) {
   return request({
-    url: `/resource/oss/${ossId}`,
+    url: `/system/oss/${ossId}`,
     method: 'delete'
   });
 }
@@ -20,7 +20,7 @@ export function delOss(ossId: string | number) {
 // 下载OSS对象
 export function downloadOss(ossId: string | number) {
   return request({
-    url: `/resource/oss/download/${ossId}`,
+    url: `/system/oss/download/${ossId}`,
     method: 'get',
     responseType: 'blob'
   });

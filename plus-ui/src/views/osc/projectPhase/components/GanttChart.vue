@@ -14,9 +14,12 @@
           <div class="phase-dates">{{ formatDate(phase.startTime) }} - {{ formatDate(phase.endTime) }}</div>
         </div>
         <div class="timeline">
-          <div class="phase-bar" :class="getPhaseBarClass(phase)" :style="getPhaseBarStyle(phase)">
+          <div class="phase-bar" :class="getPhaseBarClass(phase)" :style="getPhaseBarStyle(phase)" @click="showPhaseDetail(phase)">
             <div class="progress-bar" :style="{ width: `${calculateProgress(phase)}%` }" />
-            <span class="phase-label">{{ phase.phaseName }}</span>
+            <span class="phase-label">{{ phase.phaseName }} ({{ calculateProgress(phase) }}%)</span>
+            <el-tooltip v-if="isDelayed(phase)" content="阶段已延期" placement="top">
+              <el-icon class="delay-icon"><Warning /></el-icon>
+            </el-tooltip>
           </div>
         </div>
       </div>
@@ -26,6 +29,7 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, watch } from 'vue';
+import { Warning } from '@element-plus/icons-vue';
 import dayjs from 'dayjs';
 
 const props = defineProps({
@@ -35,6 +39,8 @@ const props = defineProps({
     default: () => []
   }
 });
+
+const emit = defineEmits(['update-progress', 'phase-detail']);
 
 // 计算时间线范围
 const timeRange = computed(() => {
@@ -121,6 +127,18 @@ const calculateProgress = (phase: any) => {
 // 格式化日期
 const formatDate = (date: string) => {
   return dayjs(date).format('YYYY-MM-DD');
+};
+
+// 检查阶段是否延期
+const isDelayed = (phase: any) => {
+  const now = dayjs();
+  const endTime = dayjs(phase.endTime);
+  return phase.status !== '2' && now.isAfter(endTime);
+};
+
+// 显示阶段详情
+const showPhaseDetail = (phase: any) => {
+  emit('phase-detail', phase);
 };
 </script>
 

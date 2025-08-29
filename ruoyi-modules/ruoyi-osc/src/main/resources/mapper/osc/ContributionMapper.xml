@@ -8,8 +8,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <select id="selectContributionList" parameterType="org.dromara.osc.domain.Contribution" resultType="org.dromara.osc.domain.vo.ContributionVo">
         SELECT 
             c.contribution_id,
-            c.member_id,
-            m.member_name,
+            c.user_id as member_id,
+            u.nick_name as member_name,
             c.project_id,
             p.project_name,
             c.contribution_type,
@@ -20,14 +20,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             c.create_time,
             c.update_time
         FROM os_contribution c
-        LEFT JOIN os_member m ON c.member_id = m.member_id
+        LEFT JOIN sys_user u ON c.user_id = u.user_id
         LEFT JOIN os_project p ON c.project_id = p.project_id
         <where>
             <if test="memberId != null">
-                AND c.member_id = #{memberId}
+                AND c.user_id = #{memberId}
             </if>
             <if test="memberName != null and memberName != ''">
-                AND m.member_name LIKE CONCAT('%', #{memberName}, '%')
+                AND u.nick_name LIKE CONCAT('%', #{memberName}, '%')
             </if>
             <if test="projectId != null">
                 AND c.project_id = #{projectId}

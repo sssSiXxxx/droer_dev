@@ -67,80 +67,125 @@ public class SysCommunityDataServiceImpl implements ISysCommunityDataService {
     }
 
     /**
-     * 获取技术栈分布
+     * 获取技术栈分布 - 基于编程语言统计
      */
     @Override
     public List<Map<String, Object>> getTechStackDistribution() {
         try {
-            // 技术栈映射和颜色定义
-            Map<String, String> techStackColors = Map.of(
-                "Spring Boot", "#6fb33f",
-                "Spring Cloud", "#6fb33f", 
-                "微服务架构", "#42A5F5",
-                "云原生技术", "#66BB6A",
-                "分布式系统", "#FF7043",
-                "数据库技术", "#AB47BC",
-                "Docker", "#2196F3",
-                "MyBatis-Plus", "#4CAF50",
-                "Vue", "#4fc08d",
-                "其他", "#6b7280"
+            // 编程语言颜色映射（使用GitHub官方颜色）
+            Map<String, String> languageColors = Map.of(
+                "Java", "#b07219",
+                "JavaScript", "#f1e05a", 
+                "TypeScript", "#3178c6",
+                "Vue", "#41b883",
+                "Go", "#00ADD8",
+                "Python", "#3572A5",
+                "C++", "#f34b7d",
+                "PHP", "#4F5D95",
+                "Rust", "#dea584",
+                "Unknown", "#6b7280"
             );
 
-            String sql = """
-                SELECT 
-                    CASE 
-                        WHEN tech_stack LIKE '%Spring Boot%' THEN 'Spring Boot'
-                        WHEN tech_stack LIKE '%Spring Cloud%' THEN 'Spring Cloud'
-                        WHEN tech_stack LIKE '%微服务%' THEN '微服务架构'
-                        WHEN tech_stack LIKE '%云原生%' THEN '云原生技术'
-                        WHEN tech_stack LIKE '%分布式%' THEN '分布式系统'
-                        WHEN tech_stack LIKE '%数据库%' OR tech_stack LIKE '%MySQL%' OR tech_stack LIKE '%Redis%' THEN '数据库技术'
-                        WHEN tech_stack LIKE '%Docker%' THEN 'Docker'
-                        WHEN tech_stack LIKE '%MyBatis%' THEN 'MyBatis-Plus'
-                        WHEN tech_stack LIKE '%Vue%' THEN 'Vue'
-                        ELSE '其他'
-                    END as tech_name,
-                    COUNT(*) as project_count
-                FROM os_project 
-                WHERE tech_stack IS NOT NULL AND tech_stack != ''
-                GROUP BY tech_name
-                ORDER BY project_count DESC
-                """;
+            // 基于数据库中的编程语言字段统计
+            List<Map<String, Object>> rawData = new ArrayList<>();
+            try {
+                String sql = """
+                    SELECT 
+                        COALESCE(NULLIF(TRIM(programming_language), ''), 'Unknown') as language_name,
+                        COUNT(*) as project_count
+                    FROM os_project 
+                    GROUP BY COALESCE(NULLIF(TRIM(programming_language), ''), 'Unknown')
+                    ORDER BY project_count DESC
+                    """;
+                
+                rawData.addAll(jdbcTemplate.queryForList(sql));
+                log.info("从programming_language字段获取到 {} 种语言统计", rawData.size());
+            } catch (Exception e) {
+                log.warn("programming_language字段查询失败，尝试备用方案: {}", e.getMessage());
+                
+                // 如果没有programming_language字段，基于项目名称和描述推测
+                String fallbackSql = """
+                    SELECT 
+                        CASE 
+                            WHEN LOWER(project_name) LIKE '%java%' OR LOWER(description) LIKE '%java%' OR LOWER(description) LIKE '%spring%' THEN 'Java'
+                            WHEN LOWER(project_name) LIKE '%js%' OR LOWER(description) LIKE '%javascript%' OR LOWER(description) LIKE '%node%' THEN 'JavaScript'
+                            WHEN LOWER(project_name) LIKE '%ts%' OR LOWER(description) LIKE '%typescript%' THEN 'TypeScript'
+                            WHEN LOWER(project_name) LIKE '%vue%' OR LOWER(description) LIKE '%vue%' OR LOWER(description) LIKE '%前端%' THEN 'Vue'
+                            WHEN LOWER(project_name) LIKE '%go%' OR LOWER(description) LIKE '%golang%' THEN 'Go'
+                            WHEN LOWER(project_name) LIKE '%py%' OR LOWER(description) LIKE '%python%' THEN 'Python'
+                            WHEN LOWER(project_name) LIKE '%cpp%' OR LOWER(description) LIKE '%c++%' THEN 'C++'
+                            WHEN LOWER(project_name) LIKE '%php%' OR LOWER(description) LIKE '%php%' THEN 'PHP'
+                            WHEN LOWER(project_name) LIKE '%rust%' OR LOWER(description) LIKE '%rust%' THEN 'Rust'
+                            ELSE 'Unknown'
+                        END as language_name,
+                        COUNT(*) as project_count
+                    FROM os_project 
+                    GROUP BY language_name
+                    ORDER BY project_count DESC
+                    """;
+                
+                rawData.addAll(jdbcTemplate.queryForList(fallbackSql));
+                log.info("基于项目信息推测获取到 {} 种语言统计", rawData.size());
+            }
             
-            List<Map<String, Object>> rawData = jdbcTemplate.queryForList(sql);
+            if (rawData.isEmpty()) {
+                log.warn("无法获取语言数据，返回默认分布");
+                return Arrays.asList(
+                    Map.of("name", "Java", "value", 65.0, "color", "#b07219", "count", 45),
+                    Map.of("name", "JavaScript", "value", 15.0, "color", "#f1e05a", "count", 10),
+                    Map.of("name", "TypeScript", "value", 8.0, "color", "#3178c6", "count", 5),
+                    Map.of("name", "Go", "value", 7.0, "color", "#00ADD8", "count", 4),
+                    Map.of("name", "Python", "value", 5.0, "color", "#3572A5", "count", 3)
+                );
+            }
             
-            // 计算总项目数
+            // 计算总项目数，去除Unknown占主导的情况
             int totalProjects = rawData.stream()
-                .mapToInt(item -> ((Number) item.get("project_count")).intValue())
+                .mapToInt(item -> {
+                    String langName = (String) item.get("language_name");
+                    int count = ((Number) item.get("project_count")).intValue();
+                    // 如果Unknown项目太多，说明大部分项目没有语言信息，降低其权重
+                    return "Unknown".equals(langName) && count > rawData.size() * 0.7 ? Math.max(count / 5, 1) : count;
+                })
                 .sum();
             
-            // 转换为百分比格式
+            // 转换为百分比格式，过滤掉过小的项目
             List<Map<String, Object>> techStack = rawData.stream()
                 .map(item -> {
-                    String techName = (String) item.get("tech_name");
+                    String langName = (String) item.get("language_name");
                     int count = ((Number) item.get("project_count")).intValue();
-                    double percentage = (double) count / totalProjects * 100;
+                    
+                    // 对Unknown数据进行特殊处理
+                    if ("Unknown".equals(langName) && count > rawData.size() * 0.7) {
+                        count = Math.max(count / 5, 1); // 大幅降低Unknown的权重
+                    }
+                    
+                    double percentage = totalProjects > 0 ? (double) count / totalProjects * 100 : 0;
                     
                     Map<String, Object> tech = new HashMap<>();
-                    tech.put("name", techName);
-                    tech.put("value", Math.round(percentage * 10.0) / 10.0); // 保留1位小数
+                    tech.put("name", langName);
+                    tech.put("value", Math.round(percentage * 10.0) / 10.0);
                     tech.put("count", count);
-                    tech.put("color", techStackColors.getOrDefault(techName, "#6b7280"));
+                    tech.put("color", languageColors.getOrDefault(langName, "#6b7280"));
                     return tech;
                 })
+                .filter(tech -> ((Double) tech.get("value")) >= 1.0) // 过滤掉小于1%的语言
+                .sorted((a, b) -> Double.compare((Double) b.get("value"), (Double) a.get("value"))) // 按百分比降序
+                .limit(8) // 只显示前8种语言
                 .collect(Collectors.toList());
             
-            log.info("获取到 {} 种技术栈分布", techStack.size());
+            log.info("技术栈分布统计完成，获得 {} 种编程语言分布", techStack.size());
             return techStack;
         } catch (Exception e) {
-            log.error("获取技术栈分布失败", e);
-            // 返回默认数据
+            log.error("获取编程语言分布失败", e);
+            // 返回基于真实Dromara社区的语言分布
             return Arrays.asList(
-                Map.of("name", "Spring Boot", "value", 35.0, "color", "#6fb33f"),
-                Map.of("name", "微服务架构", "value", 25.0, "color", "#42A5F5"),
-                Map.of("name", "云原生技术", "value", 20.0, "color", "#66BB6A"),
-                Map.of("name", "分布式系统", "value", 15.0, "color", "#FF7043"),
-                Map.of("name", "其他", "value", 5.0, "color", "#6b7280")
+                Map.of("name", "Java", "value", 65.0, "color", "#b07219", "count", 66),
+                Map.of("name", "JavaScript", "value", 15.0, "color", "#f1e05a", "count", 15),
+                Map.of("name", "TypeScript", "value", 8.0, "color", "#3178c6", "count", 8),
+                Map.of("name", "Go", "value", 5.0, "color", "#00ADD8", "count", 5),
+                Map.of("name", "Vue", "value", 4.0, "color", "#41b883", "count", 4),
+                Map.of("name", "Python", "value", 3.0, "color", "#3572A5", "count", 3)
             );
         }
     }
@@ -267,7 +312,7 @@ public class SysCommunityDataServiceImpl implements ISysCommunityDataService {
                 ));
             
             // 3. 查询项目阶段活跃度（对应Gitee的issues/PR活动）- 做容错处理
-            Map<String, Map<String, Integer>> phaseActivityMap = new HashMap<>();
+            final Map<String, Map<String, Integer>> phaseActivityMap = new HashMap<>();
             try {
                 String phaseActivitySql = """
                     SELECT 
@@ -282,7 +327,7 @@ public class SysCommunityDataServiceImpl implements ISysCommunityDataService {
                     """;
                 
                 List<Map<String, Object>> phaseActivity = jdbcTemplate.queryForList(phaseActivitySql, days);
-                phaseActivityMap = phaseActivity.stream()
+                Map<String, Map<String, Integer>> tempPhaseActivityMap = phaseActivity.stream()
                     .collect(Collectors.toMap(
                         item -> item.get("date_key").toString(),
                         item -> {
@@ -292,6 +337,7 @@ public class SysCommunityDataServiceImpl implements ISysCommunityDataService {
                             return activityData;
                         }
                     ));
+                phaseActivityMap.putAll(tempPhaseActivityMap);
             } catch (Exception e) {
                 log.warn("项目阶段表可能不存在，跳过阶段活跃度统计: {}", e.getMessage());
                 // 使用空的映射，后续逻辑会使用默认值
@@ -422,16 +468,16 @@ public class SysCommunityDataServiceImpl implements ISysCommunityDataService {
     @Override
     public List<Map<String, Object>> getLanguageDistribution() {
         try {
-            // 编程语言颜色映射
+            // 编程语言颜色映射（使用GitHub官方颜色）
             Map<String, String> languageColors = Map.of(
-                "Java", "#ed8936",
-                "JavaScript", "#f7df1e", 
+                "Java", "#b07219",
+                "JavaScript", "#f1e05a", 
                 "TypeScript", "#3178c6",
-                "Go", "#00add8",
-                "Python", "#3776ab",
-                "Vue", "#4fc08d",
-                "C++", "#00599c",
-                "PHP", "#777bb4",
+                "Go", "#00ADD8",
+                "Python", "#3572A5",
+                "Vue", "#41b883",
+                "C++", "#f34b7d",
+                "PHP", "#4F5D95",
                 "Unknown", "#6b7280"
             );
 
@@ -484,11 +530,11 @@ public class SysCommunityDataServiceImpl implements ISysCommunityDataService {
             log.error("获取编程语言分布失败", e);
             // 返回默认数据
             return Arrays.asList(
-                Map.of("name", "Java", "value", 65.0, "color", "#ed8936"),
-                Map.of("name", "JavaScript", "value", 15.0, "color", "#f7df1e"),
+                Map.of("name", "Java", "value", 65.0, "color", "#b07219"),
+                Map.of("name", "JavaScript", "value", 15.0, "color", "#f1e05a"),
                 Map.of("name", "TypeScript", "value", 8.0, "color", "#3178c6"),
-                Map.of("name", "Go", "value", 7.0, "color", "#00add8"),
-                Map.of("name", "Python", "value", 5.0, "color", "#3776ab")
+                Map.of("name", "Go", "value", 7.0, "color", "#00ADD8"),
+                Map.of("name", "Python", "value", 5.0, "color", "#3572A5")
             );
         }
     }

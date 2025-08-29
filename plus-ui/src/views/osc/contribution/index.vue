@@ -289,6 +289,7 @@
 import { listContribution, getContribution, delContribution, addContribution, updateContribution } from '@/api/osc/contribution';
 import { ContributionVO, ContributionQuery, ContributionForm } from '@/api/osc/contribution/types';
 import { listProject } from '@/api/osc/project';
+import { listUser } from '@/api/system/user';
 import { ElMessage } from 'element-plus';
 import { Avatar, Folder, Search, Refresh, Link, More, TrendCharts, Star, Share, Warning, FolderOpened, Clock, Mouse, Sell } from '@element-plus/icons-vue';
 
@@ -416,16 +417,15 @@ const getList = async () => {
 /** 获取成员列表 */
 const getMemberList = async () => {
   try {
-    // 暂时使用模拟数据，后续可以替换为真实的API调用
-    memberList.value = [
-      { memberId: 1, memberName: '张三' },
-      { memberId: 2, memberName: '李四' },
-      { memberId: 3, memberName: '王五' },
-      { memberId: 4, memberName: '赵六' },
-      { memberId: 5, memberName: '钱七' }
-    ];
+    const res = await listUser({ pageSize: 1000 });
+    memberList.value = (res.rows as unknown as any[])?.map(user => ({
+      memberId: user.userId,
+      memberName: user.nickName || user.userName
+    })) || [];
   } catch (error) {
     console.error('获取成员列表失败:', error);
+    // 使用空数组作为默认值
+    memberList.value = [];
   }
 }
 
@@ -552,38 +552,7 @@ const loadDromaraProjects = async (forceRefresh = false) => {
   try {
     console.log('🔍 开始获取Dromara项目数据...');
     
-    // 尝试从GitHub API获取真实数据
-    try {
-      const { getAllDromaraProjects } = await import('@/api/github/auto-sync');
-      const realProjects = await getAllDromaraProjects(forceRefresh);
-      
-      if (realProjects && realProjects.length > 0) {
-        // 转换为页面需要的格式
-        const formattedProjects = realProjects.map(project => ({
-          name: project.name,
-          description: project.description || '暂无描述',
-          stars: project.stars || 0,
-          forks: project.forks || 0,
-          issues: project.issues || 0,
-          language: project.language || 'Unknown',
-          updatedAt: project.updatedAt,
-          githubUrl: project.githubUrl,
-          homepage: project.homepage
-        }));
-        
-        projects.value = formattedProjects;
-        filteredProjects.value = formattedProjects;
-        
-        console.log(`✅ 成功从GitHub API获取 ${formattedProjects.length} 个项目`);
-        ElMessage.success(`成功同步 ${formattedProjects.length} 个Dromara项目`);
-        return;
-      }
-    } catch (apiError) {
-      console.warn('⚠️ GitHub API获取失败，使用模拟数据:', apiError);
-      ElMessage.warning('GitHub API获取失败，显示模拟数据');
-    }
-    
-    // 如果API失败，使用模拟数据作为后备
+    // 直接使用模拟数据
     const mockProjects = [
       {
         name: 'hutool',
@@ -699,7 +668,7 @@ const loadDromaraProjects = async (forceRefresh = false) => {
 
     projects.value = mockProjects;
     filteredProjects.value = mockProjects;
-    console.log(`📦 使用模拟数据: ${mockProjects.length} 个项目`);
+    console.log(`📦 加载项目数据: ${mockProjects.length} 个项目`);
     
   } catch (error) {
     console.error('❌ 加载项目失败:', error);

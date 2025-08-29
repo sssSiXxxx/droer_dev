@@ -112,3 +112,27 @@ export function getProjectGanttData(projectId: string | number) {
     method: 'get'
   });
 }
+
+// 为项目创建标准孵化阶段模板
+export function createStandardPhases(projectId: string | number) {
+  return request({
+    url: `/osc/projectPhase/createStandard/${projectId}`,
+    method: 'post'
+  });
+}
+
+// 自动推进到下一阶段
+export function advanceToNextPhase(phaseId: string | number) {
+  return request({
+    url: `/osc/projectPhase/advance/${phaseId}`,
+    method: 'put'
+  });
+}
+
+// 获取下一个阶段信息
+export function getNextPhase(projectId: string | number, currentPhaseId: string | number) {
+  return request({
+    url: `/osc/projectPhase/next/${projectId}/${currentPhaseId}`,
+    method: 'get'
+  });
+}

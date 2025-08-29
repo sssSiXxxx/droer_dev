@@ -31,6 +31,12 @@ public class ProjectPhaseVo implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
+     * 阶段ID
+     */
+    @ExcelProperty(value = "阶段ID")
+    private Long phaseId;
+
+    /**
      * 项目ID
      */
     @ExcelProperty(value = "项目ID")
@@ -72,6 +78,48 @@ public class ProjectPhaseVo implements Serializable {
     @ExcelProperty(value = "状态", converter = ExcelDictConvert.class)
     @ExcelDictFormat(dictType = "sys_phase_status")
     private String status;
+
+    /**
+     * 进度百分比（0-100）
+     */
+    @ExcelProperty(value = "进度百分比")
+    private Integer progress;
+
+    /**
+     * 实际开始时间
+     */
+    @ExcelProperty(value = "实际开始时间")
+    private Date actualStartTime;
+
+    /**
+     * 实际结束时间
+     */
+    @ExcelProperty(value = "实际结束时间")
+    private Date actualEndTime;
+
+    /**
+     * 负责人ID
+     */
+    @ExcelProperty(value = "负责人ID")
+    private Long ownerId;
+
+    /**
+     * 优先级（1低 2中 3高）
+     */
+    @ExcelProperty(value = "优先级")
+    private Integer priority;
+
+    /**
+     * 项目名称（关联查询）
+     */
+    @ExcelProperty(value = "项目名称")
+    private String projectName;
+
+    /**
+     * 负责人名称（关联查询）
+     */
+    @ExcelProperty(value = "负责人名称")
+    private String ownerName;
 
 
 }

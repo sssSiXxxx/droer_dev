@@ -116,6 +116,9 @@
             <el-button type="success" plain @click="handleAdd" v-if="queryParams.projectId">
               <el-icon><Plus /></el-icon>新增阶段
             </el-button>
+            <el-button type="warning" plain @click="handleCreateStandardPhases" v-if="queryParams.projectId">
+              <el-icon><DocumentCopy /></el-icon>创建标准孵化阶段
+            </el-button>
             <el-button type="primary" plain @click="switchView">
               <el-icon><Operation /></el-icon>
               {{ isGanttView ? '切换列表视图' : '切换甘特图视图' }}
@@ -194,6 +197,15 @@
                 @click="handleComplete(scope.row)"
               >
                 完成
+              </el-button>
+              <el-button 
+                type="info" 
+                link 
+                icon="Right" 
+                v-if="scope.row.status === '2'" 
+                @click="handleAdvanceNext(scope.row)"
+              > 
+                推进下一阶段 
               </el-button>
               <el-button type="warning" link icon="VideoPause" v-if="scope.row.status === '1'" @click="handlePause(scope.row)"> 暂停 </el-button>
               <el-button type="info" link icon="VideoPlay" v-if="scope.row.status === '3'" @click="handleResume(scope.row)"> 恢复 </el-button>
@@ -303,7 +315,9 @@ import {
   Refresh,
   VideoPause,
   VideoPlay,
-  Download
+  Download,
+  DocumentCopy,
+  Right
 } from '@element-plus/icons-vue';
 import {
   listProjectPhase,
@@ -316,6 +330,9 @@ import {
   pauseProjectPhase,
   resumeProjectPhase,
   updatePhaseProgress,
+  createStandardPhases,
+  advanceToNextPhase,
+  getNextPhase,
   exportProjectPhase,
   batchUpdatePhaseStatus
 } from '@/api/osc/projectPhase';
@@ -666,6 +683,19 @@ const handleAdd = () => {
   title.value = '添加阶段';
 };
 
+/** 创建标准孵化阶段 */
+const handleCreateStandardPhases = async () => {
+  try {
+    await proxy?.$modal.confirm('将为当前项目创建标准孵化阶段模板（包含：项目立项、技术调研、原型开发、MVP开发、Alpha测试、Beta测试、正式发布、社区建设、持续维护），确定继续？');
+    const res = await createStandardPhases(queryParams.value.projectId);
+    proxy?.$modal.msgSuccess('标准孵化阶段创建成功');
+    await getList();
+    await loadStatistics();
+  } catch (error) {
+    console.error('创建标准阶段失败:', error);
+  }
+};
+
 /** 修改按钮操作 */
 const handleUpdate = async (row: any) => {
   reset();
@@ -722,6 +752,29 @@ const handleComplete = async (row: any) => {
   } catch (error) {
     console.error('完成阶段失败:', error);
     proxy?.$modal.msgError('操作失败');
+  }
+};
+
+/** 推进到下一阶段 */
+const handleAdvanceNext = async (row: any) => {
+  try {
+    // 先获取下一阶段信息
+    const nextPhaseRes = await getNextPhase(row.projectId, row.phaseId);
+    const nextPhase = nextPhaseRes.data;
+    
+    if (!nextPhase) {
+      proxy?.$modal.msgInfo('当前已是最后一个阶段，无法推进');
+      return;
+    }
+    
+    await proxy?.$modal.confirm(`是否确认推进到下一阶段"${nextPhase.phaseName}"？当前阶段将标记为完成，下一阶段将自动开始。`);
+    await advanceToNextPhase(row.phaseId);
+    await getList();
+    await loadStatistics();
+    proxy?.$modal.msgSuccess(`已成功推进到"${nextPhase.phaseName}"阶段`);
+  } catch (error) {
+    console.error('推进阶段失败:', error);
+    proxy?.$modal.msgError('推进失败');
   }
 };
 

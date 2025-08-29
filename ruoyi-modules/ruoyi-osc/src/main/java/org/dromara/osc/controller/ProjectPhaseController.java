@@ -152,4 +152,34 @@ public class ProjectPhaseController extends BaseController {
                                   @RequestParam("progress") Integer progress) {
         return toAjax(projectPhaseService.updateProgress(phaseId, progress));
     }
+
+    /**
+     * 为项目创建标准孵化阶段模板
+     */
+    @SaCheckPermission("osc:projectPhase:add")
+    @Log(title = "创建标准阶段", businessType = BusinessType.INSERT)
+    @PostMapping("/createStandard/{projectId}")
+    public R<Void> createStandardPhases(@PathVariable Long projectId) {
+        return toAjax(projectPhaseService.createStandardPhases(projectId));
+    }
+
+    /**
+     * 自动推进到下一阶段
+     */
+    @SaCheckPermission("osc:projectPhase:edit")
+    @Log(title = "推进阶段", businessType = BusinessType.UPDATE)
+    @PutMapping("/advance/{phaseId}")
+    public R<Void> advanceToNextPhase(@PathVariable Long phaseId) {
+        return toAjax(projectPhaseService.advanceToNextPhase(phaseId));
+    }
+
+    /**
+     * 获取下一个阶段信息
+     */
+    @SaCheckPermission("osc:projectPhase:query")
+    @GetMapping("/next/{projectId}/{currentPhaseId}")
+    public R<ProjectPhaseVo> getNextPhase(@PathVariable Long projectId, 
+                                         @PathVariable Long currentPhaseId) {
+        return R.ok(projectPhaseService.getNextPhase(projectId, currentPhaseId));
+    }
 }

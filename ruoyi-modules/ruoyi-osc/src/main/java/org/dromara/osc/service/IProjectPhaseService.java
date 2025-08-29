@@ -107,4 +107,29 @@ public interface IProjectPhaseService {
      * @return 是否成功
      */
     Boolean updateProgress(Long phaseId, Integer progress);
+
+    /**
+     * 为项目创建标准孵化阶段模板
+     *
+     * @param projectId 项目ID
+     * @return 是否创建成功
+     */
+    Boolean createStandardPhases(Long projectId);
+
+    /**
+     * 获取下一个阶段
+     *
+     * @param projectId 项目ID
+     * @param currentPhaseId 当前阶段ID
+     * @return 下一个阶段
+     */
+    ProjectPhaseVo getNextPhase(Long projectId, Long currentPhaseId);
+
+    /**
+     * 自动推进到下一阶段
+     *
+     * @param phaseId 当前阶段ID
+     * @return 是否成功
+     */
+    Boolean advanceToNextPhase(Long phaseId);
 }

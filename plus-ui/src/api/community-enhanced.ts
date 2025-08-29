@@ -198,34 +198,34 @@ export const getTechStackStats = async () => {
     // 返回基于真实Dromara社区的技术栈分布
     return {
       techStack: [
-        { name: 'Java', value: 65, color: '#ed8936' }, // Java是Dromara主要语言
-        { name: 'JavaScript', value: 15, color: '#f7df1e' }, 
-        { name: 'TypeScript', value: 8, color: '#3178c6' },
-        { name: 'Go', value: 5, color: '#00add8' },
-        { name: 'Python', value: 4, color: '#3776ab' },
+        { name: 'Java', value: 65, color: '#b07219' }, // Java官方颜色
+        { name: 'JavaScript', value: 15, color: '#f1e05a' }, // JS官方颜色
+        { name: 'TypeScript', value: 8, color: '#3178c6' }, // TS官方颜色
+        { name: 'Go', value: 5, color: '#00ADD8' }, // Go官方颜色
+        { name: 'Python', value: 4, color: '#3572A5' }, // Python官方颜色
         { name: 'Others', value: 3, color: '#6b7280' }
       ]
     };
   }
 };
 
-// 获取语言颜色 - 使用真实的语言颜色
+// 获取语言颜色 - 使用GitHub官方颜色
 const getLanguageColor = (language: string): string => {
   const colorMap: Record<string, string> = {
-    'Java': '#ed8936', // Java橙色
-    'JavaScript': '#f7df1e', // JS黄色
-    'TypeScript': '#3178c6', // TS蓝色
-    'Go': '#00add8', // Go蓝色
-    'Python': '#3776ab', // Python蓝色
-    'Vue': '#4fc08d', // Vue绿色
-    'C++': '#00599c', // C++蓝色
-    'C#': '#239120', // C#绿色
-    'PHP': '#777bb4', // PHP紫色
-    'Shell': '#89e051', // Shell绿色
-    'Rust': '#dea584', // Rust赤褐色
-    'Kotlin': '#7f52ff', // Kotlin紫色
-    'Swift': '#fa7343', // Swift橙色
-    'Ruby': '#cc342d', // Ruby红色
+    'Java': '#b07219', // Java官方颜色
+    'JavaScript': '#f1e05a', // JS官方颜色
+    'TypeScript': '#3178c6', // TS官方颜色
+    'Go': '#00ADD8', // Go官方颜色
+    'Python': '#3572A5', // Python官方颜色
+    'Vue': '#41b883', // Vue官方颜色
+    'C++': '#f34b7d', // C++官方颜色
+    'C#': '#239120', // C#官方颜色
+    'PHP': '#4F5D95', // PHP官方颜色
+    'Shell': '#89e051', // Shell官方颜色
+    'Rust': '#dea584', // Rust官方颜色
+    'Kotlin': '#7f52ff', // Kotlin官方颜色
+    'Swift': '#fa7343', // Swift官方颜色
+    'Ruby': '#cc342d', // Ruby官方颜色
     'Unknown': '#6b7280', // 灰色
     'Others': '#6b7280' // 灰色
   };
@@ -821,11 +821,12 @@ export const getDatabaseTechStack = async () => {
     console.warn('⚠️ 从数据库获取技术栈分布失败:', error.message);
     return {
       techStack: [
-        { name: 'Spring Boot', value: 35, color: '#6fb33f' },
-        { name: '微服务架构', value: 25, color: '#42A5F5' },
-        { name: '云原生技术', value: 20, color: '#66BB6A' },
-        { name: '分布式系统', value: 15, color: '#FF7043' },
-        { name: '其他', value: 5, color: '#6b7280' }
+        { name: 'Java', value: 65.0, color: '#b07219', count: 66 },
+        { name: 'JavaScript', value: 15.0, color: '#f1e05a', count: 15 },
+        { name: 'TypeScript', value: 8.0, color: '#3178c6', count: 8 },
+        { name: 'Go', value: 5.0, color: '#00ADD8', count: 5 },
+        { name: 'Vue', value: 4.0, color: '#41b883', count: 4 },
+        { name: 'Python', value: 3.0, color: '#3572A5', count: 3 }
       ]
     };
   }

@@ -30,8 +30,9 @@ public class Contribution extends BaseEntity {
     private Long contributionId;
 
     /**
-     * 成员ID
+     * 成员ID (对应数据库user_id字段)
      */
+    @TableField("user_id")
     private Long memberId;
 
     /**

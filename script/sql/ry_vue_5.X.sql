@@ -101,6 +101,18 @@ create table sys_user (
     remark            varchar(500)    default null               comment '备注',
     primary key (user_id)
 ) engine=innodb comment = '用户信息表';
+-- 扩展sys_user表，增加个人资料字段
+ALTER TABLE sys_user 
+ADD COLUMN github_username VARCHAR(100) COMMENT 'GitHub用户名',
+ADD COLUMN wechat VARCHAR(50) COMMENT '微信号',
+ADD COLUMN qq VARCHAR(20) COMMENT 'QQ号',
+ADD COLUMN blog VARCHAR(255) COMMENT '个人博客',
+ADD COLUMN company VARCHAR(100) COMMENT '公司/组织',
+ADD COLUMN position VARCHAR(100) COMMENT '职位',
+ADD COLUMN location VARCHAR(100) COMMENT '地区',
+ADD COLUMN bio TEXT COMMENT '个人简介',
+ADD COLUMN skills TEXT COMMENT '技能标签（JSON格式）',
+ADD COLUMN experience_years INT COMMENT '工作年限';
 
 -- ----------------------------
 -- 初始化-用户信息表数据

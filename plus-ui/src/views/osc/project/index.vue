@@ -14,12 +14,12 @@
             </el-form-item>
             <el-form-item label="技术栈" prop="techStack">
               <el-select v-model="queryParams.techStack" placeholder="请选择技术栈" clearable>
-                <el-option v-for="dict in osc_project_tech" :key="dict.value" :label="dict.label" :value="dict.value" />
+                <el-option v-for="dict in techStackDict" :key="dict.value" :label="dict.label" :value="dict.value" />
               </el-select>
             </el-form-item>
             <el-form-item label="编程语言" prop="programmingLanguage">
               <el-select v-model="queryParams.programmingLanguage" placeholder="请选择编程语言" clearable>
-                <el-option v-for="dict in osc_project_prolan" :key="dict.value" :label="dict.label" :value="dict.value" />
+                <el-option v-for="dict in programmingLanguageDict" :key="dict.value" :label="dict.label" :value="dict.value" />
               </el-select>
             </el-form-item>
             <el-form-item>
@@ -137,10 +137,13 @@
         </el-table-column>
 
         <!-- 操作 -->
-        <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="120">
+        <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="180">
           <template #default="scope">
             <el-tooltip content="修改" placement="top">
               <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['osc:project:edit']"></el-button>
+            </el-tooltip>
+            <el-tooltip content="进度追踪" placement="top">
+              <el-button link type="success" icon="TrendCharts" @click="goToPhaseTracking(scope.row)"></el-button>
             </el-tooltip>
             <el-tooltip content="删除" placement="top">
               <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['osc:project:remove']"></el-button>
@@ -254,7 +257,7 @@
 import { listProject, getProject, delProject, addProject, updateProject } from '@/api/osc/project';
 import { ProjectVO, ProjectQuery, ProjectForm } from '@/api/osc/project/types';
 import { useUserStore } from '@/store/modules/user';
-import { View } from '@element-plus/icons-vue';
+import { View, TrendCharts } from '@element-plus/icons-vue';
 import { useRoute } from 'vue-router';
 import { ElMessageBox } from 'element-plus';
 
@@ -269,27 +272,28 @@ const programmingLanguageDict = computed(() => {
   if (osc_project_prolan.value && osc_project_prolan.value.length > 0) {
     return osc_project_prolan.value;
   }
-  // 如果为空，返回一个默认的编程语言列表
+  // 如果为空，返回一个基于真实语言的列表（使用语言名称作为值）
   return [
-    { label: 'Java', value: '1' },
-    { label: 'Python', value: '2' },
-    { label: 'Go', value: '3' },
-    { label: 'C', value: '4' },
-    { label: 'C++', value: '5' },
-    { label: 'JavaScript', value: '6' },
-    { label: 'Vue', value: '7' },
-    { label: 'PHP', value: '8' },
-    { label: 'Swift', value: '9' },
-    { label: 'Kotlin', value: '10' },
-    { label: 'TypeScript', value: '11' },
-    { label: 'Rust', value: '12' },
-    { label: 'Scala', value: '13' },
-    { label: 'Perl', value: '14' },
-    { label: 'Lua', value: '15' },
-    { label: 'R', value: '16' },
-    { label: 'Shell', value: '17' },
-    { label: 'MATLAB', value: '18' },
-    { label: 'HTML', value: '19' }
+    { label: 'Java', value: 'Java' },
+    { label: 'JavaScript', value: 'JavaScript' },
+    { label: 'TypeScript', value: 'TypeScript' },
+    { label: 'Vue', value: 'Vue' },
+    { label: 'Python', value: 'Python' },
+    { label: 'Go', value: 'Go' },
+    { label: 'C++', value: 'C++' },
+    { label: 'C', value: 'C' },
+    { label: 'PHP', value: 'PHP' },
+    { label: 'Swift', value: 'Swift' },
+    { label: 'Kotlin', value: 'Kotlin' },
+    { label: 'Rust', value: 'Rust' },
+    { label: 'Scala', value: 'Scala' },
+    { label: 'Ruby', value: 'Ruby' },
+    { label: 'C#', value: 'C#' },
+    { label: 'Dart', value: 'Dart' },
+    { label: 'Shell', value: 'Shell' },
+    { label: 'MATLAB', value: 'MATLAB' },
+    { label: 'HTML', value: 'HTML' },
+    { label: 'CSS', value: 'CSS' }
   ];
 });
 
@@ -552,6 +556,14 @@ const handleUpdate = async (row?: ProjectVO) => {
 
   dialog.visible = true;
   dialog.title = '修改项目列表';
+};
+
+/** 跳转到阶段追踪 */
+const goToPhaseTracking = (row: ProjectVO) => {
+  proxy?.$router.push({
+    path: '/osc/projectPhase',
+    query: { projectId: row.projectId }
+  });
 };
 
 /** 提交按钮 */

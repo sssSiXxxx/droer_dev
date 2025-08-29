@@ -25,6 +25,9 @@ import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 
 import java.util.Arrays;
 
@@ -126,8 +129,39 @@ public class SysProfileController extends BaseController {
         return R.fail("上传图片异常，请联系管理员");
     }
 
-    public record AvatarVo(String imgUrl) {}
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class AvatarVo {
+        private String imgUrl;
+    }
 
-    public record ProfileVo(SysUserVo user, String roleGroup, String postGroup) {}
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class ProfileVo {
+        private SysUserVo user;
+        private String roleGroup;
+        private String postGroup;
+        
+        // 扩展的个人资料字段
+        private String githubUsername;
+        private String giteeUsername;
+        private String wechat;
+        private String qq;
+        private String blog;
+        private String company;
+        private String position;
+        private String location;
+        private String bio;
+        private String skills;
+        private Integer experienceYears;
+        
+        public ProfileVo(SysUserVo user, String roleGroup, String postGroup) {
+            this.user = user;
+            this.roleGroup = roleGroup;
+            this.postGroup = postGroup;
+        }
+    }
 
 }

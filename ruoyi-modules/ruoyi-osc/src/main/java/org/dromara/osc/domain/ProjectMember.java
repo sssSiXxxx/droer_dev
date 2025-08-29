@@ -34,8 +34,9 @@ public class ProjectMember extends BaseEntity {
     private Long projectId;
 
     /**
-     * 成员ID
+     * 成员ID (对应数据库user_id字段)
      */
+    @TableField("user_id")
     private Long memberId;
 
     /**

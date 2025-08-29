@@ -43,16 +43,7 @@ public class ProjectMemberServiceImpl implements IProjectMemberService {
      */
     @Override
     public ProjectMemberVo queryById(Long id) {
-        try {
-            return baseMapper.selectVoById(id);
-        } catch (Exception e) {
-            // 如果selectVoById失败，使用原始查询并手动转换
-            ProjectMember entity = baseMapper.selectById(id);
-            if (entity != null) {
-                return convertToVo(entity);
-            }
-            return null;
-        }
+        return baseMapper.queryById(id);
     }
 
     /**
@@ -60,28 +51,8 @@ public class ProjectMemberServiceImpl implements IProjectMemberService {
      */
     @Override
     public TableDataInfo<ProjectMemberVo> queryPageList(ProjectMemberBo bo, PageQuery pageQuery) {
-        try {
-            LambdaQueryWrapper<ProjectMember> lqw = buildQueryWrapper(bo);
-            Page<ProjectMemberVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
-            return TableDataInfo.build(result);
-        } catch (Exception e) {
-            // 如果出现类型转换异常，使用原始查询方式
-            LambdaQueryWrapper<ProjectMember> lqw = buildQueryWrapper(bo);
-            Page<ProjectMember> entityPage = baseMapper.selectPage(pageQuery.build(), lqw);
-            
-            // 手动转换为VO对象
-            List<ProjectMemberVo> voList = entityPage.getRecords().stream()
-                .map(this::convertToVo)
-                .toList();
-                
-            Page<ProjectMemberVo> result = new Page<>();
-            result.setRecords(voList);
-            result.setTotal(entityPage.getTotal());
-            result.setCurrent(entityPage.getCurrent());
-            result.setSize(entityPage.getSize());
-            
-            return TableDataInfo.build(result);
-        }
+        Page<ProjectMemberVo> result = baseMapper.queryPageList(pageQuery.build(), bo);
+        return TableDataInfo.build(result);
     }
 
     /**
@@ -89,17 +60,7 @@ public class ProjectMemberServiceImpl implements IProjectMemberService {
      */
     @Override
     public List<ProjectMemberVo> queryList(ProjectMemberBo bo) {
-        try {
-            LambdaQueryWrapper<ProjectMember> lqw = buildQueryWrapper(bo);
-            return baseMapper.selectVoList(lqw);
-        } catch (Exception e) {
-            // 如果查询失败，使用原始查询并手动转换
-            LambdaQueryWrapper<ProjectMember> lqw = buildQueryWrapper(bo);
-            List<ProjectMember> entityList = baseMapper.selectList(lqw);
-            return entityList.stream()
-                .map(this::convertToVo)
-                .toList();
-        }
+        return baseMapper.queryList(bo);
     }
 
     /**
@@ -133,7 +94,7 @@ public class ProjectMemberServiceImpl implements IProjectMemberService {
         // 检查项目成员关联是否已存在
         QueryWrapper<ProjectMember> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("project_id", entity.getProjectId());
-        queryWrapper.eq("member_id", entity.getMemberId());
+        queryWrapper.eq("user_id", entity.getMemberId());
         if (entity.getId() != null) {
             queryWrapper.ne("id", entity.getId());
         }
@@ -172,10 +133,7 @@ public class ProjectMemberServiceImpl implements IProjectMemberService {
      */
     @Override
     public List<ProjectMemberVo> queryByProjectId(Long projectId) {
-        LambdaQueryWrapper<ProjectMember> lqw = Wrappers.lambdaQuery(ProjectMember.class);
-        lqw.eq(ProjectMember::getProjectId, projectId);
-        lqw.orderByDesc(ProjectMember::getCreateTime);
-        return baseMapper.selectVoList(lqw);
+        return baseMapper.queryByProjectId(projectId);
     }
 
     /**
@@ -183,10 +141,7 @@ public class ProjectMemberServiceImpl implements IProjectMemberService {
      */
     @Override
     public List<ProjectMemberVo> queryByMemberId(Long memberId) {
-        LambdaQueryWrapper<ProjectMember> lqw = Wrappers.lambdaQuery(ProjectMember.class);
-        lqw.eq(ProjectMember::getMemberId, memberId);
-        lqw.orderByDesc(ProjectMember::getCreateTime);
-        return baseMapper.selectVoList(lqw);
+        return baseMapper.queryByMemberId(memberId);
     }
 
     /**
@@ -312,23 +267,57 @@ public class ProjectMemberServiceImpl implements IProjectMemberService {
         
         List<ProjectMemberVo> members = queryByProjectId(projectId);
         
-        // 角色分布数据
-        Map<String, Long> roleDistribution = new HashMap<>();
-        for (ProjectMemberVo member : members) {
-            String role = member.getRole();
-            roleDistribution.put(role, roleDistribution.getOrDefault(role, 0L) + 1);
+        // 按角色分组
+        Map<String, List<ProjectMemberVo>> roleGroups = members.stream()
+            .collect(java.util.stream.Collectors.groupingBy(ProjectMemberVo::getRole));
+        
+        // 构建角色数据
+        List<Map<String, Object>> roleData = new ArrayList<>();
+        for (Map.Entry<String, List<ProjectMemberVo>> entry : roleGroups.entrySet()) {
+            String roleCode = entry.getKey();
+            List<ProjectMemberVo> roleMembers = entry.getValue();
+            
+            Map<String, Object> roleInfo = new HashMap<>();
+            roleInfo.put("roleCode", roleCode);
+            roleInfo.put("roleName", getRoleName(roleCode));
+            roleInfo.put("memberCount", roleMembers.size());
+            roleInfo.put("members", roleMembers);
+            
+            roleData.add(roleInfo);
         }
         
-        // 活跃度数据
+        // 活跃度统计
         long activeCount = members.stream()
             .filter(member -> "1".equals(member.getIsActive()))
             .count();
         
-        visualization.put("roleDistribution", roleDistribution);
-        visualization.put("activeCount", activeCount);
-        visualization.put("totalCount", members.size());
+        visualization.put("roleData", roleData);
+        visualization.put("totalMembers", members.size());
+        visualization.put("activeMembers", activeCount);
+        visualization.put("roleDistribution", roleGroups.entrySet().stream()
+            .collect(java.util.stream.Collectors.toMap(
+                Map.Entry::getKey, 
+                entry -> (long) entry.getValue().size()
+            )));
         
         return visualization;
+    }
+    
+    /**
+     * 获取角色名称
+     */
+    private String getRoleName(String roleCode) {
+        if (StringUtils.isBlank(roleCode)) {
+            return "未知";
+        }
+        switch (roleCode) {
+            case "0": return "普通成员";
+            case "1": return "项目负责人";
+            case "2": return "核心开发者";
+            case "3": return "维护者";
+            case "4": return "贡献者";
+            default: return "未知角色";
+        }
     }
 
     /**
@@ -441,20 +430,4 @@ public class ProjectMemberServiceImpl implements IProjectMemberService {
         }
     }
 
-    /**
-     * 获取角色名称
-     */
-    private String getRoleName(String role) {
-        if (StringUtils.isBlank(role)) {
-            return "未知";
-        }
-        switch (role) {
-            case "0": return "项目负责人";
-            case "1": return "开发负责人";
-            case "2": return "开发人员";
-            case "3": return "测试人员";
-            case "4": return "观察者";
-            default: return "普通成员";
-        }
-    }
 }
