@@ -83,13 +83,21 @@ CREATE TABLE `os_project_phase` (
   `description` varchar(500) COMMENT '阶段描述',
   `start_time` datetime COMMENT '开始时间',
   `end_time` datetime COMMENT '结束时间',
-  `status` char(1) DEFAULT '0' COMMENT '状态（0进行中 1已完成 2已取消）',
+  `actual_start_time` datetime COMMENT '实际开始时间',
+  `actual_end_time` datetime COMMENT '实际结束时间',
+  `status` char(1) DEFAULT '0' COMMENT '状态（0未开始 1进行中 2已完成 3已暂停 4已延期）',
+  `progress` int DEFAULT 0 COMMENT '进度百分比(0-100)',
+  `owner_id` bigint COMMENT '负责人ID',
+  `priority` int DEFAULT 2 COMMENT '优先级(1低 2中 3高)',
+  `create_dept` bigint COMMENT '创建部门',
   `create_by` bigint COMMENT '创建者',
   `create_time` datetime COMMENT '创建时间',
   `update_by` bigint COMMENT '更新者',
   `update_time` datetime COMMENT '更新时间',
   PRIMARY KEY (`phase_id`),
-  INDEX `idx_phase_project` (`project_id`)
+  INDEX `idx_phase_project` (`project_id`),
+  INDEX `idx_phase_status` (`status`),
+  INDEX `idx_phase_owner` (`owner_id`)
 ) COMMENT='项目孵化阶段表';
 
 -- 项目文档表

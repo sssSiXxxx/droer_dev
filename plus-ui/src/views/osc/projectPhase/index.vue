@@ -74,13 +74,13 @@
             remote
             :remote-method="handleProjectSearch"
             :loading="projectSearchLoading"
-            style="width: 240px" 
+            style="width: 280px" 
             @change="handleProjectChange"
           >
             <el-option v-for="item in filteredProjectOptions" :key="item.projectId" :label="item.projectName" :value="item.projectId">
               <div class="project-option">
                 <div class="project-name">{{ item.projectName }}</div>
-                <div class="project-desc" v-if="item.description">{{ item.description }}</div>
+                <div class="project-code">{{ item.projectCode }}</div>
               </div>
             </el-option>
             <template #empty>
