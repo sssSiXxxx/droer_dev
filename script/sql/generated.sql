@@ -83,45 +83,5 @@ values(1954519360355749893, '进度追踪删除', 1954519360355749889, '4',  '#'
 insert into sys_menu (menu_id, menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_dept, create_by, create_time, update_by, update_time, remark)
 values(1954519360355749894, '进度追踪导出', 1954519360355749889, '5',  '#', '', 1, 0, 'F', '0', '0', 'osc:projectPhase:export',       '#', 103, 1, sysdate(), null, null, '');
 
--- 贡献统计菜单
--- 菜单 SQL
-insert into sys_menu (menu_id, menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_dept, create_by, create_time, update_by, update_time, remark)
-values(1956364860340125698, '贡献统计', '1942216939709456385', '1', 'contribution', 'osc/contribution/index', 1, 0, 'C', '0', '0', 'osc:contribution:list', '#', 103, 1, sysdate(), null, null, '贡献统计菜单');
 
--- 按钮 SQL
-insert into sys_menu (menu_id, menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_dept, create_by, create_time, update_by, update_time, remark)
-values(1956364860340125699, '贡献统计查询', 1956364860340125698, '1',  '#', '', 1, 0, 'F', '0', '0', 'osc:contribution:query',        '#', 103, 1, sysdate(), null, null, '');
-
-insert into sys_menu (menu_id, menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_dept, create_by, create_time, update_by, update_time, remark)
-values(1956364860340125700, '贡献统计新增', 1956364860340125698, '2',  '#', '', 1, 0, 'F', '0', '0', 'osc:contribution:add',          '#', 103, 1, sysdate(), null, null, '');
-
-insert into sys_menu (menu_id, menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_dept, create_by, create_time, update_by, update_time, remark)
-values(1956364860340125701, '贡献统计修改', 1956364860340125698, '3',  '#', '', 1, 0, 'F', '0', '0', 'osc:contribution:edit',         '#', 103, 1, sysdate(), null, null, '');
-
-insert into sys_menu (menu_id, menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_dept, create_by, create_time, update_by, update_time, remark)
-values(1956364860340125702, '贡献统计删除', 1956364860340125698, '4',  '#', '', 1, 0, 'F', '0', '0', 'osc:contribution:remove',       '#', 103, 1, sysdate(), null, null, '');
-
-insert into sys_menu (menu_id, menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_dept, create_by, create_time, update_by, update_time, remark)
-values(1956364860340125703, '贡献统计导出', 1956364860340125698, '5',  '#', '', 1, 0, 'F', '0', '0', 'osc:contribution:export',       '#', 103, 1, sysdate(), null, null, '');
-
--- 人员项目管理菜单
--- 菜单 SQL
-insert into sys_menu (menu_id, menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_dept, create_by, create_time, update_by, update_time, remark)
-values(1956377635485433858, '人员项目管理', '1942216939709456385', '1', 'projectMember', 'osc/projectMember/index', 1, 0, 'C', '0', '0', 'osc:projectMember:list', '#', 103, 1, sysdate(), null, null, '人员项目管理菜单');
-
--- 按钮 SQL
-insert into sys_menu (menu_id, menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_dept, create_by, create_time, update_by, update_time, remark)
-values(1956377635485433859, '人员项目管理查询', 1956377635485433858, '1',  '#', '', 1, 0, 'F', '0', '0', 'osc:projectMember:query',        '#', 103, 1, sysdate(), null, null, '');
-
-insert into sys_menu (menu_id, menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_dept, create_by, create_time, update_by, update_time, remark)
-values(1956377635485433860, '人员项目管理新增', 1956377635485433858, '2',  '#', '', 1, 0, 'F', '0', '0', 'osc:projectMember:add',          '#', 103, 1, sysdate(), null, null, '');
-
-insert into sys_menu (menu_id, menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_dept, create_by, create_time, update_by, update_time, remark)
-values(1956377635485433861, '人员项目管理修改', 1956377635485433858, '3',  '#', '', 1, 0, 'F', '0', '0', 'osc:projectMember:edit',         '#', 103, 1, sysdate(), null, null, '');
-
-insert into sys_menu (menu_id, menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_dept, create_by, create_time, update_by, update_time, remark)
-values(1956377635485433862, '人员项目管理删除', 1956377635485433858, '4',  '#', '', 1, 0, 'F', '0', '0', 'osc:projectMember:remove',       '#', 103, 1, sysdate(), null, null, '');
-
-insert into sys_menu (menu_id, menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_dept, create_by, create_time, update_by, update_time, remark)
-values(1956377635485433863, '人员项目管理导出', 1956377635485433858, '5',  '#', '', 1, 0, 'F', '0', '0', 'osc:projectMember:export',       '#', 103, 1, sysdate(), null, null, '');
 

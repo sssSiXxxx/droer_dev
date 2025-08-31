@@ -195,64 +195,8 @@ export const dynamicRoutes: RouteRecordRaw[] = [
         meta: { title: '项目详情', icon: 'project', hidden: true },
         permissions: ['osc:project:query']
       },
-      {
-        path: 'projectMember',
-        component: () => import('@/views/osc/projectMember/index.vue'),
-        name: 'ProjectMember',
-        meta: { title: '人员项目管理', icon: 'user' },
-        permissions: ['osc:projectMember:list']
-      },
-      {
-        path: 'projectMemberVisualization',
-        component: () => import('@/views/osc/projectMember/visualization.vue'),
-        name: 'ProjectMemberVisualization',
-        meta: { title: '项目人员可视化', icon: 'chart' },
-        permissions: ['osc:projectMember:list']
-      },
-      {
-        path: 'projectMember/test',
-        component: () => import('@/views/osc/projectMember/test.vue'),
-        name: 'ProjectMemberTest',
-        meta: { title: '项目成员测试', icon: 'test' },
-        hidden: true
-      },
-      {
-        path: 'projectMember/debug',
-        component: () => import('@/views/osc/projectMember/debug.vue'),
-        name: 'ProjectMemberDebug',
-        meta: { title: '项目成员调试', icon: 'debug' },
-        hidden: true
-      },
-      {
-        path: 'projectMember/simple',
-        component: () => import('@/views/osc/projectMember/simple.vue'),
-        name: 'ProjectMemberSimple',
-        meta: { title: '项目成员简化测试', icon: 'test' },
-        hidden: true
-      },
-      {
-        path: 'projectMember/basic',
-        component: () => import('@/views/osc/projectMember/basic.vue'),
-        name: 'ProjectMemberBasic',
-        meta: { title: '项目成员基础测试', icon: 'test' },
-        hidden: true
-      }
     ]
   },
-  // 项目成员关联路由
-  {
-    path: '/osc/projectMember',
-    component: Layout,
-    hidden: true,
-    children: [
-      {
-        path: 'index',
-        component: () => import('@/views/osc/projectMember/index.vue'),
-        name: 'ProjectMember',
-        meta: { title: '项目成员关联', icon: 'user' }
-      }
-    ]
-  }
 ];
 
 /**

@@ -5,7 +5,6 @@
 
 -- 清空现有数据 (谨慎执行)
 -- DELETE FROM osc_contributions;
--- DELETE FROM os_project_member;  
 -- DELETE FROM osc_members;
 -- DELETE FROM osc_projects;
 
@@ -217,31 +216,6 @@ INSERT INTO osc_members (member_name, real_name, email, github_username, gitee_u
 ('Pandas886', 'Pandas886', '', 'Pandas886', 'Pandas886', 'https://foruda.gitee.com/avatar/1681047857177084214/12623134_pandas886_1681047857.png', 'contributor', '2025-08-26', '', '', '', 'https://gitee.com/Pandas886'),
 ('vinci-897', 'vinci', '', 'vinci-897', 'vinci-897', 'https://foruda.gitee.com/avatar/1700483729067941252/13727968_vinci-897_1700483729.png', 'contributor', '2025-08-26', '', '', '', 'https://gitee.com/vinci-897');
 
--- 项目成员关联数据
-INSERT INTO os_project_member (project_id, member_id, role, join_time, contribution_score) VALUES
-((SELECT project_id FROM osc_projects WHERE project_name = 'Sa-Token'), (SELECT member_id FROM osc_members WHERE member_name = 'click33'), 'maintainer', '2021-01-01', 512),
-((SELECT project_id FROM osc_projects WHERE project_name = 'dax-pay'), (SELECT member_id FROM osc_members WHERE member_name = 'xxm1995'), 'maintainer', '2021-01-01', 533),
-((SELECT project_id FROM osc_projects WHERE project_name = 'forest'), (SELECT member_id FROM osc_members WHERE member_name = 'gongjun'), 'maintainer', '2021-01-01', 441),
-((SELECT project_id FROM osc_projects WHERE project_name = 'northstar'), (SELECT member_id FROM osc_members WHERE member_name = 'KevinHuangwl'), 'maintainer', '2021-01-01', 437),
-((SELECT project_id FROM osc_projects WHERE project_name = 'lamp-cloud'), (SELECT member_id FROM osc_members WHERE member_name = 'zuihou'), 'maintainer', '2021-01-01', 477),
-((SELECT project_id FROM osc_projects WHERE project_name = 'MaxKey'), (SELECT member_id FROM osc_members WHERE member_name = 'shimingxy'), 'maintainer', '2021-01-01', 247),
-((SELECT project_id FROM osc_projects WHERE project_name = 'electron-egg'), (SELECT member_id FROM osc_members WHERE member_name = 'wallace5303'), 'maintainer', '2021-01-01', 379),
-((SELECT project_id FROM osc_projects WHERE project_name = 'Jpom'), (SELECT member_id FROM osc_members WHERE member_name = 'jiangzeyin'), 'maintainer', '2021-01-01', 385),
-((SELECT project_id FROM osc_projects WHERE project_name = 'fast-request'), (SELECT member_id FROM osc_members WHERE member_name = 'kings1990'), 'maintainer', '2021-01-01', 376),
-((SELECT project_id FROM osc_projects WHERE project_name = 'hmily'), (SELECT member_id FROM osc_members WHERE member_name = 'xiaoyu'), 'maintainer', '2021-01-01', 165),
-((SELECT project_id FROM osc_projects WHERE project_name = 'TLog'), (SELECT member_id FROM osc_members WHERE member_name = 'bryan31'), 'maintainer', '2021-01-01', 408),
-
--- 补充剩余项目的主要维护者关联
--- domain-admin
-((SELECT project_id FROM osc_projects WHERE project_name = 'domain-admin'), (SELECT member_id FROM osc_members WHERE member_name = 'mouday'), 'maintainer', '2022-09-23', 325),
-
--- dante-cloud 
-((SELECT project_id FROM osc_projects WHERE project_name = 'dante-cloud'), (SELECT member_id FROM osc_members WHERE member_name = 'herodotus-ecosystem'), 'maintainer', '2021-05-19', 192),
-
--- RuoYi-Vue-Plus
-((SELECT project_id FROM osc_projects WHERE project_name = 'RuoYi-Vue-Plus'), (SELECT member_id FROM osc_members WHERE member_name = 'JavaLionLi'), 'maintainer', '2021-06-23', 464),
-
--- cubic 
 ((SELECT project_id FROM osc_projects WHERE project_name = 'cubic'), (SELECT member_id FROM osc_members WHERE member_name = 'dromara'), 'maintainer', '2020-05-20', 100),
 
 -- dynamic-tp
@@ -361,60 +335,6 @@ INSERT INTO os_project_member (project_id, member_id, role, join_time, contribut
 ((SELECT project_id FROM osc_projects WHERE project_name = 'hmily'), (SELECT member_id FROM osc_members WHERE member_name = 'yu199195'), '2', '2017-10-15', 123),
 ((SELECT project_id FROM osc_projects WHERE project_name = 'hmily'), (SELECT member_id FROM osc_members WHERE member_name = 'dromara'), '4', '2018-02-10', 98);
 
--- 示例贡献记录
-INSERT INTO osc_contributions (member_id, project_id, contribution_type, content, contribution_time, points) VALUES
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 0), 1, 'bug_fix', '优化了性能', '2025-03-23', 5),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 2), 1, 'bug_fix', '添加了新功能', '2025-05-08', 9),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 0), 1, 'bug_fix', '更新了文档', '2025-05-08', 3),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 2), 2, 'feature', '优化了性能', '2025-03-23', 10),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 4), 2, 'code', '修复了重要Bug', '2025-05-18', 9),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 0), 2, 'review', '更新了文档', '2025-01-03', 4),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 0), 3, 'review', '修复了重要Bug', '2024-10-01', 1),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 1), 3, 'doc', '修复了重要Bug', '2025-06-16', 5),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 1), 3, 'bug_fix', '重构了代码', '2024-09-30', 3),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 4), 4, 'feature', '更新了文档', '2025-03-27', 7),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 3), 4, 'feature', '优化了性能', '2024-10-12', 8),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 2), 4, 'review', '重构了代码', '2025-03-27', 6),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 2), 5, 'review', '添加了新功能', '2025-06-07', 9),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 0), 5, 'doc', '修复了重要Bug', '2025-07-07', 7),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 3), 5, 'review', '优化了性能', '2025-02-02', 2),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 1), 6, 'bug_fix', '重构了代码', '2025-07-01', 9),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 2), 6, 'feature', '添加了新功能', '2025-07-25', 8),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 1), 6, 'feature', '更新了文档', '2025-02-28', 8),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 4), 7, 'code', '重构了代码', '2025-03-24', 3),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 0), 7, 'feature', '更新了文档', '2024-09-26', 6),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 1), 7, 'feature', '添加了新功能', '2025-04-28', 3),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 0), 8, 'code', '修复了重要Bug', '2025-06-16', 1),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 3), 8, 'review', '添加了新功能', '2025-05-30', 4),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 0), 8, 'feature', '优化了性能', '2025-06-16', 2),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 1), 9, 'bug_fix', '添加了新功能', '2025-08-19', 7),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 2), 9, 'doc', '修复了重要Bug', '2025-02-10', 7),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 1), 9, 'code', '更新了文档', '2025-05-21', 3),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 1), 10, 'doc', '重构了代码', '2025-08-05', 10),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 4), 10, 'code', '优化了性能', '2024-09-27', 9),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 4), 10, 'bug_fix', '更新了文档', '2025-08-13', 1),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 4), 11, 'review', '优化了性能', '2024-10-12', 7),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 3), 11, 'feature', '更新了文档', '2025-08-15', 6),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 3), 11, 'doc', '修复了重要Bug', '2025-05-29', 1),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 3), 12, 'code', '优化了性能', '2025-02-09', 2),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 0), 12, 'review', '修复了重要Bug', '2024-11-14', 10),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 1), 12, 'doc', '优化了性能', '2025-02-22', 9),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 2), 13, 'doc', '优化了性能', '2024-11-16', 8),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 2), 13, 'feature', '修复了重要Bug', '2025-02-01', 9),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 1), 13, 'doc', '修复了重要Bug', '2025-07-07', 5),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 2), 14, 'bug_fix', '修复了重要Bug', '2025-04-23', 6),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 2), 14, 'doc', '修复了重要Bug', '2025-07-15', 7),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 2), 14, 'feature', '优化了性能', '2025-02-25', 1),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 2), 15, 'review', '修复了重要Bug', '2024-10-30', 3),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 0), 15, 'review', '修复了重要Bug', '2025-03-13', 10),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 2), 15, 'bug_fix', '优化了性能', '2025-03-16', 9),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 2), 16, 'doc', '重构了代码', '2024-10-22', 3),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 0), 16, 'review', '更新了文档', '2025-08-07', 3),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 1), 16, 'feature', '修复了重要Bug', '2025-06-04', 10),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 1), 17, 'bug_fix', '添加了新功能', '2024-08-29', 6),
-((SELECT member_id FROM osc_members LIMIT 1 OFFSET 2), 17, 'feature', '优化了性能', '2025-01-11', 1);
-
-
 -- 数据统计
 -- 项目总数: 98
 -- 成员总数: 104
@@ -429,6 +349,4 @@ INSERT INTO osc_contributions (member_id, project_id, contribution_type, content
 
 SELECT 
     (SELECT COUNT(*) FROM osc_projects) as '项目数量',
-    (SELECT COUNT(*) FROM osc_members) as '成员数量',
-    (SELECT COUNT(*) FROM os_project_member) as '关联关系',
-    (SELECT COUNT(*) FROM osc_contributions) as '贡献记录';
+    (SELECT COUNT(*) FROM osc_members) as '成员数量';

@@ -170,52 +170,7 @@ CREATE TABLE `os_member_skill` (
   INDEX `idx_member_skill` (`member_id`, `skill_id`)
 ) COMMENT='成员技能关联表';
 
--- 项目成员关联表
-CREATE TABLE `os_project_member` (
-  `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'ID',
-  `project_id` bigint NOT NULL COMMENT '项目ID',
-  `member_id` bigint NOT NULL COMMENT '成员ID',
-  `role` char(1) DEFAULT '0' COMMENT '角色（0普通成员 1项目负责人 2核心开发者 3维护者 4贡献者）',
-  `join_time` datetime COMMENT '加入时间',
-  `permission_level` int DEFAULT '1' COMMENT '权限级别（1-5，数字越大权限越高）',
-  `is_active` char(1) DEFAULT '1' COMMENT '是否活跃（0非活跃 1活跃）',
-  `contribution_score` int DEFAULT '0' COMMENT '贡献度评分（1-100）',
-  `remark` varchar(500) COMMENT '备注',
-  `create_dept` bigint COMMENT '创建部门',
-  `create_by` bigint COMMENT '创建者',
-  `create_time` datetime COMMENT '创建时间',
-  `update_by` bigint COMMENT '更新者',
-  `update_time` datetime COMMENT '更新时间',
-  `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0代表存在 2代表删除）',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_project_member` (`project_id`, `member_id`),
-  INDEX `idx_project_member` (`project_id`, `member_id`),
-  INDEX `idx_member_project` (`member_id`, `project_id`),
-  INDEX `idx_role` (`role`),
-  INDEX `idx_is_active` (`is_active`),
-  INDEX `idx_del_flag` (`del_flag`)
-) COMMENT='项目成员关联表';
 
--- 贡献记录表
-CREATE TABLE `os_contribution` (
-  `contribution_id` bigint NOT NULL AUTO_INCREMENT COMMENT '贡献ID',
-  `member_id` bigint NOT NULL COMMENT '成员ID',
-  `project_id` bigint NOT NULL COMMENT '项目ID',
-  `contribution_type` char(1) DEFAULT '0' COMMENT '贡献类型（0代码提交 1问题修复 2文档贡献 3回答问题 4其他）',
-  `content` varchar(500) COMMENT '贡献内容',
-  `url` varchar(255) COMMENT '相关链接',
-  `contribution_time` datetime COMMENT '贡献时间',
-  `points` int DEFAULT '0' COMMENT '贡献点数',
-  `create_dept` bigint COMMENT '创建部门',
-  `create_by` bigint COMMENT '创建者',
-  `create_time` datetime COMMENT '创建时间',
-  `update_by` bigint COMMENT '更新者',
-  `update_time` datetime COMMENT '更新时间',
-  PRIMARY KEY (`contribution_id`),
-  INDEX `idx_contribution_member` (`member_id`),
-  INDEX `idx_contribution_project` (`project_id`),
-  INDEX `idx_contribution_create_dept` (`create_dept`)
-) COMMENT='贡献记录表';
 
 -- ----------------------------
 -- 3. 社区管理相关表
@@ -303,10 +258,3 @@ ADD COLUMN file_type varchar(20) DEFAULT 'other' COMMENT '文档类型（logo: L
 ALTER TABLE sys_oss
 ADD CONSTRAINT fk_oss_project FOREIGN KEY (project_id) REFERENCES os_project (project_id) ON DELETE SET NULL;
 
--- 为已存在的 os_project_member 表添加 del_flag 字段（仅在字段不存在时执行）
-ALTER TABLE os_project_member 
-ADD COLUMN IF NOT EXISTS del_flag char(1) DEFAULT '0' COMMENT '删除标志（0代表存在 2代表删除）';
-
--- 为 del_flag 字段添加索引（仅在索引不存在时执行）
-ALTER TABLE os_project_member 
-ADD INDEX IF NOT EXISTS idx_del_flag (del_flag);
