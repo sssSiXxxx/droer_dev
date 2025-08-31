@@ -12,6 +12,7 @@ export interface ProjectVO {
   techStack?: string;
   programmingLanguage?: string;
   coreContributors?: string;
+  maintainer?: string;
   contactInfo?: string;
   versionInfo?: string;
   starCount?: number;
@@ -39,11 +40,8 @@ export interface ProjectForm {
   logoUrl?: string;
   status?: string;
   remark?: string;
-  techStack?: string[];
-  programmingLanguage?: string[];
-  coreContributors?: string;
-  contactInfo?: string;
-  versionInfo?: string;
+  maintainer?: string;
+  userId?: number;
   starCount?: number;
   forkCount?: number;
   issuesCount?: number;
@@ -61,7 +59,7 @@ export interface ProjectQuery {
   projectCode?: string;
   status?: string;
   techStack?: string;
-  programmingLanguage?: string;
+  maintainer?: string;
   createBy?: number | string;
   params?: any;
 }

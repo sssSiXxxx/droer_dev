@@ -51,6 +51,9 @@ ALTER TABLE os_project ADD COLUMN readme_url VARCHAR(500) COMMENT 'README链接'
 ALTER TABLE os_project ADD COLUMN wiki_url VARCHAR(500) COMMENT 'Wiki链接';
 ALTER TABLE os_project ADD COLUMN api_doc_url VARCHAR(500) COMMENT 'API文档链接';
 ALTER TABLE os_project ADD COLUMN last_commit_time DATETIME COMMENT '最后提交时间';
+ALTER TABLE os_project ADD COLUMN user_id BIGINT COMMENT '项目负责人用户ID';
+ALTER TABLE os_project ADD COLUMN maintainer VARCHAR(100) COMMENT '项目负责人姓名';
+ALTER TABLE os_project ADD INDEX idx_user_id (user_id);
 
 -- 项目审核表
 CREATE TABLE `os_project_audit` (

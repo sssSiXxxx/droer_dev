@@ -14,33 +14,71 @@
       </template>
 
       <el-row :gutter="24">
-        <el-col :span="8">
+        <el-col :span="6">
           <div class="info-item">
             <label>项目序号：</label>
             <span>{{ projectInfo.projectId }}</span>
           </div>
         </el-col>
-        <el-col :span="8">
+        <el-col :span="6">
           <div class="info-item">
             <label>项目名称：</label>
             <span class="project-name">{{ projectInfo.projectName }}</span>
           </div>
         </el-col>
-        <el-col :span="8">
+        <el-col :span="6">
           <div class="info-item">
-            <label>项目状态：</label>
-            <el-tag :type="getStatusType(projectInfo.status)">
-              {{ getStatusLabel(projectInfo.status) }}
-            </el-tag>
+            <label>项目负责人：</label>
+            <span class="maintainer">{{ projectInfo.maintainer || '未设置' }}</span>
+          </div>
+        </el-col>
+      </el-row>
+
+      <!-- 项目统计数据 -->
+      <el-row :gutter="24" style="margin-top: 16px">
+        <el-col :span="6">
+          <div class="stat-item">
+            <el-icon class="stat-icon star-icon"><Star /></el-icon>
+            <div class="stat-content">
+              <div class="stat-number">{{ projectInfo.starCount || 0 }}</div>
+              <div class="stat-label">Star数</div>
+            </div>
+          </div>
+        </el-col>
+        <el-col :span="6">
+          <div class="stat-item">
+            <el-icon class="stat-icon fork-icon"><Share /></el-icon>
+            <div class="stat-content">
+              <div class="stat-number">{{ projectInfo.forkCount || 0 }}</div>
+              <div class="stat-label">Fork数</div>
+            </div>
+          </div>
+        </el-col>
+        <el-col :span="6">
+          <div class="stat-item">
+            <el-icon class="stat-icon contributor-icon"><User /></el-icon>
+            <div class="stat-content">
+              <div class="stat-number">{{ getContributorCount() }}</div>
+              <div class="stat-label">贡献者数</div>
+            </div>
+          </div>
+        </el-col>
+        <el-col :span="6">
+          <div class="stat-item">
+            <el-icon class="stat-icon issue-icon"><Warning /></el-icon>
+            <div class="stat-content">
+              <div class="stat-number">{{ projectInfo.issuesCount || 0 }}</div>
+              <div class="stat-label">Issues</div>
+            </div>
           </div>
         </el-col>
       </el-row>
 
       <el-row :gutter="24" style="margin-top: 16px">
         <el-col :span="24">
-          <div class="info-item">
+          <div class="info-item description-item">
             <label>项目描述：</label>
-            <span>{{ projectInfo.description || '暂无描述' }}</span>
+            <div class="description-content">{{ projectInfo.description || '暂无描述' }}</div>
           </div>
         </el-col>
       </el-row>
@@ -74,7 +112,7 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
-import { Document, ArrowLeft } from '@element-plus/icons-vue';
+import { Document, ArrowLeft, Star, Share, User, Warning } from '@element-plus/icons-vue';
 import { getProject } from '@/api/osc/project';
 import { ProjectVO } from '@/api/osc/project/types';
 
@@ -96,33 +134,15 @@ const getProjectInfo = async () => {
 };
 
 
+// 获取贡献者数量
+const getContributorCount = () => {
+  if (projectInfo.value.coreContributors) {
+    return projectInfo.value.coreContributors.split(',').filter(c => c.trim()).length;
+  }
+  return 0;
+};
+
 // 获取状态标签
-const getStatusLabel = (status: string) => {
-  const statusMap: Record<string, string> = {
-    '0': '草稿',
-    '1': '审核中',
-    '2': '进行中',
-    '3': '已完成',
-    '4': '已暂停',
-    '5': '已驳回'
-  };
-  return statusMap[status] || '未知';
-};
-
-// 获取状态类型
-const getStatusType = (status: string) => {
-  const typeMap: Record<string, string> = {
-    '0': 'info',
-    '1': 'warning',
-    '2': 'success',
-    '3': 'success',
-    '4': 'danger',
-    '5': 'danger'
-  };
-  return typeMap[status] || 'info';
-};
-
-
 onMounted(async () => {
   await getProjectInfo();
 });
@@ -155,7 +175,7 @@ onMounted(async () => {
 
 .info-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 12px;
 }
 
@@ -164,11 +184,88 @@ onMounted(async () => {
   color: var(--el-text-color-regular);
   min-width: 80px;
   margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.description-item {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.description-item label {
+  margin-bottom: 8px;
+}
+
+.description-content {
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: var(--el-text-color-primary);
 }
 
 .project-name {
   font-weight: 600;
   color: var(--el-color-primary);
+}
+
+.maintainer {
+  font-weight: 500;
+  color: var(--el-text-color-primary);
+}
+
+/* 统计数据样式 */
+.stat-item {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+  transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.stat-icon {
+  font-size: 24px;
+  margin-right: 12px;
+}
+
+.star-icon {
+  color: #f7ba2a;
+}
+
+.fork-icon {
+  color: #28a745;
+}
+
+.contributor-icon {
+  color: #6f42c1;
+}
+
+.issue-icon {
+  color: #fd7e14;
+}
+
+.stat-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-number {
+  font-size: 20px;
+  font-weight: bold;
+  color: var(--el-text-color-primary);
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--el-text-color-regular);
+  margin-top: 4px;
 }
 
 </style>

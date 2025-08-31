@@ -170,6 +170,17 @@ public class ProjectVo implements Serializable {
     private Date lastCommitTime;
 
     /**
+     * 项目负责人用户ID
+     */
+    private Long userId;
+
+    /**
+     * 项目负责人姓名
+     */
+    @ExcelProperty(value = "项目负责人")
+    private String maintainer;
+
+    /**
      * 创建部门
      */
     private Long createDept;

@@ -7,20 +7,13 @@
             <el-form-item label="项目名称" prop="projectName">
               <el-input v-model="queryParams.projectName" placeholder="请输入项目名称" clearable @keyup.enter="handleQuery" />
             </el-form-item>
-            <el-form-item label="项目状态" prop="status">
-              <el-select v-model="queryParams.status" placeholder="请选择项目状态" clearable>
-                <el-option v-for="dict in osc_project_status" :key="dict.value" :label="dict.label" :value="dict.value" />
-              </el-select>
-            </el-form-item>
             <el-form-item label="技术栈" prop="techStack">
               <el-select v-model="queryParams.techStack" placeholder="请选择技术栈" clearable>
                 <el-option v-for="dict in techStackDict" :key="dict.value" :label="dict.label" :value="dict.value" />
               </el-select>
             </el-form-item>
-            <el-form-item label="编程语言" prop="programmingLanguage">
-              <el-select v-model="queryParams.programmingLanguage" placeholder="请选择编程语言" clearable>
-                <el-option v-for="dict in programmingLanguageDict" :key="dict.value" :label="dict.label" :value="dict.value" />
-              </el-select>
+            <el-form-item label="项目负责人" prop="maintainer">
+              <el-input v-model="queryParams.maintainer" placeholder="请输入负责人姓名" clearable />
             </el-form-item>
             <el-form-item>
               <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
@@ -67,64 +60,61 @@
         </el-table-column>
         <el-table-column label="项目ID" align="center" prop="projectId" v-if="false" />
 
-        <!-- 项目名称 -->
-        <el-table-column label="项目名称" align="center" prop="projectName" min-width="120" :show-overflow-tooltip="true">
+        <!-- 项目名称和描述 -->
+        <el-table-column label="项目信息" align="center" prop="projectName" min-width="280" :show-overflow-tooltip="false">
           <template #default="scope">
-            <div class="project-name-cell">
-              <el-link
-                v-if="scope.row.websiteUrl"
-                :href="scope.row.websiteUrl"
-                target="_blank"
-                type="primary"
-                :underline="false"
-                class="project-name-link"
-              >
-                {{ scope.row.projectName }}
-              </el-link>
-              <span v-else>{{ scope.row.projectName }}</span>
+            <div class="project-info-cell">
+              <div class="project-name">
+                <el-link
+                  v-if="scope.row.websiteUrl"
+                  :href="scope.row.websiteUrl"
+                  target="_blank"
+                  type="primary"
+                  :underline="false"
+                  class="project-name-link"
+                >
+                  {{ scope.row.projectName }}
+                </el-link>
+                <span v-else class="project-name-text">{{ scope.row.projectName }}</span>
+              </div>
+              <div v-if="scope.row.description" class="project-description">
+                {{ scope.row.description }}
+              </div>
             </div>
           </template>
         </el-table-column>
 
-        <!-- 项目描述 -->
-        <el-table-column label="项目描述" align="center" prop="description" min-width="180" :show-overflow-tooltip="true">
+        <!-- 项目负责人 -->
+        <el-table-column label="项目负责人" align="center" prop="maintainer" min-width="120" :show-overflow-tooltip="true">
           <template #default="scope">
-            <div class="description-cell">
-              {{ scope.row.description || '暂无描述' }}
+            <div class="maintainer-cell">
+              <span v-if="scope.row.maintainer">{{ scope.row.maintainer }}</span>
+              <span v-else class="text-gray-400">未设置</span>
             </div>
           </template>
         </el-table-column>
 
-        <!-- 技术栈 -->
-        <el-table-column label="技术栈" align="center" prop="techStack" min-width="150">
+        <!-- Star数 -->
+        <el-table-column label="Star数" align="center" prop="starCount" min-width="100" sortable>
           <template #default="scope">
-            <div v-if="scope.row.techStack && typeof scope.row.techStack === 'string'" class="tech-stack">
-              <el-tag v-for="tech in scope.row.techStack.split(',')" :key="tech" size="small" type="info" class="tech-tag">
-                {{ getDictLabel(techStackDict, tech) }}
-              </el-tag>
+            <div class="star-cell">
+              <el-icon class="star-icon"><Star /></el-icon>
+              <span>{{ formatNumber(scope.row.starCount) }}</span>
             </div>
-            <span v-else class="text-gray-400">-</span>
           </template>
         </el-table-column>
 
-        <!-- 编程语言 -->
-        <el-table-column label="编程语言" align="center" prop="programmingLanguage" min-width="150">
+        <!-- Fork数 -->
+        <el-table-column label="Fork数" align="center" prop="forkCount" min-width="100" sortable>
           <template #default="scope">
-            <div v-if="scope.row.programmingLanguage && typeof scope.row.programmingLanguage === 'string'" class="programming-language">
-              <el-tag v-for="lang in scope.row.programmingLanguage.split(',')" :key="lang" size="small" type="success" class="lang-tag">
-                {{ getDictLabel(programmingLanguageDict, lang) }}
-              </el-tag>
+            <div class="fork-cell">
+              <el-icon class="fork-icon"><Share /></el-icon>
+              <span>{{ formatNumber(scope.row.forkCount) }}</span>
             </div>
-            <span v-else class="text-gray-400">-</span>
           </template>
         </el-table-column>
 
-        <!-- 状态 -->
-        <el-table-column label="状态" align="center" prop="status" min-width="80">
-          <template #default="scope">
-            <dict-tag :options="osc_project_status" :value="scope.row.status" />
-          </template>
-        </el-table-column>
+
 
         <!-- 详细信息 -->
         <el-table-column label="详细信息" align="center" prop="description" min-width="120">
@@ -142,8 +132,8 @@
             <el-tooltip content="修改" placement="top">
               <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['osc:project:edit']"></el-button>
             </el-tooltip>
-            <el-tooltip content="进度追踪" placement="top">
-              <el-button link type="success" icon="TrendCharts" @click="goToPhaseTracking(scope.row)"></el-button>
+            <el-tooltip content="贡献统计" placement="top">
+              <el-button link type="success" icon="TrendCharts" @click="goToContributors(scope.row)"></el-button>
             </el-tooltip>
             <el-tooltip content="删除" placement="top">
               <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['osc:project:remove']"></el-button>
@@ -156,56 +146,46 @@
     </el-card>
     <!-- 添加或修改项目列表对话框 -->
     <el-dialog :title="dialog.title" v-model="dialog.visible" width="500px" append-to-body>
-      <el-form ref="projectFormRef" :model="form" :rules="rules" label-width="80px" class="dialog-form">
+      <el-form ref="projectFormRef" :model="form" :rules="rules" label-width="100px" class="dialog-form">
         <el-form-item label="项目名称" prop="projectName">
           <el-input v-model="form.projectName" placeholder="请输入项目名称" />
         </el-form-item>
 
         <el-form-item label="项目描述" prop="description">
-          <el-input v-model="form.description" type="textarea" placeholder="请输入内容" />
+          <el-input v-model="form.description" type="textarea" :rows="3" placeholder="请输入项目描述" />
         </el-form-item>
+
         <el-form-item label="代码仓库" prop="repositoryUrl">
-          <el-input v-model="form.repositoryUrl" placeholder="请输入仓库地址" />
+          <el-input v-model="form.repositoryUrl" placeholder="请输入GitHub/Gitee仓库地址" />
         </el-form-item>
+
         <el-form-item label="项目网站" prop="websiteUrl">
-          <el-input v-model="form.websiteUrl" placeholder="请输入项目网址" />
+          <el-input v-model="form.websiteUrl" placeholder="请输入项目网址（可选）" />
         </el-form-item>
+
+        <el-form-item label="项目负责人" prop="maintainer">
+          <el-select 
+            v-model="form.maintainer" 
+            placeholder="请选择项目负责人" 
+            filterable 
+            clearable
+            style="width: 100%"
+            @focus="getUserList"
+          >
+            <el-option 
+              v-for="user in userList" 
+              :key="user.userId" 
+              :label="user.nickName" 
+              :value="user.nickName"
+            >
+              <span>{{ user.nickName }}</span>
+              <span style="float: right; color: #999; font-size: 12px">{{ user.userName }}</span>
+            </el-option>
+          </el-select>
+        </el-form-item>
+
         <el-form-item label="项目Logo" prop="logoUrl">
           <image-upload v-model="form.logoUrl" />
-        </el-form-item>
-        <el-form-item label="项目状态" prop="status">
-          <el-select v-model="form.status" placeholder="请选择项目状态" style="width: 100%">
-            <el-option v-for="dict in osc_project_status" :key="dict.value" :label="dict.label" :value="dict.value" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="技术栈" prop="techStack">
-          <el-select
-            v-model="form.techStack"
-            multiple
-            filterable
-            placeholder="搜索或选择技术栈"
-            style="width: 100%"
-            :filter-method="filterTechStack"
-            :reserve-keyword="true"
-          >
-            <el-option v-for="dict in filteredTechStack" :key="dict.value" :label="dict.label" :value="dict.value" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="编程语言" prop="programmingLanguage">
-          <el-select
-            v-model="form.programmingLanguage"
-            multiple
-            filterable
-            placeholder="搜索或选择编程语言"
-            style="width: 100%"
-            :filter-method="filterProgrammingLanguage"
-            :reserve-keyword="true"
-          >
-            <el-option v-for="dict in filteredProgrammingLanguage" :key="dict.value" :label="dict.label" :value="dict.value" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -255,9 +235,11 @@
 
 <script setup name="Project" lang="ts">
 import { listProject, getProject, delProject, addProject, updateProject } from '@/api/osc/project';
+import { listUser } from '@/api/system/user';
 import { ProjectVO, ProjectQuery, ProjectForm } from '@/api/osc/project/types';
+import { UserVO } from '@/api/system/user/types';
 import { useUserStore } from '@/store/modules/user';
-import { View, TrendCharts } from '@element-plus/icons-vue';
+import { View, TrendCharts, Star, Share } from '@element-plus/icons-vue';
 import { useRoute } from 'vue-router';
 import { ElMessageBox } from 'element-plus';
 
@@ -377,6 +359,7 @@ const filterProgrammingLanguage = (query: string) => {
 };
 
 const projectList = ref<ProjectVO[]>([]);
+const userList = ref<UserVO[]>([]);
 const buttonLoading = ref(false);
 const loading = ref(true);
 const showSearch = ref(true);
@@ -420,11 +403,8 @@ const initFormData: ProjectForm = {
   logoUrl: undefined,
   status: undefined,
   remark: undefined,
-  techStack: undefined,
-  programmingLanguage: undefined,
-  coreContributors: undefined,
-  contactInfo: undefined,
-  versionInfo: undefined,
+  maintainer: undefined,
+  userId: undefined,
   starCount: undefined,
   forkCount: undefined,
   issuesCount: undefined,
@@ -442,7 +422,7 @@ const data = reactive<PageData<ProjectForm, ProjectQuery>>({
     projectName: undefined,
     status: undefined,
     techStack: undefined,
-    programmingLanguage: undefined,
+    maintainer: undefined,
     createBy: undefined,
     params: {}
   },
@@ -450,7 +430,7 @@ const data = reactive<PageData<ProjectForm, ProjectQuery>>({
     projectName: [{ required: true, message: '项目名称不能为空', trigger: 'blur' }],
     description: [{ required: true, message: '项目描述不能为空', trigger: 'blur' }],
     repositoryUrl: [{ required: true, message: '代码仓库不能为空', trigger: 'blur' }],
-    status: [{ required: true, message: '项目状态不能为空', trigger: 'change' }]
+    maintainer: [{ required: true, message: '项目负责人不能为空', trigger: 'blur' }]
   }
 });
 
@@ -466,6 +446,15 @@ const getDictLabel = (dictList: any[], value: string) => {
     dict = dictList.find((item) => item.label === trimmedValue);
   }
   return dict ? dict.label : value;
+};
+
+/** 格式化数字显示 */
+const formatNumber = (num: number | undefined | null) => {
+  if (num === undefined || num === null) return '0';
+  if (num >= 1000) {
+    return (num / 1000).toFixed(1) + 'k';
+  }
+  return num.toString();
 };
 
 /** 查询项目列表列表 */
@@ -485,6 +474,17 @@ const getList = async () => {
   }
 };
 
+/** 获取用户列表 */
+const getUserList = async () => {
+  try {
+    const res = await listUser({ pageNum: 1, pageSize: 1000, status: '0' });
+    userList.value = res.rows || [];
+  } catch (error) {
+    console.error('获取用户列表失败:', error);
+    userList.value = [];
+  }
+};
+
 /** 取消按钮 */
 const cancel = () => {
   reset();
@@ -494,9 +494,6 @@ const cancel = () => {
 /** 表单重置 */
 const reset = () => {
   form.value = { ...initFormData };
-  // 确保多选字段初始化为数组
-  (form.value as any).techStack = [];
-  (form.value as any).programmingLanguage = [];
   projectFormRef.value?.resetFields();
 };
 
@@ -511,12 +508,9 @@ const resetQuery = () => {
   queryFormRef.value?.resetFields();
   queryParams.value.projectName = undefined;
   queryParams.value.techStack = undefined;
-  queryParams.value.programmingLanguage = undefined;
-  queryParams.value.params = {
-    statusList: ['2', '3', '4'] // 默认显示进行中、已完成和已归档的项目
-  };
-  queryParams.value.status = undefined;
+  queryParams.value.maintainer = undefined;
   queryParams.value.createBy = undefined;
+  queryParams.value.params = {};
   handleQuery();
 };
 
@@ -541,29 +535,24 @@ const handleUpdate = async (row?: ProjectVO) => {
   const res = await getProject(_projectId);
   Object.assign(form.value, res.data);
 
-  // 处理多选字段：将字符串转换为数组
-  if (form.value.techStack && typeof form.value.techStack === 'string') {
-    (form.value as any).techStack = form.value.techStack.split(',').filter((item: string) => item.trim());
-  } else {
-    (form.value as any).techStack = [];
-  }
-
-  if (form.value.programmingLanguage && typeof form.value.programmingLanguage === 'string') {
-    (form.value as any).programmingLanguage = form.value.programmingLanguage.split(',').filter((item: string) => item.trim());
-  } else {
-    (form.value as any).programmingLanguage = [];
-  }
-
   dialog.visible = true;
   dialog.title = '修改项目列表';
 };
 
-/** 跳转到阶段追踪 */
-const goToPhaseTracking = (row: ProjectVO) => {
-  proxy?.$router.push({
-    path: '/osc/projectPhase',
-    query: { projectId: row.projectId }
-  });
+/** 跳转到GitHub贡献统计 */
+const goToContributors = (row: ProjectVO) => {
+  if (row.repositoryUrl) {
+    // 构建GitHub Contributors URL
+    let contributorsUrl = row.repositoryUrl;
+    if (contributorsUrl.includes('github.com')) {
+      contributorsUrl = contributorsUrl.replace(/\.git$/, '') + '/graphs/contributors';
+    } else if (contributorsUrl.includes('gitee.com')) {
+      contributorsUrl = contributorsUrl.replace(/\.git$/, '') + '/contributors';
+    }
+    window.open(contributorsUrl, '_blank');
+  } else {
+    proxy?.$modal.msgWarning('该项目暂无代码仓库地址');
+  }
 };
 
 /** 提交按钮 */
@@ -572,14 +561,23 @@ const submitForm = () => {
     if (valid) {
       buttonLoading.value = true;
 
-      // 处理多选字段：将数组转换为字符串
       const submitData = { ...form.value };
-      if (Array.isArray(submitData.techStack)) {
-        submitData.techStack = submitData.techStack.join(',');
+      
+      // 如果选择了负责人，需要设置userId和maintainer
+      if (submitData.maintainer) {
+        const selectedUser = userList.value.find(user => user.nickName === submitData.maintainer);
+        if (selectedUser) {
+          submitData.userId = selectedUser.userId;
+          submitData.maintainer = selectedUser.nickName;
+          console.log('设置负责人:', {
+            userId: selectedUser.userId,
+            maintainer: selectedUser.nickName,
+            userName: selectedUser.userName
+          });
+        }
       }
-      if (Array.isArray(submitData.programmingLanguage)) {
-        submitData.programmingLanguage = submitData.programmingLanguage.join(',');
-      }
+
+      console.log('提交数据:', submitData);
 
       if (form.value.projectId) {
         await updateProject(submitData).finally(() => (buttonLoading.value = false));
@@ -724,49 +722,17 @@ onMounted(() => {
   // 从路由参数中获取查询条件
   const route = useRoute();
 
-  // 处理路由参数
-  if (route.query.status) {
-    // 设置状态
-    queryParams.value.status = route.query.status as string;
-    // 如果是草稿状态，清除状态列表
-    if (route.query.status === '0') {
-      queryParams.value.params = {};
-    }
-  } else {
-    // 默认显示进行中、已完成和已归档的项目
-    queryParams.value.params = {
-      statusList: ['2', '3', '4']
-    };
-  }
-
   // 处理创建者参数
   if (route.query.createBy) {
     queryParams.value.createBy = route.query.createBy as string;
   }
 
-  // 处理状态列表参数
-  if (route.query.params) {
-    try {
-      const params = JSON.parse(route.query.params as string);
-      if (params.statusList) {
-        queryParams.value.params = params;
-      }
-    } catch (error) {
-      console.error('解析params参数失败:', error);
-    }
-  }
-
-  // 如果是查看草稿箱，必须带上用户ID
-  if (route.query.status === '0') {
-    const userId = useUserStore().userId;
-    if (userId) {
-      queryParams.value.createBy = userId;
-    }
-  }
-
   // 初始化过滤列表
   filteredTechStack.value = techStackDict.value;
   filteredProgrammingLanguage.value = programmingLanguageDict.value;
+
+  // 获取用户列表
+  getUserList();
 
   // 获取列表数据
   handleQuery();
@@ -792,23 +758,34 @@ onMounted(() => {
 
 /* 主卡片 */
 .main-card {
-  border-radius: 8px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 /* 表格样式 */
 .el-table {
-  border-radius: 8px;
+  border-radius: 12px;
   overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
 .el-table th {
-  background-color: #f8f9fa;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
   font-weight: 600;
   color: #333;
+  border: none;
+  font-size: 14px;
 }
 
 .el-table td {
-  padding: 12px 8px;
+  padding: 16px 12px;
+  border: none;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.el-table tbody tr:last-child td {
+  border-bottom: none;
 }
 
 /* 序号列 */
@@ -817,21 +794,69 @@ onMounted(() => {
   color: #666;
 }
 
-/* 项目名称 */
-.project-name-cell {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  cursor: pointer;
-  max-width: 100%;
-  text-align: center;
-  font-weight: 500;
-  color: #333;
-  transition: color 0.3s ease;
+/* 项目信息 */
+.project-info-cell {
+  text-align: left;
+  padding: 8px 0;
 }
 
-.project-name-cell:hover {
-  color: #409eff;
+.project-name {
+  font-weight: 600;
+  font-size: 15px;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.project-name-text {
+  color: #333;
+}
+
+.project-description {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.4;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
+}
+
+/* 项目负责人 */
+.maintainer-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  color: #606266;
+}
+
+/* Star数 */
+.star-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-weight: 500;
+}
+
+.star-icon {
+  color: #f7ba2a;
+  font-size: 16px;
+}
+
+/* Fork数 */
+.fork-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-weight: 500;
+}
+
+.fork-icon {
+  color: #67c23a;
+  font-size: 16px;
 }
 
 /* 项目名称链接 */
@@ -874,25 +899,16 @@ onMounted(() => {
   padding: 2px 6px;
 }
 
-/* 编程语言标签 */
-.programming-language {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 4px;
-  padding: 4px;
-  max-width: 100%;
-}
-
-.lang-tag {
+.tech-count-tag {
   margin: 2px;
   border-radius: 12px;
   font-size: 11px;
-  padding: 2px 8px;
-  min-width: 40px;
-  max-width: none;
-  white-space: nowrap;
+  padding: 2px 6px;
+  background-color: #f0f0f0;
+  color: #666;
+  border: 1px solid #d9d9d9;
 }
+
 
 /* 项目描述 */
 .description-cell {
@@ -1008,7 +1024,13 @@ onMounted(() => {
 
 /* 表格行悬停效果 */
 .el-table tbody tr:hover > td {
-  background-color: #f5f7fa !important;
+  background: linear-gradient(135deg, #f8fbff 0%, #f0f9ff 100%) !important;
+  transform: translateY(-1px);
+  transition: all 0.3s ease;
+}
+
+.el-table tbody tr {
+  transition: all 0.3s ease;
 }
 
 /* 状态标签样式 */

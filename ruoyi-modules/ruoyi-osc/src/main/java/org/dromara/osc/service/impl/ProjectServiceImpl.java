@@ -89,44 +89,16 @@ public class ProjectServiceImpl implements IProjectService {
         LambdaQueryWrapper<Project> lqw = Wrappers.lambdaQuery();
         lqw.orderByDesc(Project::getCreateTime);  // 按创建时间倒序排序
         
-        log.info("构建查询条件 - 项目名称: {}, 技术栈: {}, 编程语言: {}, 创建者: {}, 状态: {}", 
-                bo.getProjectName(), bo.getTechStack(), bo.getProgrammingLanguage(), bo.getCreateBy(), bo.getStatus());
+        log.info("构建查询条件 - 项目名称: {}, 技术栈: {}, 负责人: {}, 创建者: {}", 
+                bo.getProjectName(), bo.getTechStack(), bo.getMaintainer(), bo.getCreateBy());
         
         // 处理基本查询条件
         lqw.like(StringUtils.isNotBlank(bo.getProjectName()), Project::getProjectName, bo.getProjectName());
         lqw.eq(StringUtils.isNotBlank(bo.getTechStack()), Project::getTechStack, bo.getTechStack());
-        lqw.eq(StringUtils.isNotBlank(bo.getProgrammingLanguage()), Project::getProgrammingLanguage, bo.getProgrammingLanguage());
+        lqw.like(StringUtils.isNotBlank(bo.getMaintainer()), Project::getMaintainer, bo.getMaintainer());
         lqw.eq(bo.getCreateBy() != null, Project::getCreateBy, bo.getCreateBy());  // 添加创建者条件
         
-        // 处理状态条件
-        log.info("查询参数: params={}, status={}", params, bo.getStatus());
-        
-        if (params != null && params.get("statusList") != null) {
-            // 如果有状态列表参数，使用in查询
-            try {
-                List<String> statusList = (List<String>) params.get("statusList");
-                log.info("状态列表: {}", statusList);
-                if (!statusList.isEmpty()) {
-                    lqw.in(Project::getStatus, statusList);
-                    log.info("使用状态列表查询: {}", statusList);
-                }
-            } catch (Exception e) {
-                log.error("处理状态列表参数失败", e);
-                // 如果状态列表处理失败，默认显示进行中的项目
-                lqw.in(Project::getStatus, List.of("2", "3", "4"));
-                log.info("状态列表处理失败，使用默认状态: [2, 3, 4]");
-            }
-        } else if (StringUtils.isNotBlank(bo.getStatus())) {
-            // 如果没有状态列表但有单个状态，使用eq查询
-            lqw.eq(Project::getStatus, bo.getStatus());
-            log.info("使用单个状态查询: {}", bo.getStatus());
-        } else {
-            // 如果没有任何状态条件，默认显示进行中、已完成和已归档的项目
-            lqw.in(Project::getStatus, List.of("2", "3", "4"));
-            log.info("无状态条件，使用默认状态: [2, 3, 4]");
-        }
-        
-        log.info("最终查询条件构建完成");
+        log.info("查询条件构建完成");
         return lqw;
     }
 
@@ -187,11 +159,14 @@ public class ProjectServiceImpl implements IProjectService {
      */
     @Override
     public Boolean updateByBo(ProjectBo bo) {
-        log.info("开始更新项目：projectId={}, projectName={}, status={}", 
-                bo.getProjectId(), bo.getProjectName(), bo.getStatus());
+        log.info("开始更新项目：projectId={}, projectName={}, maintainer={}, userId={}", 
+                bo.getProjectId(), bo.getProjectName(), bo.getMaintainer(), bo.getUserId());
         
         Project update = MapstructUtils.convert(bo, Project.class);
         validEntityBeforeSave(update);
+        
+        log.info("转换后的Project对象：maintainer={}, userId={}", 
+                update.getMaintainer(), update.getUserId());
         
         boolean result = baseMapper.updateById(update) > 0;
         log.info("项目更新结果：{}", result);
