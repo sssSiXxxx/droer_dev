@@ -144,10 +144,5 @@ public class Project extends BaseEntity {
      */
     private Long userId;
 
-    /**
-     * 项目负责人姓名
-     */
-    private String maintainer;
-
 
 }

@@ -44,6 +44,10 @@ export interface UserVO extends BaseEntity {
   remark: string;
   deptName: string;
   giteeAccount?: string;
+  githubAccount?: string;
+  bio?: string;
+  identityTags?: string;
+  ownedProjects?: any[];
   roles: RoleVO[];
   roleIds: any;
   postIds: any;
@@ -67,6 +71,10 @@ export interface UserForm {
   status: string;
   remark?: string;
   giteeAccount?: string;
+  githubAccount?: string;
+  bio?: string;
+  identityTags?: string;
+  ownedProjects?: string;
   postIds: string[];
   roleIds: string[];
 }

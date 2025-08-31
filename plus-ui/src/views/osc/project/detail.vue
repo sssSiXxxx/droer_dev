@@ -29,7 +29,7 @@
         <el-col :span="6">
           <div class="info-item">
             <label>项目负责人：</label>
-            <span class="maintainer">{{ projectInfo.maintainer || '未设置' }}</span>
+            <span class="maintainer">{{ getMaintainerName(projectInfo.userId) || '未设置' }}</span>
           </div>
         </el-col>
       </el-row>
@@ -114,13 +114,34 @@ import { useRoute, useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import { Document, ArrowLeft, Star, Share, User, Warning } from '@element-plus/icons-vue';
 import { getProject } from '@/api/osc/project';
+import { listUser } from '@/api/system/user';
 import { ProjectVO } from '@/api/osc/project/types';
+import { UserVO } from '@/api/system/user/types';
 
 const route = useRoute();
 const router = useRouter();
 
 // 响应式数据
 const projectInfo = ref<ProjectVO>({});
+const userList = ref<UserVO[]>([]);
+
+// 获取用户列表
+const getUserList = async () => {
+  try {
+    const res = await listUser({ pageNum: 1, pageSize: 1000, status: '0' });
+    userList.value = res.rows || [];
+  } catch (error) {
+    console.error('获取用户列表失败:', error);
+    userList.value = [];
+  }
+};
+
+// 根据用户ID获取用户姓名
+const getMaintainerName = (userId?: number) => {
+  if (!userId) return '未设置';
+  const user = userList.value.find(u => u.userId === userId);
+  return user ? user.nickName : '未设置';
+};
 
 // 获取项目信息
 const getProjectInfo = async () => {
@@ -142,8 +163,8 @@ const getContributorCount = () => {
   return 0;
 };
 
-// 获取状态标签
 onMounted(async () => {
+  await getUserList();
   await getProjectInfo();
 });
 </script>

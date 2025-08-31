@@ -87,15 +87,36 @@ public class ProjectServiceImpl implements IProjectService {
     private LambdaQueryWrapper<Project> buildQueryWrapper(ProjectBo bo) {
         Map<String, Object> params = bo.getParams();
         LambdaQueryWrapper<Project> lqw = Wrappers.lambdaQuery();
-        lqw.orderByDesc(Project::getCreateTime);  // 按创建时间倒序排序
         
-        log.info("构建查询条件 - 项目名称: {}, 技术栈: {}, 负责人: {}, 创建者: {}", 
-                bo.getProjectName(), bo.getTechStack(), bo.getMaintainer(), bo.getCreateBy());
+        // 处理排序
+        String orderByColumn = (String) params.get("orderByColumn");
+        String isAsc = (String) params.get("isAsc");
+        
+        if (StringUtils.isNotBlank(orderByColumn)) {
+            if ("starCount".equals(orderByColumn)) {
+                if ("asc".equals(isAsc)) {
+                    lqw.orderByAsc(Project::getStarCount);
+                } else {
+                    lqw.orderByDesc(Project::getStarCount);
+                }
+            } else if ("forkCount".equals(orderByColumn)) {
+                if ("asc".equals(isAsc)) {
+                    lqw.orderByAsc(Project::getForkCount);
+                } else {
+                    lqw.orderByDesc(Project::getForkCount);
+                }
+            }
+        } else {
+            lqw.orderByDesc(Project::getCreateTime);  // 默认按创建时间倒序排序
+        }
+        
+        log.info("构建查询条件 - 项目名称: {}, 项目描述: {}, 负责人用户ID: {}, 创建者: {}, 排序: {} {}", 
+                bo.getProjectName(), bo.getDescription(), bo.getUserId(), bo.getCreateBy(), orderByColumn, isAsc);
         
         // 处理基本查询条件
         lqw.like(StringUtils.isNotBlank(bo.getProjectName()), Project::getProjectName, bo.getProjectName());
-        lqw.eq(StringUtils.isNotBlank(bo.getTechStack()), Project::getTechStack, bo.getTechStack());
-        lqw.like(StringUtils.isNotBlank(bo.getMaintainer()), Project::getMaintainer, bo.getMaintainer());
+        lqw.like(StringUtils.isNotBlank(bo.getDescription()), Project::getDescription, bo.getDescription());
+        lqw.eq(bo.getUserId() != null, Project::getUserId, bo.getUserId());
         lqw.eq(bo.getCreateBy() != null, Project::getCreateBy, bo.getCreateBy());  // 添加创建者条件
         
         log.info("查询条件构建完成");
@@ -159,14 +180,14 @@ public class ProjectServiceImpl implements IProjectService {
      */
     @Override
     public Boolean updateByBo(ProjectBo bo) {
-        log.info("开始更新项目：projectId={}, projectName={}, maintainer={}, userId={}", 
-                bo.getProjectId(), bo.getProjectName(), bo.getMaintainer(), bo.getUserId());
+        log.info("开始更新项目：projectId={}, projectName={}, userId={}", 
+                bo.getProjectId(), bo.getProjectName(), bo.getUserId());
         
         Project update = MapstructUtils.convert(bo, Project.class);
         validEntityBeforeSave(update);
         
-        log.info("转换后的Project对象：maintainer={}, userId={}", 
-                update.getMaintainer(), update.getUserId());
+        log.info("转换后的Project对象：userId={}", 
+                update.getUserId());
         
         boolean result = baseMapper.updateById(update) > 0;
         log.info("项目更新结果：{}", result);

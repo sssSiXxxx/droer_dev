@@ -37,11 +37,6 @@
         <el-form-item label="手机号码" prop="phonenumber">
           <el-input v-model="queryParams.phonenumber" placeholder="请输入手机号码" clearable @keyup.enter="handleQuery" />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-select v-model="queryParams.status" placeholder="用户状态" clearable>
-            <el-option v-for="dict in sys_normal_disable" :key="dict.value" :label="dict.label" :value="dict.value" />
-          </el-select>
-        </el-form-item>
         <el-form-item>
           <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
           <el-button icon="Refresh" @click="resetQuery">重置</el-button>
@@ -71,17 +66,29 @@
             {{ (queryParams.pageNum - 1) * queryParams.pageSize + scope.$index + 1 }}
           </template>
         </el-table-column>
-        <el-table-column label="用户名称" align="center" prop="userName" :show-overflow-tooltip="true" />
+        <el-table-column label="Gitee用户名" align="center" prop="userName" :show-overflow-tooltip="true" />
         <el-table-column label="用户昵称" align="center" prop="nickName" :show-overflow-tooltip="true" />
-        <el-table-column label="Gitee账号" align="center" prop="giteeAccount" :show-overflow-tooltip="true" />
-        <el-table-column label="GitHub账号" align="center" prop="githubAccount" :show-overflow-tooltip="true" />
-        <el-table-column label="手机号码" align="center" prop="phonenumber" width="120" />
-        <el-table-column label="状态" align="center">
+        <el-table-column label="身份标签" align="center" prop="identityTags" min-width="120">
           <template #default="scope">
-            <el-switch v-model="scope.row.status" active-value="0" inactive-value="1" @change="handleStatusChange(scope.row)"></el-switch>
+            <div v-if="scope.row.identityTags" class="identity-tags">
+              <el-tag v-for="tag in scope.row.identityTags.split(',')" :key="tag" size="small" type="primary" class="identity-tag">
+                {{ tag }}
+              </el-tag>
+            </div>
+            <span v-else class="text-gray-400">-</span>
           </template>
         </el-table-column>
-        <el-table-column label="创建时间" align="center" prop="createTime" width="160" />
+        <el-table-column label="个人邮箱" align="center" prop="email" :show-overflow-tooltip="true" />
+        <el-table-column label="拥有项目" align="center" min-width="180">
+          <template #default="scope">
+            <div class="owned-projects">
+              <!-- 目前显示暂无项目，后续需要后端实现关联查询 -->
+              <span class="text-gray-400">暂无项目</span>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="手机号码" align="center" prop="phonenumber" width="120" />
+        <el-table-column label="加入时间" align="center" prop="createTime" width="160" />
         <el-table-column label="操作" fixed="right" width="180" class-name="small-padding fixed-width">
           <template #default="scope">
             <el-tooltip content="修改" placement="top">
@@ -114,12 +121,12 @@
         </el-row>
         <el-row>
           <el-col :span="12">
-            <el-form-item label="Gitee账号" prop="giteeAccount">
+            <el-form-item label="Gitee" prop="giteeAccount">
               <el-input v-model="form.giteeAccount" placeholder="请输入Gitee账号" maxlength="50" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="GitHub账号" prop="githubAccount">
+            <el-form-item label="GitHub" prop="githubAccount">
               <el-input v-model="form.githubAccount" placeholder="请输入GitHub账号" maxlength="50" />
             </el-form-item>
           </el-col>
@@ -145,17 +152,34 @@
         </el-row>
         <el-row>
           <el-col :span="12">
+            <el-form-item label="个人邮箱" prop="email">
+              <el-input v-model="form.email" placeholder="请输入个人邮箱" maxlength="50" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="拥有项目" prop="ownedProjects">
+              <el-input v-model="form.ownedProjects" placeholder="请输入拥有项目数" maxlength="10" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="24">
+            <el-form-item label="身份标签" prop="identityTags">
+              <el-input v-model="form.identityTags" placeholder="请输入身份标签，多个标签用逗号分隔" maxlength="200" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="12">
+            <el-form-item label="Gitee" prop="giteeAccount">
+              <el-input v-model="form.giteeAccount" placeholder="请输入Gitee账号" maxlength="50" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
             <el-form-item label="用户性别">
               <el-select v-model="form.sex" placeholder="请选择">
                 <el-option v-for="dict in sys_user_sex" :key="dict.value" :label="dict.label" :value="dict.value"></el-option>
               </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="状态">
-              <el-radio-group v-model="form.status">
-                <el-radio v-for="dict in sys_normal_disable" :key="dict.value" :value="dict.value">{{ dict.label }}</el-radio>
-              </el-radio-group>
             </el-form-item>
           </el-col>
         </el-row>
@@ -243,7 +267,9 @@ const initFormData: UserForm = {
   roleIds: [],
   giteeAccount: '',
   githubAccount: '',
-  bio: ''
+  bio: '',
+  identityTags: '',
+  ownedProjects: ''
 };
 
 const initData: PageData<UserForm, UserQuery> = {
@@ -279,7 +305,7 @@ const initData: PageData<UserForm, UserQuery> = {
         trigger: 'blur'
       }
     ],
-    roleIds: [{ required: true, message: '用户角色不能为空', trigger: 'blur' }]
+    roleIds: [{ required: false, message: '用户角色不能为空', trigger: 'blur' }]
   }
 };
 
@@ -484,6 +510,22 @@ const submitForm = () => {
   });
 };
 
+/** 跳转到项目仓库 */
+const goToRepository = (project: any) => {
+  if (project.repositoryUrl) {
+    window.open(project.repositoryUrl, '_blank');
+  } else {
+    proxy?.$modal.msgWarning('该项目暂无代码仓库地址');
+  }
+};
+
+/** 获取用户拥有项目数量 */
+const getOwnedProjectsCount = (user: UserVO) => {
+  // 这里的ownedProjects应该是从后端查询得到的用户作为负责人的项目列表
+  // 目前后端还未实现关联查询，所以返回空数组
+  return user.ownedProjects && Array.isArray(user.ownedProjects) ? user.ownedProjects : [];
+};
+
 onMounted(() => {
   loadProjects();
   getList();
@@ -491,6 +533,111 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.owned-projects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  align-items: center;
+}
+
+.project-link {
+  font-size: 12px;
+  margin: 2px;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: #f0f9ff;
+  border: 1px solid #e1f5fe;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.project-link:hover {
+  background: #e3f2fd;
+  transform: translateY(-1px);
+}
+
+.project-link-small {
+  font-size: 11px;
+  display: block;
+  margin: 2px 0;
+  padding: 2px 4px;
+  border-radius: 4px;
+  background: #f8f9fa;
+}
+
+.more-projects {
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.more-tag {
+  margin: 1px;
+  font-size: 11px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.owned-projects-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.project-count {
+  font-size: 13px;
+  color: #606266;
+  background: #f0f9ff;
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid #e1f5fe;
+}
+
+.owned-projects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+}
+
+.project-tag {
+  margin: 1px;
+  font-size: 11px;
+  border-radius: 10px;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.more-tag {
+  margin: 1px;
+  font-size: 11px;
+  border-radius: 10px;
+}
+
+.identity-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+}
+
+.identity-tag {
+  margin: 2px;
+  font-size: 12px;
+  border-radius: 12px;
+}
+
+.text-gray-400 {
+  color: #9ca3af;
+  font-size: 13px;
+}
+
 .project-option {
   .project-name {
     font-weight: 500;

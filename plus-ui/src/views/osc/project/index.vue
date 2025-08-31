@@ -7,13 +7,13 @@
             <el-form-item label="项目名称" prop="projectName">
               <el-input v-model="queryParams.projectName" placeholder="请输入项目名称" clearable @keyup.enter="handleQuery" />
             </el-form-item>
-            <el-form-item label="技术栈" prop="techStack">
-              <el-select v-model="queryParams.techStack" placeholder="请选择技术栈" clearable>
-                <el-option v-for="dict in techStackDict" :key="dict.value" :label="dict.label" :value="dict.value" />
-              </el-select>
+            <el-form-item label="项目描述" prop="description">
+              <el-input v-model="queryParams.description" placeholder="请输入项目描述关键字" clearable />
             </el-form-item>
-            <el-form-item label="项目负责人" prop="maintainer">
-              <el-input v-model="queryParams.maintainer" placeholder="请输入负责人姓名" clearable />
+            <el-form-item label="负责人" prop="userId">
+              <el-select v-model="queryParams.userId" placeholder="请选择负责人" clearable filterable @focus="getUserList">
+                <el-option v-for="user in userList" :key="user.userId" :label="user.nickName" :value="user.userId" />
+              </el-select>
             </el-form-item>
             <el-form-item>
               <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
@@ -48,7 +48,7 @@
         </el-row>
       </template>
 
-      <el-table v-loading="loading" border :data="projectList" @selection-change="handleSelectionChange" class="responsive-table">
+      <el-table v-loading="loading" border :data="projectList" @selection-change="handleSelectionChange" @sort-change="handleSortChange" class="responsive-table">
         <template #empty>
           <el-empty :description="loading ? '加载中...' : '暂无数据'" />
         </template>
@@ -85,17 +85,17 @@
         </el-table-column>
 
         <!-- 项目负责人 -->
-        <el-table-column label="项目负责人" align="center" prop="maintainer" min-width="120" :show-overflow-tooltip="true">
+        <el-table-column label="项目负责人" align="center" prop="userId" min-width="120" :show-overflow-tooltip="true">
           <template #default="scope">
             <div class="maintainer-cell">
-              <span v-if="scope.row.maintainer">{{ scope.row.maintainer }}</span>
+              <span v-if="scope.row.userId">{{ getUserNickName(scope.row.userId) }}</span>
               <span v-else class="text-gray-400">未设置</span>
             </div>
           </template>
         </el-table-column>
 
         <!-- Star数 -->
-        <el-table-column label="Star数" align="center" prop="starCount" min-width="100" sortable>
+        <el-table-column label="Star数" align="center" prop="starCount" min-width="100" sortable="custom">
           <template #default="scope">
             <div class="star-cell">
               <el-icon class="star-icon"><Star /></el-icon>
@@ -105,7 +105,7 @@
         </el-table-column>
 
         <!-- Fork数 -->
-        <el-table-column label="Fork数" align="center" prop="forkCount" min-width="100" sortable>
+        <el-table-column label="Fork数" align="center" prop="forkCount" min-width="100" sortable="custom">
           <template #default="scope">
             <div class="fork-cell">
               <el-icon class="fork-icon"><Share /></el-icon>
@@ -163,9 +163,9 @@
           <el-input v-model="form.websiteUrl" placeholder="请输入项目网址（可选）" />
         </el-form-item>
 
-        <el-form-item label="项目负责人" prop="maintainer">
+        <el-form-item label="项目负责人" prop="userId">
           <el-select 
-            v-model="form.maintainer" 
+            v-model="form.userId" 
             placeholder="请选择项目负责人" 
             filterable 
             clearable
@@ -176,7 +176,7 @@
               v-for="user in userList" 
               :key="user.userId" 
               :label="user.nickName" 
-              :value="user.nickName"
+              :value="user.userId"
             >
               <span>{{ user.nickName }}</span>
               <span style="float: right; color: #999; font-size: 12px">{{ user.userName }}</span>
@@ -403,7 +403,6 @@ const initFormData: ProjectForm = {
   logoUrl: undefined,
   status: undefined,
   remark: undefined,
-  maintainer: undefined,
   userId: undefined,
   starCount: undefined,
   forkCount: undefined,
@@ -421,20 +420,28 @@ const data = reactive<PageData<ProjectForm, ProjectQuery>>({
     pageSize: 10,
     projectName: undefined,
     status: undefined,
-    techStack: undefined,
-    maintainer: undefined,
+    description: undefined,
+    userId: undefined,
     createBy: undefined,
+    orderByColumn: undefined,
+    isAsc: undefined,
     params: {}
   },
   rules: {
     projectName: [{ required: true, message: '项目名称不能为空', trigger: 'blur' }],
     description: [{ required: true, message: '项目描述不能为空', trigger: 'blur' }],
     repositoryUrl: [{ required: true, message: '代码仓库不能为空', trigger: 'blur' }],
-    maintainer: [{ required: true, message: '项目负责人不能为空', trigger: 'blur' }]
+    userId: [{ required: true, message: '项目负责人不能为空', trigger: 'blur' }]
   }
 });
 
 const { queryParams, form, rules } = toRefs(data);
+
+/** 根据用户ID获取用户昵称 */
+const getUserNickName = (userId: number) => {
+  const user = userList.value.find(u => u.userId === userId);
+  return user ? user.nickName : '未设置';
+};
 
 /** 根据字典值获取标签 */
 const getDictLabel = (dictList: any[], value: string) => {
@@ -503,13 +510,27 @@ const handleQuery = () => {
   getList();
 };
 
+/** 排序变化处理 */
+const handleSortChange = ({ prop, order }: { prop: string; order: string }) => {
+  if (prop && order) {
+    queryParams.value.orderByColumn = prop;
+    queryParams.value.isAsc = order === 'ascending' ? 'asc' : 'desc';
+  } else {
+    queryParams.value.orderByColumn = undefined;
+    queryParams.value.isAsc = undefined;
+  }
+  handleQuery();
+};
+
 /** 重置按钮操作 */
 const resetQuery = () => {
   queryFormRef.value?.resetFields();
   queryParams.value.projectName = undefined;
-  queryParams.value.techStack = undefined;
-  queryParams.value.maintainer = undefined;
+  queryParams.value.description = undefined;
+  queryParams.value.userId = undefined;
   queryParams.value.createBy = undefined;
+  queryParams.value.orderByColumn = undefined;
+  queryParams.value.isAsc = undefined;
   queryParams.value.params = {};
   handleQuery();
 };
@@ -563,20 +584,6 @@ const submitForm = () => {
 
       const submitData = { ...form.value };
       
-      // 如果选择了负责人，需要设置userId和maintainer
-      if (submitData.maintainer) {
-        const selectedUser = userList.value.find(user => user.nickName === submitData.maintainer);
-        if (selectedUser) {
-          submitData.userId = selectedUser.userId;
-          submitData.maintainer = selectedUser.nickName;
-          console.log('设置负责人:', {
-            userId: selectedUser.userId,
-            maintainer: selectedUser.nickName,
-            userName: selectedUser.userName
-          });
-        }
-      }
-
       console.log('提交数据:', submitData);
 
       if (form.value.projectId) {
