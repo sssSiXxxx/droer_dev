@@ -156,6 +156,12 @@ public class SysUser extends BaseEntity {
     private String skills;
 
     /**
+     * 身份标签
+     */
+    @TableField(value = "identity_tags", typeHandler = org.apache.ibatis.type.StringTypeHandler.class)
+    private String identityTags;
+
+    /**
      * 工作年限
      */
     private Integer experienceYears;

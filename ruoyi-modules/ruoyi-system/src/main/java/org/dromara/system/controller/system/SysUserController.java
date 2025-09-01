@@ -22,6 +22,7 @@ import org.dromara.common.mybatis.core.page.PageQuery;
 import org.dromara.common.mybatis.core.page.TableDataInfo;
 import org.dromara.common.satoken.utils.LoginHelper;
 import org.dromara.common.web.core.BaseController;
+import org.dromara.system.domain.SysUser;
 import org.dromara.system.domain.bo.SysDeptBo;
 import org.dromara.system.domain.bo.SysPostBo;
 import org.dromara.system.domain.bo.SysRoleBo;
@@ -35,7 +36,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 用户信息
@@ -278,12 +281,21 @@ public class SysUserController extends BaseController {
     }
 
     /**
-     * 获取部门下的所有用户信息
+     * 测试身份标签字段映射
      */
-    @SaCheckPermission("system:user:list")
-    @GetMapping("/list/dept/{deptId}")
-    public R<List<SysUserVo>> listByDept(@PathVariable @NotNull Long deptId) {
-        return R.ok(userService.selectUserListByDept(deptId));
+    @GetMapping("/testIdentityTags/{userId}")
+    public R<Map<String, Object>> testIdentityTags(@PathVariable Long userId) {
+        Map<String, Object> result = new HashMap<>();
+
+        // 查询VO
+        SysUserVo userVo = userService.selectUserById(userId);
+        result.put("voIdentityTags", userVo != null ? userVo.getIdentityTags() : "userVo not found");
+        result.put("userVoExists", userVo != null);
+        if (userVo != null) {
+            result.put("userVoData", userVo);
+        }
+
+        return R.ok(result);
     }
 
 }

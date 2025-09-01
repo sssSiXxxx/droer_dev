@@ -71,7 +71,7 @@
         <el-table-column label="身份标签" align="center" prop="identityTags" min-width="120">
           <template #default="scope">
             <div v-if="scope.row.identityTags" class="identity-tags">
-              <el-tag v-for="tag in scope.row.identityTags.split(',')" :key="tag" size="small" type="primary" class="identity-tag">
+              <el-tag v-for="tag in parseIdentityTagsForDisplay(scope.row.identityTags)" :key="tag" size="small" type="primary" class="identity-tag">
                 {{ tag }}
               </el-tag>
             </div>
@@ -79,16 +79,38 @@
           </template>
         </el-table-column>
         <el-table-column label="个人邮箱" align="center" prop="email" :show-overflow-tooltip="true" />
-        <el-table-column label="拥有项目" align="center" min-width="180">
+        <el-table-column label="拥有项目" align="center" min-width="200">
           <template #default="scope">
             <div class="owned-projects">
-              <!-- 目前显示暂无项目，后续需要后端实现关联查询 -->
-              <span class="text-gray-400">暂无项目</span>
+              <div v-if="scope.row.ownedProjects && scope.row.ownedProjects.length > 0" class="project-list">
+                <div 
+                  v-for="(projectId, index) in scope.row.ownedProjects.slice(0, 3)" 
+                  :key="projectId"
+                  class="project-item"
+                >
+                  <span 
+                    class="project-link"
+                    @click="goToProjectRepository(projectId)"
+                    :title="getProjectDescById(projectId)"
+                  >
+                    {{ getProjectNameById(projectId) }}
+                  </span>
+                  <span v-if="index < Math.min(scope.row.ownedProjects.length - 1, 2)" class="project-separator">、</span>
+                </div>
+                <div v-if="scope.row.ownedProjects.length > 3" class="more-projects">
+                  <span class="more-text">等{{ scope.row.ownedProjects.length }}个项目</span>
+                </div>
+              </div>
+              <span v-else class="text-gray-400">暂无项目</span>
             </div>
           </template>
         </el-table-column>
         <el-table-column label="手机号码" align="center" prop="phonenumber" width="120" />
-        <el-table-column label="加入时间" align="center" prop="createTime" width="160" />
+        <el-table-column label="加入时间" align="center" prop="joinTime" width="160">
+          <template #default="scope">
+            {{ scope.row.joinTime || scope.row.createTime }}
+          </template>
+        </el-table-column>
         <el-table-column label="操作" fixed="right" width="180" class-name="small-padding fixed-width">
           <template #default="scope">
             <el-tooltip content="修改" placement="top">
@@ -158,21 +180,101 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="拥有项目" prop="ownedProjects">
-              <el-input v-model="form.ownedProjects" placeholder="请输入拥有项目数" maxlength="10" />
+              <el-select
+                v-model="form.ownedProjects"
+                placeholder="请选择项目"
+                multiple
+                clearable
+                filterable
+                remote
+                :remote-method="handleUserFormProjectSearch"
+                :loading="userFormProjectSearchLoading"
+                collapse-tags
+                collapse-tags-tooltip
+                :max-collapse-tags="1"
+                popper-class="project-select-dropdown"
+              >
+                <el-option
+                  v-for="item in userFormProjectOptions"
+                  :key="item.projectId"
+                  :label="item.projectName"
+                  :value="item.projectId"
+                >
+                  {{ item.projectName }}
+                </el-option>
+              </el-select>
             </el-form-item>
           </el-col>
         </el-row>
         <el-row>
           <el-col :span="24">
             <el-form-item label="身份标签" prop="identityTags">
-              <el-input v-model="form.identityTags" placeholder="请输入身份标签，多个标签用逗号分隔" maxlength="200" />
+              <el-tag
+                v-for="tag in dynamicTags"
+                :key="tag"
+                class="mx-1"
+                closable
+                :disable-transitions="false"
+                @close="handleTagClose(tag)"
+              >
+                {{ tag }}
+              </el-tag>
+              <el-input
+                v-if="inputVisible"
+                ref="inputRef"
+                v-model="inputValue"
+                class="ml-1 w-20"
+                size="small"
+                @keyup.enter="handleInputConfirm"
+                @blur="handleInputConfirm"
+              />
+              <el-button v-else class="button-new-tag ml-1" size="small" @click="showInput">
+                + 新标签
+              </el-button>
             </el-form-item>
           </el-col>
         </el-row>
         <el-row>
           <el-col :span="12">
-            <el-form-item label="Gitee" prop="giteeAccount">
-              <el-input v-model="form.giteeAccount" placeholder="请输入Gitee账号" maxlength="50" />
+            <el-form-item label="用户角色">
+              <div class="role-display">
+                <el-tag 
+                  v-for="roleId in form.roleIds" 
+                  :key="roleId" 
+                  size="small" 
+                  type="info" 
+                  class="role-tag"
+                >
+                  {{ getRoleNameById(roleId) }}
+                </el-tag>
+                <span v-if="!form.roleIds || form.roleIds.length === 0" class="text-gray-400">暂无角色</span>
+              </div>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="用户岗位">
+              <el-select v-model="form.postIds" multiple placeholder="请选择用户岗位" style="width: 100%">
+                <el-option
+                  v-for="post in postOptions"
+                  :key="post.postId"
+                  :label="post.postName"
+                  :value="post.postId"
+                />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="12">
+            <el-form-item label="加入时间" prop="joinTime">
+              <el-date-picker 
+                v-model="form.joinTime" 
+                type="date" 
+                placeholder="请选择加入Dromara社区时间" 
+                format="YYYY-MM-DD"
+                value-format="YYYY-MM-DD"
+                style="width: 100%"
+              />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -244,6 +346,16 @@ const projectOptions = ref<any[]>([]);
 const filteredProjectOptions = ref<any[]>([]);
 const projectSearchLoading = ref(false);
 
+// 用户表单中的项目搜索相关
+const userFormProjectOptions = ref<any[]>([]);
+const userFormProjectSearchLoading = ref(false);
+
+// 身份标签相关
+const dynamicTags = ref<string[]>([]);
+const inputVisible = ref(false);
+const inputValue = ref('');
+const inputRef = ref<ElementPlus.InputInstance>();
+
 const queryFormRef = ref<ElFormInstance>();
 const userFormRef = ref<ElFormInstance>();
 
@@ -269,7 +381,8 @@ const initFormData: UserForm = {
   githubAccount: '',
   bio: '',
   identityTags: '',
-  ownedProjects: ''
+  ownedProjects: [],
+  joinTime: ''
 };
 
 const initData: PageData<UserForm, UserQuery> = {
@@ -305,7 +418,7 @@ const initData: PageData<UserForm, UserQuery> = {
         trigger: 'blur'
       }
     ],
-    roleIds: [{ required: false, message: '用户角色不能为空', trigger: 'blur' }]
+    roleIds: []
   }
 };
 
@@ -374,6 +487,138 @@ const loadProjects = async () => {
   }
 };
 
+/** 加载用户表单项目列表 */
+const loadUserFormProjects = async () => {
+  try {
+    userFormProjectSearchLoading.value = true;
+    const res = await listProject({ pageNum: 1, pageSize: 1000 });
+    
+    if (res && res.rows && Array.isArray(res.rows)) {
+      userFormProjectOptions.value = res.rows;
+    } else if (res && res.data && Array.isArray(res.data)) {
+      userFormProjectOptions.value = res.data;
+    } else {
+      userFormProjectOptions.value = [];
+    }
+  } catch (error) {
+    console.error('获取项目列表失败:', error);
+    userFormProjectOptions.value = [];
+  } finally {
+    userFormProjectSearchLoading.value = false;
+  }
+};
+
+/** 加载用户拥有的项目 */
+const loadUserOwnedProjects = async (userId: number | string) => {
+  try {
+    const res = await listProject({ 
+      pageNum: 1, 
+      pageSize: 1000,
+      userId: userId
+    });
+    
+    let ownedProjects = [];
+    if (res && res.rows && Array.isArray(res.rows)) {
+      ownedProjects = res.rows.map(p => p.projectId);
+    } else if (res && res.data && Array.isArray(res.data)) {
+      ownedProjects = res.data.map(p => p.projectId);
+    }
+    
+    form.value.ownedProjects = ownedProjects;
+  } catch (error) {
+    console.error('加载用户项目失败:', error);
+    form.value.ownedProjects = [];
+  }
+};
+
+/** 批量加载所有用户的拥有项目 */
+const loadUsersOwnedProjects = async () => {
+  try {
+    // 并行加载所有用户的项目
+    const promises = userList.value?.map(async (user) => {
+      const res = await listProject({ 
+        pageNum: 1, 
+        pageSize: 1000,
+        userId: user.userId
+      });
+      
+      let ownedProjects = [];
+      if (res && res.rows && Array.isArray(res.rows)) {
+        ownedProjects = res.rows.map(p => p.projectId);
+      } else if (res && res.data && Array.isArray(res.data)) {
+        ownedProjects = res.data.map(p => p.projectId);
+      }
+      
+      user.ownedProjects = ownedProjects;
+      return user;
+    }) || [];
+    
+    await Promise.all(promises);
+  } catch (error) {
+    console.error('批量加载用户项目失败:', error);
+  }
+};
+
+/** 标签管理相关方法 */
+const handleTagClose = (tag: string) => {
+  dynamicTags.value.splice(dynamicTags.value.indexOf(tag), 1);
+  updateFormIdentityTags();
+};
+
+const showInput = () => {
+  inputVisible.value = true;
+  nextTick(() => {
+    inputRef.value?.focus();
+  });
+};
+
+const handleInputConfirm = () => {
+  if (inputValue.value && !dynamicTags.value.includes(inputValue.value)) {
+    dynamicTags.value.push(inputValue.value);
+    updateFormIdentityTags();
+  }
+  inputVisible.value = false;
+  inputValue.value = '';
+};
+
+const updateFormIdentityTags = () => {
+  if (dynamicTags.value && dynamicTags.value.length > 0) {
+    form.value.identityTags = JSON.stringify(dynamicTags.value);
+  } else {
+    form.value.identityTags = '';
+  }
+};
+
+const parseIdentityTags = (identityTags: string) => {
+  if (!identityTags || identityTags.trim() === '') {
+    dynamicTags.value = [];
+    return;
+  }
+  
+  try {
+    const parsed = JSON.parse(identityTags);
+    dynamicTags.value = Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    console.warn('解析身份标签失败:', error);
+    // 兼容旧的逗号分隔格式
+    dynamicTags.value = identityTags.split(',').filter(tag => tag.trim() !== '');
+  }
+};
+
+/** 解析身份标签用于显示 */
+const parseIdentityTagsForDisplay = (identityTags: string): string[] => {
+  if (!identityTags || identityTags.trim() === '') return [];
+  
+  try {
+    const parsed = JSON.parse(identityTags);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    console.warn('解析身份标签失败:', error);
+    // 兼容旧的逗号分隔格式
+    return identityTags.split(',').filter(tag => tag.trim() !== '');
+  }
+};
+
 /** 项目搜索处理（防抖优化） */
 const handleProjectSearch = debounce(async (query: string) => {
   if (query !== '') {
@@ -400,6 +645,36 @@ const handleProjectSearch = debounce(async (query: string) => {
   }
 }, 300);
 
+/** 用户表单中的项目搜索处理 */
+const handleUserFormProjectSearch = debounce(async (query: string) => {
+  if (query !== '') {
+    userFormProjectSearchLoading.value = true;
+    try {
+      const res = await listProject({ 
+        pageNum: 1, 
+        pageSize: 100,
+        projectName: query
+      });
+      
+      if (res && res.rows && Array.isArray(res.rows)) {
+        userFormProjectOptions.value = res.rows;
+      } else if (res && res.data && Array.isArray(res.data)) {
+        userFormProjectOptions.value = res.data;
+      } else {
+        userFormProjectOptions.value = [];
+      }
+    } catch (error) {
+      console.error('搜索项目失败:', error);
+      userFormProjectOptions.value = [];
+    } finally {
+      userFormProjectSearchLoading.value = false;
+    }
+  } else {
+    // 加载所有项目
+    await loadUserFormProjects();
+  }
+}, 300);
+
 /** 搜索按钮操作 */
 const handleQuery = () => {
   queryParams.value.pageNum = 1;
@@ -422,6 +697,11 @@ const getList = async () => {
     const res = await api.listUser(queryParams.value);
     userList.value = res.rows;
     total.value = res.total;
+    
+    // 为每个用户加载拥有的项目
+    if (userList.value && userList.value.length > 0) {
+      await loadUsersOwnedProjects();
+    }
   } catch (error) {
     console.error('获取用户列表失败:', error);
     userList.value = [];
@@ -464,6 +744,7 @@ const handleSelectionChange = (selection: UserVO[]) => {
 /** 重置操作表单 */
 const reset = () => {
   form.value = { ...initFormData };
+  dynamicTags.value = [];
   userFormRef.value?.resetFields();
 };
 
@@ -481,12 +762,22 @@ const handleAdd = async () => {
   dialog.title = '新增用户';
   postOptions.value = data.posts;
   roleOptions.value = data.roles;
+  await loadUserFormProjects();
 };
 
 /** 修改按钮操作 */
 const handleUpdate = async (row?: UserForm) => {
   reset();
   const userId = row?.userId || ids.value[0];
+  
+  // 测试身份标签字段映射
+  try {
+    const testRes = await proxy.$http.get(`/system/user/testIdentityTags/${userId}`);
+    console.log('身份标签测试结果:', testRes.data);
+  } catch (error) {
+    console.error('测试身份标签失败:', error);
+  }
+  
   const { data } = await api.getUser(userId);
   dialog.visible = true;
   dialog.title = '修改用户';
@@ -496,16 +787,58 @@ const handleUpdate = async (row?: UserForm) => {
   form.value.postIds = data.postIds;
   form.value.roleIds = data.roleIds;
   form.value.password = '';
+  await loadUserFormProjects();
+  
+  // 加载用户拥有的项目
+  await loadUserOwnedProjects(userId);
+  
+  // 调试：检查身份标签数据
+  console.log('用户数据:', data.user);
+  console.log('身份标签原始数据:', data.user.identityTags);
+  console.log('身份标签类型:', typeof data.user.identityTags);
+  
+  // 解析身份标签
+  parseIdentityTags(form.value.identityTags || '');
+  
+  console.log('解析后的动态标签:', dynamicTags.value);
+};
+
+/** 根据角色ID获取角色名称 */
+const getRoleNameById = (roleId: number) => {
+  const role = roleOptions.value.find(r => r.roleId === roleId);
+  return role ? role.roleName : `角色${roleId}`;
 };
 
 /** 提交按钮 */
 const submitForm = () => {
   userFormRef.value?.validate(async (valid: boolean) => {
     if (valid) {
-      form.value.userId ? await api.updateUser(form.value) : await api.addUser(form.value);
-      proxy?.$modal.msgSuccess('操作成功');
-      dialog.visible = false;
-      await getList();
+      // 在提交前更新身份标签
+      updateFormIdentityTags();
+      
+      // 创建提交数据的副本，避免修改原始表单数据
+      const submitData = { ...form.value };
+      
+      // 移除角色数据，不允许前端修改角色
+      delete submitData.roleIds;
+      
+      // 确保数组中的值是数字类型
+      if (submitData.postIds && Array.isArray(submitData.postIds)) {
+        submitData.postIds = submitData.postIds.map(id => Number(id));
+      }
+      
+      console.log('提交的表单数据：', submitData);
+      console.log('身份标签：', submitData.identityTags);
+      
+      try {
+        form.value.userId ? await api.updateUser(submitData) : await api.addUser(submitData);
+        proxy?.$modal.msgSuccess('操作成功');
+        dialog.visible = false;
+        await getList();
+      } catch (error) {
+        console.error('提交失败：', error);
+        proxy?.$modal.msgError('提交失败：' + (error.message || '未知错误'));
+      }
     }
   });
 };
@@ -516,6 +849,30 @@ const goToRepository = (project: any) => {
     window.open(project.repositoryUrl, '_blank');
   } else {
     proxy?.$modal.msgWarning('该项目暂无代码仓库地址');
+  }
+};
+
+/** 根据项目ID获取项目名称 */
+const getProjectNameById = (projectId: number) => {
+  const project = projectOptions.value.find(p => p.projectId === projectId);
+  return project ? project.projectName : `项目${projectId}`;
+};
+
+/** 根据项目ID获取项目描述 */
+const getProjectDescById = (projectId: number) => {
+  const project = projectOptions.value.find(p => p.projectId === projectId);
+  return project ? (project.description || project.projectName) : `项目${projectId}`;
+};
+
+/** 根据项目ID跳转到项目仓库 */
+const goToProjectRepository = (projectId: number) => {
+  const project = projectOptions.value.find(p => p.projectId === projectId);
+  if (project && project.repositoryUrl) {
+    window.open(project.repositoryUrl, '_blank');
+  } else if (project && project.websiteUrl) {
+    window.open(project.websiteUrl, '_blank');
+  } else {
+    proxy?.$modal.msgWarning('该项目暂无仓库地址或网站链接');
   }
 };
 
@@ -536,29 +893,67 @@ onMounted(() => {
 .owned-projects {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 4px;
+  justify-content: center;
+}
+
+.project-list {
+  display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   align-items: center;
+  max-width: 190px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+.project-item {
+  display: inline-flex;
+  align-items: center;
+  margin: 2px 0;
 }
 
 .project-link {
-  font-size: 12px;
-  margin: 2px;
-  padding: 2px 6px;
-  border-radius: 8px;
-  background: #f0f9ff;
-  border: 1px solid #e1f5fe;
-  max-width: 80px;
+  color: #409eff;
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  border-radius: 3px;
+  padding: 1px 3px;
+  max-width: 120px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  display: inline-block;
 }
 
 .project-link:hover {
-  background: #e3f2fd;
-  transform: translateY(-1px);
+  color: #66b1ff;
+  background-color: rgba(64, 158, 255, 0.1);
+  text-decoration: underline;
+}
+
+.project-separator {
+  color: #909399;
+  font-size: 12px;
+  margin: 0 2px;
+}
+
+.more-projects {
+  margin-top: 2px;
+}
+
+.more-text {
+  color: #909399;
+  font-size: 12px;
+}
+
+.identity-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
 }
 
 .project-link-small {
@@ -605,19 +1000,30 @@ onMounted(() => {
 }
 
 .project-tag {
-  margin: 1px;
+  margin: 2px;
   font-size: 11px;
-  border-radius: 10px;
-  max-width: 80px;
-  overflow: hidden;
+  border-radius: 12px;
+  max-width: 100px;
+  min-width: 40px;
+  padding: 2px 8px;
+  display: inline-block;
   text-overflow: ellipsis;
+  overflow: hidden;
   white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.project-tag:hover {
+  transform: scale(1.05);
+  z-index: 10;
 }
 
 .more-tag {
-  margin: 1px;
+  margin: 2px;
   font-size: 11px;
-  border-radius: 10px;
+  border-radius: 12px;
+  padding: 2px 6px;
 }
 
 .identity-tags {
@@ -638,28 +1044,40 @@ onMounted(() => {
   font-size: 13px;
 }
 
-.project-option {
-  .project-name {
-    font-weight: 500;
-    color: var(--el-text-color-primary);
-    font-size: 14px;
-    margin-bottom: 2px;
-  }
-  
-  .project-desc {
-    font-size: 12px;
-    color: var(--el-text-color-secondary);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    line-height: 1.2;
-  }
+:deep(.project-select-dropdown) {
+  max-width: 300px !important;
+  width: auto !important;
 }
 
-.empty-option {
-  padding: 12px;
-  text-align: center;
-  color: var(--el-text-color-secondary);
-  font-size: 13px;
+.button-new-tag {
+  height: 24px;
+  line-height: 22px;
+  padding: 0 8px;
+  border-style: dashed;
+}
+
+.mx-1 {
+  margin-left: 4px;
+  margin-right: 4px;
+}
+
+.ml-1 {
+  margin-left: 4px;
+}
+
+.w-20 {
+  width: 80px;
+}
+
+.role-display {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-height: 32px;
+  align-items: center;
+}
+
+.role-tag {
+  margin: 2px;
 }
 </style>

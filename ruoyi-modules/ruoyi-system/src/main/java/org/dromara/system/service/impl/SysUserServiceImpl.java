@@ -478,30 +478,35 @@ public class SysUserServiceImpl implements ISysUserService, UserService {
      * @param clear   清除已存在的关联数据
      */
     private void insertUserRole(Long userId, Long[] roleIds, boolean clear) {
-        if (ArrayUtil.isNotEmpty(roleIds)) {
-            List<Long> roleList = new ArrayList<>(List.of(roleIds));
-            if (!LoginHelper.isSuperAdmin(userId)) {
-                roleList.remove(SystemConstants.SUPER_ADMIN_ID);
-            }
-            // 判断是否具有此角色的操作权限
-            List<SysRoleVo> roles = roleMapper.selectRoleList(
-                new QueryWrapper<SysRole>().in("r.role_id", roleList));
-            if (CollUtil.isEmpty(roles)) {
-                throw new ServiceException("没有权限访问角色的数据");
-            }
-            if (clear) {
-                // 删除用户与角色关联
-                userRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>().eq(SysUserRole::getUserId, userId));
-            }
-            // 新增用户与角色管理
-            List<SysUserRole> list = StreamUtils.toList(roleList, roleId -> {
-                SysUserRole ur = new SysUserRole();
-                ur.setUserId(userId);
-                ur.setRoleId(roleId);
-                return ur;
-            });
-            userRoleMapper.insertBatch(list);
+        // 如果需要清除已存在的关联数据，先执行清除操作
+        if (clear) {
+            // 删除用户与角色关联
+            userRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>().eq(SysUserRole::getUserId, userId));
         }
+        
+        // 如果角色数组为空或null，直接返回（允许用户没有角色）
+        if (ArrayUtil.isEmpty(roleIds)) {
+            return;
+        }
+        
+        List<Long> roleList = new ArrayList<>(List.of(roleIds));
+        if (!LoginHelper.isSuperAdmin(userId)) {
+            roleList.remove(SystemConstants.SUPER_ADMIN_ID);
+        }
+        
+        // 如果过滤后角色列表为空，直接返回
+        if (CollUtil.isEmpty(roleList)) {
+            return;
+        }
+        
+        // 新增用户与角色管理
+        List<SysUserRole> list = StreamUtils.toList(roleList, roleId -> {
+            SysUserRole ur = new SysUserRole();
+            ur.setUserId(userId);
+            ur.setRoleId(roleId);
+            return ur;
+        });
+        userRoleMapper.insertBatch(list);
     }
 
     /**

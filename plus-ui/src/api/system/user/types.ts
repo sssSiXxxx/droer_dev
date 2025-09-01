@@ -47,7 +47,7 @@ export interface UserVO extends BaseEntity {
   githubAccount?: string;
   bio?: string;
   identityTags?: string;
-  ownedProjects?: any[];
+  ownedProjects?: number[];
   roles: RoleVO[];
   roleIds: any;
   postIds: any;
@@ -74,7 +74,8 @@ export interface UserForm {
   githubAccount?: string;
   bio?: string;
   identityTags?: string;
-  ownedProjects?: string;
+  ownedProjects?: number[];
+  joinTime?: string;
   postIds: string[];
   roleIds: string[];
 }

@@ -134,4 +134,9 @@ public class SysUserVo implements Serializable {
      */
     private Long roleId;
 
+    /**
+     * 身份标签
+     */
+    private String identityTags;
+
 }
