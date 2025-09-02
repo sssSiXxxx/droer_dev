@@ -207,7 +207,7 @@
           </el-col>
         </el-row>
         <el-row>
-          <el-col :span="24">
+          <el-col :span="12">
             <el-form-item label="身份标签" prop="identityTags">
               <el-tag
                 v-for="tag in dynamicTags"
@@ -233,34 +233,20 @@
               </el-button>
             </el-form-item>
           </el-col>
-        </el-row>
-        <el-row>
           <el-col :span="12">
             <el-form-item label="用户角色">
               <div class="role-display">
                 <el-tag
-                  v-for="roleId in form.roleIds"
-                  :key="roleId"
-                  size="small"
-                  type="info"
-                  class="role-tag"
+                    v-for="roleId in form.roleIds"
+                    :key="roleId"
+                    size="small"
+                    type="info"
+                    class="role-tag"
                 >
                   {{ getRoleNameById(roleId) }}
                 </el-tag>
                 <span v-if="!form.roleIds || form.roleIds.length === 0" class="text-gray-400">暂无角色</span>
               </div>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="用户岗位">
-              <el-select v-model="form.postIds" multiple placeholder="请选择用户岗位" style="width: 100%">
-                <el-option
-                  v-for="post in postOptions"
-                  :key="post.postId"
-                  :label="post.postName"
-                  :value="post.postId"
-                />
-              </el-select>
             </el-form-item>
           </el-col>
         </el-row>
