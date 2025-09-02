@@ -24,7 +24,6 @@
             <el-option v-for="item in filteredProjectOptions" :key="item.projectId" :label="item.projectName" :value="item.projectId">
               <div class="project-option">
                 <div class="project-name">{{ item.projectName }}</div>
-                <div class="project-desc" v-if="item.description">{{ item.description }}</div>
               </div>
             </el-option>
             <template #empty>
