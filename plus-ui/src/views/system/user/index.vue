@@ -83,12 +83,12 @@
           <template #default="scope">
             <div class="owned-projects">
               <div v-if="scope.row.ownedProjects && scope.row.ownedProjects.length > 0" class="project-list">
-                <div 
-                  v-for="(projectId, index) in scope.row.ownedProjects.slice(0, 3)" 
+                <div
+                  v-for="(projectId, index) in scope.row.ownedProjects.slice(0, 3)"
                   :key="projectId"
                   class="project-item"
                 >
-                  <span 
+                  <span
                     class="project-link"
                     @click="goToProjectRepository(projectId)"
                     :title="getProjectDescById(projectId)"
@@ -238,11 +238,11 @@
           <el-col :span="12">
             <el-form-item label="用户角色">
               <div class="role-display">
-                <el-tag 
-                  v-for="roleId in form.roleIds" 
-                  :key="roleId" 
-                  size="small" 
-                  type="info" 
+                <el-tag
+                  v-for="roleId in form.roleIds"
+                  :key="roleId"
+                  size="small"
+                  type="info"
                   class="role-tag"
                 >
                   {{ getRoleNameById(roleId) }}
@@ -267,10 +267,10 @@
         <el-row>
           <el-col :span="12">
             <el-form-item label="加入时间" prop="joinTime">
-              <el-date-picker 
-                v-model="form.joinTime" 
-                type="date" 
-                placeholder="请选择加入Dromara社区时间" 
+              <el-date-picker
+                v-model="form.joinTime"
+                type="date"
+                placeholder="请选择加入Dromara社区时间"
                 format="YYYY-MM-DD"
                 value-format="YYYY-MM-DD"
                 style="width: 100%"
@@ -430,7 +430,7 @@ const loadProjects = async () => {
   try {
     projectSearchLoading.value = true;
     const res = await listProject({ pageNum: 1, pageSize: 1000 });
-    
+
     // 检查不同的响应结构
     if (res && res.rows && Array.isArray(res.rows)) {
       projectOptions.value = res.rows;
@@ -439,9 +439,9 @@ const loadProjects = async () => {
     } else {
       projectOptions.value = [];
     }
-    
+
     filteredProjectOptions.value = [...projectOptions.value];
-    
+
     // 如果没有数据，提供模拟数据
     if (projectOptions.value.length === 0) {
       projectOptions.value = [
@@ -492,7 +492,7 @@ const loadUserFormProjects = async () => {
   try {
     userFormProjectSearchLoading.value = true;
     const res = await listProject({ pageNum: 1, pageSize: 1000 });
-    
+
     if (res && res.rows && Array.isArray(res.rows)) {
       userFormProjectOptions.value = res.rows;
     } else if (res && res.data && Array.isArray(res.data)) {
@@ -511,19 +511,19 @@ const loadUserFormProjects = async () => {
 /** 加载用户拥有的项目 */
 const loadUserOwnedProjects = async (userId: number | string) => {
   try {
-    const res = await listProject({ 
-      pageNum: 1, 
+    const res = await listProject({
+      pageNum: 1,
       pageSize: 1000,
       userId: userId
     });
-    
+
     let ownedProjects = [];
     if (res && res.rows && Array.isArray(res.rows)) {
       ownedProjects = res.rows.map(p => p.projectId);
     } else if (res && res.data && Array.isArray(res.data)) {
       ownedProjects = res.data.map(p => p.projectId);
     }
-    
+
     form.value.ownedProjects = ownedProjects;
   } catch (error) {
     console.error('加载用户项目失败:', error);
@@ -536,23 +536,23 @@ const loadUsersOwnedProjects = async () => {
   try {
     // 并行加载所有用户的项目
     const promises = userList.value?.map(async (user) => {
-      const res = await listProject({ 
-        pageNum: 1, 
+      const res = await listProject({
+        pageNum: 1,
         pageSize: 1000,
         userId: user.userId
       });
-      
+
       let ownedProjects = [];
       if (res && res.rows && Array.isArray(res.rows)) {
         ownedProjects = res.rows.map(p => p.projectId);
       } else if (res && res.data && Array.isArray(res.data)) {
         ownedProjects = res.data.map(p => p.projectId);
       }
-      
+
       user.ownedProjects = ownedProjects;
       return user;
     }) || [];
-    
+
     await Promise.all(promises);
   } catch (error) {
     console.error('批量加载用户项目失败:', error);
@@ -594,7 +594,7 @@ const parseIdentityTags = (identityTags: string) => {
     dynamicTags.value = [];
     return;
   }
-  
+
   try {
     const parsed = JSON.parse(identityTags);
     dynamicTags.value = Array.isArray(parsed) ? parsed : [];
@@ -608,7 +608,7 @@ const parseIdentityTags = (identityTags: string) => {
 /** 解析身份标签用于显示 */
 const parseIdentityTagsForDisplay = (identityTags: string): string[] => {
   if (!identityTags || identityTags.trim() === '') return [];
-  
+
   try {
     const parsed = JSON.parse(identityTags);
     return Array.isArray(parsed) ? parsed : [];
@@ -628,7 +628,7 @@ const handleProjectSearch = debounce(async (query: string) => {
       if (projectOptions.value.length === 0) {
         await loadProjects();
       }
-      
+
       // 本地过滤项目
       filteredProjectOptions.value = projectOptions.value.filter(
         (item) =>
@@ -650,12 +650,12 @@ const handleUserFormProjectSearch = debounce(async (query: string) => {
   if (query !== '') {
     userFormProjectSearchLoading.value = true;
     try {
-      const res = await listProject({ 
-        pageNum: 1, 
+      const res = await listProject({
+        pageNum: 1,
         pageSize: 100,
         projectName: query
       });
-      
+
       if (res && res.rows && Array.isArray(res.rows)) {
         userFormProjectOptions.value = res.rows;
       } else if (res && res.data && Array.isArray(res.data)) {
@@ -697,7 +697,7 @@ const getList = async () => {
     const res = await api.listUser(queryParams.value);
     userList.value = res.rows;
     total.value = res.total;
-    
+
     // 为每个用户加载拥有的项目
     if (userList.value && userList.value.length > 0) {
       await loadUsersOwnedProjects();
@@ -769,7 +769,7 @@ const handleAdd = async () => {
 const handleUpdate = async (row?: UserForm) => {
   reset();
   const userId = row?.userId || ids.value[0];
-  
+
   // 测试身份标签字段映射
   try {
     const testRes = await proxy.$http.get(`/system/user/testIdentityTags/${userId}`);
@@ -777,7 +777,7 @@ const handleUpdate = async (row?: UserForm) => {
   } catch (error) {
     console.error('测试身份标签失败:', error);
   }
-  
+
   const { data } = await api.getUser(userId);
   dialog.visible = true;
   dialog.title = '修改用户';
@@ -788,18 +788,18 @@ const handleUpdate = async (row?: UserForm) => {
   form.value.roleIds = data.roleIds;
   form.value.password = '';
   await loadUserFormProjects();
-  
+
   // 加载用户拥有的项目
   await loadUserOwnedProjects(userId);
-  
+
   // 调试：检查身份标签数据
   console.log('用户数据:', data.user);
   console.log('身份标签原始数据:', data.user.identityTags);
   console.log('身份标签类型:', typeof data.user.identityTags);
-  
+
   // 解析身份标签
   parseIdentityTags(form.value.identityTags || '');
-  
+
   console.log('解析后的动态标签:', dynamicTags.value);
 };
 
@@ -815,21 +815,21 @@ const submitForm = () => {
     if (valid) {
       // 在提交前更新身份标签
       updateFormIdentityTags();
-      
+
       // 创建提交数据的副本，避免修改原始表单数据
       const submitData = { ...form.value };
-      
+
       // 移除角色数据，不允许前端修改角色
       delete submitData.roleIds;
-      
+
       // 确保数组中的值是数字类型
       if (submitData.postIds && Array.isArray(submitData.postIds)) {
         submitData.postIds = submitData.postIds.map(id => Number(id));
       }
-      
+
       console.log('提交的表单数据：', submitData);
       console.log('身份标签：', submitData.identityTags);
-      
+
       try {
         form.value.userId ? await api.updateUser(submitData) : await api.addUser(submitData);
         proxy?.$modal.msgSuccess('操作成功');

@@ -28,6 +28,18 @@ export interface ProjectVO {
   createTime?: string;
   updateBy?: number;
   updateTime?: string;
+  // 孵化申请字段
+  applicationType?: string;
+  applicationStatus?: string;
+  license?: string;
+  applicationReason?: string;
+  contribution?: string;
+  currentStatus?: string;
+  upgradeReason?: string;
+  communityImpact?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  remarks?: string;
 }
 
 export interface ProjectForm {
@@ -49,6 +61,18 @@ export interface ProjectForm {
   wikiUrl?: string;
   apiDocUrl?: string;
   lastCommitTime?: string;
+  // 孵化申请字段
+  applicationType?: string;
+  applicationStatus?: string;
+  license?: string;
+  applicationReason?: string;
+  contribution?: string;
+  currentStatus?: string;
+  upgradeReason?: string;
+  communityImpact?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  remarks?: string;
 }
 
 export interface ProjectQuery {
@@ -63,4 +87,7 @@ export interface ProjectQuery {
   orderByColumn?: string;
   isAsc?: string;
   params?: any;
+  // 孵化申请查询字段
+  applicationType?: string;
+  applicationStatus?: string;
 }

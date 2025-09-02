@@ -3,33 +3,45 @@
     <!-- 顶部导航栏 -->
     <div class="page-header">
       <div class="header-title">
-        <el-icon class="mr-2"><Plus /></el-icon>
-        <span>创建项目</span>
+        <el-icon class="mr-2"><Star /></el-icon>
+        <span>项目孵化申请</span>
       </div>
       <div class="header-actions">
-        <el-button-group>
-          <el-button type="success" @click="showTemplateDialog">
-            <el-icon><Files /></el-icon>
-            使用模板
-          </el-button>
-          <el-button type="info" @click="goMyProjects">
-            <el-icon><List /></el-icon>
-            我的创建
-          </el-button>
-          <el-button type="primary" @click="goDraftBox">
-            <el-icon><Document /></el-icon>
-            草稿箱
-          </el-button>
-        </el-button-group>
+        <el-button type="primary" @click="goDraftBox">
+          <el-icon><Document /></el-icon>
+          草稿箱
+        </el-button>
       </div>
-
-      <!-- 模板选择对话框 -->
-      <template-select v-model="templateDialogVisible" @select="handleTemplateSelect" />
     </div>
 
     <!-- 主要内容区 -->
     <div class="main-content">
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px" class="project-form" :hide-required-asterisk="false">
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="120px" class="project-form" :hide-required-asterisk="false">
+        <!-- 申请类型选择卡片 -->
+        <el-card class="form-card mb-4">
+          <template #header>
+            <div class="card-header">
+              <el-icon><Setting /></el-icon>
+              <span>申请类型</span>
+            </div>
+          </template>
+
+          <el-form-item label="申请类型" prop="applicationType" class="mb-4">
+            <el-radio-group v-model="form.applicationType" @change="onApplicationTypeChange">
+              <el-radio value="personal">个人项目加入社区</el-radio>
+              <el-radio value="community">社区项目升级为顶级项目</el-radio>
+            </el-radio-group>
+          </el-form-item>
+
+          <div v-if="form.applicationType" class="type-description">
+            <el-alert
+              :title="getTypeDescription(form.applicationType)"
+              type="info"
+              :closable="false"
+              show-icon
+            />
+          </div>
+        </el-card>
         <!-- 基本信息卡片 -->
         <el-card class="form-card mb-4">
           <template #header>
@@ -48,73 +60,18 @@
               v-model="form.description"
               type="textarea"
               :rows="4"
-              placeholder="请简要描述项目的主要功能和特点"
+              placeholder="请详细描述项目的功能和特点，让评审委员会更好地了解您的项目"
               :maxlength="500"
               show-word-limit
             />
           </el-form-item>
-        </el-card>
-
-        <!-- 技术信息卡片 -->
-        <el-card class="form-card mb-4">
-          <template #header>
-            <div class="card-header">
-              <el-icon><Monitor /></el-icon>
-              <span>技术信息</span>
-            </div>
-          </template>
-
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="技术栈" prop="techStack">
-                <el-select
-                  v-model="form.techStack"
-                  multiple
-                  filterable
-                  collapse-tags
-                  collapse-tags-tooltip
-                  placeholder="请选择技术栈"
-                  class="w-full"
-                  :filter-method="filterTechStack"
-                >
-                  <el-option v-for="dict in filteredTechStack" :key="dict.value" :label="dict.label" :value="dict.value" />
-                </el-select>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="编程语言" prop="programmingLanguage">
-                <el-select
-                  v-model="form.programmingLanguage"
-                  multiple
-                  filterable
-                  collapse-tags
-                  collapse-tags-tooltip
-                  placeholder="请选择编程语言"
-                  class="w-full"
-                  :filter-method="filterProgrammingLanguage"
-                >
-                  <el-option v-for="dict in filteredProgrammingLanguage" :key="dict.value" :label="dict.label" :value="dict.value" />
-                </el-select>
-              </el-form-item>
-            </el-col>
-          </el-row>
-        </el-card>
-
-        <!-- 仓库信息卡片 -->
-        <el-card class="form-card mb-4">
-          <template #header>
-            <div class="card-header">
-              <el-icon><Link /></el-icon>
-              <span>仓库信息</span>
-            </div>
-          </template>
 
           <el-row :gutter="20">
             <el-col :span="12">
               <el-form-item label="代码仓库" prop="repositoryUrl">
-                <el-input v-model="form.repositoryUrl" placeholder="请输入代码仓库地址" class="url-input">
+                <el-input v-model="form.repositoryUrl" placeholder="https://github.com/yourname/project">
                   <template #append>
-                    <el-button @click="() => openUrl(form.repositoryUrl)">
+                    <el-button @click="() => openUrl(form.repositoryUrl)" :disabled="!form.repositoryUrl">
                       <el-icon><Link /></el-icon>
                     </el-button>
                   </template>
@@ -123,13 +80,141 @@
             </el-col>
             <el-col :span="12">
               <el-form-item label="项目网站" prop="websiteUrl">
-                <el-input v-model="form.websiteUrl" placeholder="请输入项目网站地址" class="url-input">
+                <el-input v-model="form.websiteUrl" placeholder="https://yourproject.com（可选）">
                   <template #append>
-                    <el-button @click="() => openUrl(form.websiteUrl)">
+                    <el-button @click="() => openUrl(form.websiteUrl)" :disabled="!form.websiteUrl">
                       <el-icon><Link /></el-icon>
                     </el-button>
                   </template>
                 </el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+
+          <el-row :gutter="20" class="mt-4">
+            <el-col :span="12">
+              <el-form-item label="开源协议" prop="license">
+                <el-select v-model="form.license" placeholder="请选择开源协议" class="w-full">
+                  <el-option label="Apache 2.0" value="Apache-2.0" />
+                  <el-option label="MIT" value="MIT" />
+                  <el-option label="GPL v3" value="GPL-3.0" />
+                  <el-option label="BSD 3-Clause" value="BSD-3-Clause" />
+                  <el-option label="Mozilla Public License 2.0" value="MPL-2.0" />
+                  <el-option label="其他" value="OTHER" />
+                </el-select>
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </el-card>
+
+        <!-- 个人项目特有字段 -->
+        <el-card v-if="form.applicationType === 'personal'" class="form-card mb-4">
+          <template #header>
+            <div class="card-header">
+              <el-icon><User /></el-icon>
+              <span>个人项目信息</span>
+            </div>
+          </template>
+
+          <el-form-item label="申请理由" prop="applicationReason">
+            <el-input v-model="form.applicationReason" type="textarea" :rows="3"
+              placeholder="请说明为什么希望将此项目加入到开源社区" :maxlength="500" show-word-limit />
+          </el-form-item>
+
+          <el-form-item label="预期贡献" prop="contribution">
+            <el-input v-model="form.contribution" type="textarea" :rows="2"
+              placeholder="请描述您计划对社区做出的贡献" :maxlength="300" show-word-limit />
+          </el-form-item>
+
+          <el-form-item label="项目现状" prop="currentStatus">
+            <el-input v-model="form.currentStatus" type="textarea" :rows="2"
+              placeholder="请描述项目的当前状态、功能完成度等" :maxlength="300" show-word-limit />
+          </el-form-item>
+        </el-card>
+
+        <!-- 社区项目特有字段 -->
+        <el-card v-if="form.applicationType === 'community'" class="form-card mb-4">
+          <template #header>
+            <div class="card-header">
+              <el-icon><Star /></el-icon>
+              <span>社区项目信息</span>
+            </div>
+          </template>
+
+          <!-- 社区项目选择 -->
+          <el-form-item label="选择社区项目" prop="selectedCommunityProject">
+            <el-select
+              v-model="selectedCommunityProject"
+              placeholder="请选择要申请升级的社区项目"
+              @change="handleCommunityProjectSelect"
+              filterable
+              class="w-full"
+            >
+              <el-option
+                v-for="project in communityProjects"
+                :key="project.projectId"
+                :label="project.projectName"
+                :value="project.projectId"
+              >
+                <div class="project-option">
+                  <span class="project-name">{{ project.projectName }}</span>
+                </div>
+              </el-option>
+            </el-select>
+          </el-form-item>
+
+          <el-form-item label="升级理由" prop="upgradeReason">
+            <el-input v-model="form.upgradeReason" type="textarea" :rows="3"
+              placeholder="请说明项目为什么达到了升级为顶级项目的标准" :maxlength="500" show-word-limit />
+          </el-form-item>
+
+          <el-form-item label="社区影响" prop="communityImpact">
+            <el-input v-model="form.communityImpact" type="textarea" :rows="3"
+              placeholder="请描述项目对社区的积极影响和贡献" :maxlength="500" show-word-limit />
+          </el-form-item>
+
+          <el-row :gutter="20">
+            <el-col :span="6">
+              <el-form-item label="Star数量" prop="starCount">
+                <el-input-number v-model="form.starCount" :min="0" placeholder="0" class="w-full" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="6">
+              <el-form-item label="Fork数量" prop="forkCount">
+                <el-input-number v-model="form.forkCount" :min="0" placeholder="0" class="w-full" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="6">
+              <el-form-item label="Issues数量" prop="issuesCount">
+                <el-input-number v-model="form.issuesCount" :min="0" placeholder="0" class="w-full" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="6">
+              <el-form-item label="PR数量" prop="prCount">
+                <el-input-number v-model="form.prCount" :min="0" placeholder="0" class="w-full" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </el-card>
+
+        <!-- 联系信息卡片 -->
+        <el-card class="form-card mb-4">
+          <template #header>
+            <div class="card-header">
+              <el-icon><Phone /></el-icon>
+              <span>联系信息</span>
+            </div>
+          </template>
+
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item label="联系邮箱" prop="contactEmail">
+                <el-input v-model="form.contactEmail" placeholder="example@email.com" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="联系电话" prop="contactPhone">
+                <el-input v-model="form.contactPhone" placeholder="请输入联系电话" />
               </el-form-item>
             </el-col>
           </el-row>
@@ -140,29 +225,12 @@
           <template #header>
             <div class="card-header">
               <el-icon><More /></el-icon>
-              <span>其他信息</span>
+              <span>备注信息</span>
             </div>
           </template>
 
-          <el-row :gutter="20" class="mb-4">
-            <el-col :span="12">
-              <el-form-item label="联系方式" prop="contactInfo">
-                <el-input v-model="form.contactInfo" placeholder="请输入联系方式" :maxlength="100" show-word-limit />
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="版本信息" prop="versionInfo">
-                <el-input v-model="form.versionInfo" placeholder="请输入版本信息" :maxlength="50" show-word-limit />
-              </el-form-item>
-            </el-col>
-          </el-row>
-
-          <el-form-item label="项目Logo" prop="logoUrl">
-            <image-upload v-model="form.logoUrl" :limit="1" class="logo-uploader" tip="建议上传正方形图片，大小不超过2MB" />
-          </el-form-item>
-
-          <el-form-item label="备注" prop="remark">
-            <el-input v-model="form.remark" type="textarea" placeholder="请输入备注信息" :rows="3" :maxlength="200" show-word-limit />
+          <el-form-item label="备注" prop="remarks">
+            <el-input v-model="form.remarks" type="textarea" placeholder="其他需要说明的信息" :rows="3" :maxlength="200" show-word-limit />
           </el-form-item>
         </el-card>
 
@@ -189,180 +257,221 @@
   </div>
 </template>
 
-<script setup name="ProjectCreate" lang="ts">
-import { ProjectForm } from '@/api/osc/project/types';
-import { addProject, getProject, updateProject } from '@/api/osc/project';
-
-import { getCurrentInstance, ref, onMounted, onBeforeUnmount, toRefs, nextTick, watch } from 'vue';
-import { Plus, List, Document, InfoFilled, Monitor, Link, More, Check, DocumentAdd, Timer, Files } from '@element-plus/icons-vue';
-import TemplateSelect from './components/TemplateSelect.vue';
+<script setup name="IncubationApplication" lang="ts">
+import { getCurrentInstance, ref, onMounted, onBeforeUnmount, watch } from 'vue';
+import { Star, Document, InfoFilled, Setting, User, Phone, More, Check, DocumentAdd, Timer, Link } from '@element-plus/icons-vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useUserStore } from '@/store/modules/user';
+import { getProject, addProject, updateProject, listProject } from '@/api/osc/project';
 import type { FormInstance as ElFormInstance } from 'element-plus';
+import { ProjectVO } from '@/api/osc/project/types';
 
 const { proxy } = getCurrentInstance() as any;
 const userStore = useUserStore();
-
-// 模板相关
-const templateDialogVisible = ref(false);
-const showTemplateDialog = () => {
-  templateDialogVisible.value = true;
-};
-
-const handleTemplateSelect = (template: any) => {
-  // 使用模板配置填充表单
-  form.value = {
-    ...form.value,
-    description: template.config.description,
-    techStack: template.config.techStack,
-    programmingLanguage: template.config.programmingLanguage
-  };
-  proxy?.$modal.msgSuccess(`已成功应用"${template.name}"模板`);
-
-  // 更新过滤后的数组，确保选项正确显示
-  filteredTechStack.value = techStackDict.value;
-  filteredProgrammingLanguage.value = programmingLanguageDict.value;
-};
+const route = useRoute();
+const router = useRouter();
 
 // 自动保存相关
 const autoSaveTimer = ref<ReturnType<typeof setInterval>>();
 const isAutoSaving = ref(false);
 const lastSaveTime = ref<string>('');
-
-// 提交状态
 const isSubmitting = ref(false);
 
-// 加载字典数据
-const { osc_project_tech, osc_project_prolan } = toRefs<any>(proxy?.useDict('osc_project_tech', 'osc_project_prolan'));
-
-// 技术栈字典数据（备用）
-const techStackDict = computed(() => {
-  if (osc_project_tech.value && osc_project_tech.value.length > 0) {
-    return osc_project_tech.value;
-  }
-  // 备用的技术栈列表
-  return [
-    { value: '1', label: 'Spring Boot' },
-    { value: '2', label: 'Spring Cloud' },
-    { value: '3', label: 'Docker' },
-    { value: '4', label: 'MyBatis-Plus' },
-    { value: '5', label: '微服务架构' },
-    { value: '6', label: 'Vue 3' },
-    { value: '7', label: 'React' },
-    { value: '8', label: 'TypeScript' },
-    { value: '9', label: 'Redis' },
-    { value: '10', label: 'MySQL' }
-  ];
-});
-
-// 编程语言字典数据（备用）
-const programmingLanguageDict = computed(() => {
-  if (osc_project_prolan.value && osc_project_prolan.value.length > 0) {
-    return osc_project_prolan.value;
-  }
-  // 备用的编程语言列表
-  return [
-    { label: 'Java', value: '1' },
-    { label: 'JavaScript', value: '2' },
-    { label: 'TypeScript', value: '3' },
-    { label: 'Python', value: '4' },
-    { label: 'Go', value: '5' },
-    { label: 'C++', value: '6' },
-    { label: 'PHP', value: '7' },
-    { label: 'Rust', value: '8' },
-    { label: 'Swift', value: '9' },
-    { label: 'Kotlin', value: '10' }
-  ];
-});
-
-const filteredProgrammingLanguage = ref<any[]>([]);
-const programmingLanguageSearchKeyword = ref('');
-const filteredTechStack = ref<any[]>([]);
-const techStackSearchKeyword = ref('');
-
-// 过滤编程语言选项
-const filterProgrammingLanguage = (query: string) => {
-  if (query) {
-    filteredProgrammingLanguage.value = programmingLanguageDict.value.filter((item) => item.label.toLowerCase().includes(query.toLowerCase()));
-  } else {
-    filteredProgrammingLanguage.value = programmingLanguageDict.value;
-  }
-};
-
-// 过滤技术栈选项
-const filterTechStack = (query: string) => {
-  if (query) {
-    filteredTechStack.value = techStackDict.value.filter((item) => item.label.toLowerCase().includes(query.toLowerCase()));
-  } else {
-    filteredTechStack.value = techStackDict.value;
-  }
-};
-
 const formRef = ref<ElFormInstance>();
-const form = ref<ProjectForm>({
+
+// 社区项目相关
+const selectedCommunityProject = ref<number>();
+const communityProjects = ref<ProjectVO[]>([]);
+
+// 孵化申请表单数据
+interface IncubationForm {
+  applicationId?: number;
+  applicationType?: 'personal' | 'community';
+  projectName?: string;
+  description?: string;
+  repositoryUrl?: string;
+  websiteUrl?: string;
+  license?: string;
+  // 个人项目字段
+  applicationReason?: string;
+  contribution?: string;
+  currentStatus?: string;
+  // 社区项目字段
+  upgradeReason?: string;
+  communityImpact?: string;
+  starCount?: number;
+  forkCount?: number;
+  issuesCount?: number;
+  prCount?: number;
+  // 联系信息
+  contactEmail?: string;
+  contactPhone?: string;
+  remarks?: string;
+  applicationStatus?: 'draft' | 'pending' | 'approved' | 'rejected';
+}
+
+const form = ref<IncubationForm>({
+  applicationType: undefined,
   projectName: undefined,
   description: undefined,
   repositoryUrl: undefined,
   websiteUrl: undefined,
-  logoUrl: undefined,
-  status: '0',
-  techStack: [],
-  programmingLanguage: [],
-  contactInfo: undefined,
-  versionInfo: undefined,
-  remark: undefined
+  license: undefined,
+  applicationReason: undefined,
+  contribution: undefined,
+  currentStatus: undefined,
+  upgradeReason: undefined,
+  communityImpact: undefined,
+  starCount: undefined,
+  forkCount: undefined,
+  issuesCount: undefined,
+  prCount: undefined,
+  contactEmail: undefined,
+  contactPhone: undefined,
+  remarks: undefined,
+  applicationStatus: 'draft'
 });
 
 // 提交审核时的验证规则
 const submitRules = {
+  applicationType: [{ required: true, message: '请选择申请类型', trigger: 'change' }],
   projectName: [{ required: true, message: '项目名称不能为空', trigger: 'blur' }],
+  projectCode: [{ required: true, message: '项目代码不能为空', trigger: 'blur' }],
   description: [{ required: true, message: '项目描述不能为空', trigger: 'blur' }],
   repositoryUrl: [
     { required: true, message: '代码仓库不能为空', trigger: 'blur' },
     { type: 'url', message: '请输入有效的URL地址', trigger: 'blur' }
   ],
-  websiteUrl: [{ type: 'url', message: '请输入有效的URL地址', trigger: 'blur' }]
+  websiteUrl: [{ type: 'url', message: '请输入有效的URL地址', trigger: 'blur' }],
+  license: [{ required: true, message: '请选择开源协议', trigger: 'change' }],
+  contactEmail: [
+    { required: true, message: '联系邮箱不能为空', trigger: 'blur' },
+    { type: 'email', message: '请输入有效的邮箱地址', trigger: 'blur' }
+  ],
+  contactPhone: [{ required: true, message: '联系电话不能为空', trigger: 'blur' }],
+  // 个人项目必填字段
+  applicationReason: [{ required: true, message: '申请理由不能为空', trigger: 'blur' }],
+  contribution: [{ required: true, message: '预期贡献不能为空', trigger: 'blur' }],
+  currentStatus: [{ required: true, message: '项目现状不能为空', trigger: 'blur' }],
+  // 社区项目必填字段
+  upgradeReason: [{ required: true, message: '升级理由不能为空', trigger: 'blur' }],
+  communityImpact: [{ required: true, message: '社区影响不能为空', trigger: 'blur' }]
 };
 
-// 保存草稿时的验证规则（只验证URL格式）
+// 保存草稿时的验证规则（只验证URL格式和邮箱格式）
 const draftRules = {
   repositoryUrl: [{ type: 'url', message: '请输入有效的URL地址', trigger: 'blur' }],
-  websiteUrl: [{ type: 'url', message: '请输入有效的URL地址', trigger: 'blur' }]
+  websiteUrl: [{ type: 'url', message: '请输入有效的URL地址', trigger: 'blur' }],
+  contactEmail: [{ type: 'email', message: '请输入有效的邮箱地址', trigger: 'blur' }]
 };
 
 // 根据操作类型动态设置验证规则
 const rules = ref<any>(submitRules);
 
+// 申请类型描述
+const getTypeDescription = (type: 'personal' | 'community') => {
+  if (type === 'personal') {
+    return '将您的个人开源项目申请加入到开源社区，获得社区的支持和资源';
+  } else {
+    return '将已在社区孵化的项目申请升级为顶级项目，获得更高的项目地位和影响力';
+  }
+};
+
+// 根据申请类型动态获取提交验证规则
+const getSubmitRules = () => {
+  const baseRules = {
+    applicationType: [{ required: true, message: '请选择申请类型', trigger: 'change' }],
+    projectName: [{ required: true, message: '项目名称不能为空', trigger: 'blur' }],
+    description: [{ required: true, message: '项目描述不能为空', trigger: 'blur' }],
+    repositoryUrl: [
+      { required: true, message: '代码仓库不能为空', trigger: 'blur' },
+      { type: 'url', message: '请输入有效的URL地址', trigger: 'blur' }
+    ],
+    websiteUrl: [{ type: 'url', message: '请输入有效的URL地址', trigger: 'blur' }],
+    license: [{ required: true, message: '请选择开源协议', trigger: 'change' }],
+    contactEmail: [
+      { required: true, message: '联系邮箱不能为空', trigger: 'blur' },
+      { type: 'email', message: '请输入有效的邮箱地址', trigger: 'blur' }
+    ],
+    contactPhone: [{ required: true, message: '联系电话不能为空', trigger: 'blur' }]
+  };
+
+  // 根据申请类型添加特定字段的验证
+  if (form.value.applicationType === 'personal') {
+    return {
+      ...baseRules,
+      applicationReason: [{ required: true, message: '申请理由不能为空', trigger: 'blur' }],
+      contribution: [{ required: true, message: '预期贡献不能为空', trigger: 'blur' }],
+      currentStatus: [{ required: true, message: '项目现状不能为空', trigger: 'blur' }]
+    };
+  } else if (form.value.applicationType === 'community') {
+    return {
+      ...baseRules,
+      upgradeReason: [{ required: true, message: '升级理由不能为空', trigger: 'blur' }],
+      communityImpact: [{ required: true, message: '社区影响不能为空', trigger: 'blur' }]
+    };
+  }
+
+  return baseRules;
+};
+
+// 申请类型改变时的处理
+const onApplicationTypeChange = (type: 'personal' | 'community') => {
+  // 清空类型特有的字段
+  if (type === 'personal') {
+    form.value.upgradeReason = undefined;
+    form.value.communityImpact = undefined;
+    form.value.starCount = undefined;
+    form.value.forkCount = undefined;
+    form.value.issuesCount = undefined;
+    form.value.prCount = undefined;
+  } else {
+    form.value.applicationReason = undefined;
+    form.value.contribution = undefined;
+    form.value.currentStatus = undefined;
+  }
+};
+
 /** 自动保存功能 */
 const autoSave = async () => {
-  if (isAutoSaving.value) return;
+  if (isAutoSaving.value || isSubmitting.value) return;
 
   const userId = userStore.userId;
   if (!userId) return;
 
+  // 检查是否有必要的数据进行保存
+  if (!form.value.projectName && !form.value.description && !form.value.applicationType) {
+    return;
+  }
+
   isAutoSaving.value = true;
   try {
-    // 转换多选值为字符串
     const submitData: any = {
       ...form.value,
-      techStack: form.value.techStack?.join(','),
-      programmingLanguage: form.value.programmingLanguage?.join(','),
-      status: '0', // 0: 草稿
-      createBy: userId
+      applicationStatus: 'draft',
+      userId: userId
     };
 
-    const projectId = route.query.projectId;
-    if (projectId) {
-      // 编辑模式：更新现有项目
-      submitData.projectId = projectId;
+    const applicationId = route.query.applicationId;
+    if (applicationId && form.value.applicationId) {
+      // 编辑模式：更新现有申请
+      submitData.projectId = applicationId;
       await updateProject(submitData);
     } else {
-      // 新建模式：创建新项目
-      await addProject(submitData);
+      // 新建模式：创建新申请
+      const result = await addProject(submitData);
+      // 如果是首次保存，更新URL以包含applicationId
+      if (result && result.data) {
+        const newApplicationId = result.data;
+        router.replace({
+          path: '/osc/projectCreate',
+          query: { applicationId: newApplicationId }
+        });
+        form.value.applicationId = newApplicationId;
+      }
     }
 
     lastSaveTime.value = new Date().toLocaleTimeString();
-    proxy?.$modal.msgSuccess(`草稿已自动保存 (${lastSaveTime.value})`);
   } catch (error) {
     console.error('自动保存失败:', error);
   } finally {
@@ -407,57 +516,50 @@ const submitForm = async (isSubmitAudit: boolean) => {
   }
 
   // 根据操作类型设置验证规则
-  rules.value = isSubmitAudit ? submitRules : draftRules;
+  rules.value = isSubmitAudit ? getSubmitRules() : draftRules;
 
   isSubmitting.value = true;
   try {
     // 进行表单验证
     await formRef.value?.validate();
 
-    // 转换多选值为字符串
     const submitData: any = {
       ...form.value,
-      techStack: form.value.techStack?.join(','),
-      programmingLanguage: form.value.programmingLanguage?.join(','),
-      status: isSubmitAudit ? '1' : '0', // 1: 待审核, 0: 草稿
-      createBy: userId
+      applicationStatus: isSubmitAudit ? 'pending' : 'draft',
+      userId: userId
     };
 
-    console.log('提交数据:', submitData);
+    console.log('提交孵化申请数据:', submitData);
     console.log('是否提交审核:', isSubmitAudit);
-    console.log('项目状态:', submitData.status);
+    console.log('申请状态:', submitData.applicationStatus);
 
     let result;
-    const projectId = route.query.projectId;
+    const applicationId = route.query.applicationId;
 
-    if (projectId) {
-      // 编辑模式：更新现有项目
-      submitData.projectId = projectId;
-      console.log('编辑模式，更新项目ID:', projectId);
+    if (applicationId && form.value.applicationId) {
+      // 编辑模式：更新现有申请
+      submitData.projectId = applicationId;
+      console.log('编辑模式，更新申请ID:', applicationId);
       result = await updateProject(submitData);
-      console.log('更新结果:', result);
     } else {
-      // 新建模式：创建新项目
-      console.log('新建模式，创建新项目');
+      // 新建模式：创建新申请
+      console.log('新建模式，创建新孵化申请');
       result = await addProject(submitData);
-      console.log('创建结果:', result);
+      // 如果是新建，保存返回的ID
+      if (result && result.data) {
+        form.value.applicationId = result.data;
+      }
     }
 
     if (isSubmitAudit) {
       // 提交审核成功
-      proxy?.$modal.msgSuccess('提交成功，等待审核');
-
-      // 跳转到项目列表（待审核状态）
-      proxy?.$router.push({
-        path: '/osc/project',
-        query: {
-          status: '1'
-        }
-      });
+      proxy?.$modal.msgSuccess('孵化申请提交成功，等待审核');
+      // 跳转到孵化申请列表
+      router.push('/osc/incubation');
     } else {
       proxy?.$modal.msgSuccess('草稿保存成功');
       // 跳转到草稿箱
-      proxy?.$router.push({
+      router.push({
         path: '/osc/projectDraft'
       });
     }
@@ -468,7 +570,7 @@ const submitForm = async (isSubmitAudit: boolean) => {
     }
   } finally {
     // 恢复为默认的验证规则
-    rules.value = submitRules;
+    rules.value = getSubmitRules();
     // 重置提交状态
     isSubmitting.value = false;
   }
@@ -476,7 +578,33 @@ const submitForm = async (isSubmitAudit: boolean) => {
 
 /** 取消按钮 */
 const cancel = () => {
-  proxy?.$router.push('/osc/project');
+  // 清空表单数据
+  form.value = {
+    applicationType: undefined,
+    projectName: undefined,
+    description: undefined,
+    repositoryUrl: undefined,
+    websiteUrl: undefined,
+    license: undefined,
+    applicationReason: undefined,
+    contribution: undefined,
+    currentStatus: undefined,
+    upgradeReason: undefined,
+    communityImpact: undefined,
+    starCount: undefined,
+    forkCount: undefined,
+    issuesCount: undefined,
+    prCount: undefined,
+    contactEmail: undefined,
+    contactPhone: undefined,
+    remarks: undefined,
+    applicationStatus: 'draft'
+  };
+
+  // 清除表单验证状态
+  formRef.value?.clearValidate();
+
+  proxy?.$modal.msgSuccess('表单已清空');
 };
 
 /** 跳转到草稿箱 */
@@ -486,41 +614,10 @@ const goDraftBox = () => {
     proxy?.$modal.msgError('获取用户信息失败');
     return;
   }
-
-  // 如果表单已修改，提示保存
-  proxy?.$router.push({
+  router.push({
     path: '/osc/projectDraft',
     query: { createBy: userId }
   });
-};
-
-/** 跳转到我的创建 */
-const goMyProjects = () => {
-  const userId = userStore.userId;
-  if (!userId) {
-    proxy?.$modal.msgError('获取用户信息失败');
-    return;
-  }
-
-  // 如果表单已修改，提示保存
-  proxy?.$router.push({
-    path: '/osc/myProject',
-    query: { createBy: userId }
-  });
-};
-
-/** 获取项目信息 */
-const getInfo = async (projectId: string) => {
-  try {
-    const res = await getProject(projectId);
-    form.value = {
-      ...res.data,
-      techStack: res.data.techStack?.split(',') || [],
-      programmingLanguage: res.data.programmingLanguage?.split(',') || []
-    };
-  } catch (error) {
-    console.error('获取项目信息失败:', error);
-  }
 };
 
 /** 打开URL */
@@ -530,38 +627,88 @@ const openUrl = (url?: string) => {
   }
 };
 
-// 如果是编辑模式，获取项目信息
-const route = useRoute();
+/** 获取社区项目列表 */
+const getCommunityProjects = async () => {
+  try {
+    const res = await listProject({
+      status: '2', // 只获取已通过审核的项目
+      applicationType: 'personal' // 获取个人项目作为社区项目候选
+    });
+    communityProjects.value = res.rows || [];
+  } catch (error) {
+    console.error('获取社区项目失败:', error);
+  }
+};
 
-// 监听字典数据变化，确保过滤数组正确初始化
-watch(
-  [techStackDict, programmingLanguageDict],
-  ([techStack, programmingLanguage]) => {
-    if (techStack && techStack.length > 0) {
-      filteredTechStack.value = [...techStack];
+/** 处理社区项目选择 */
+const handleCommunityProjectSelect = async (projectId: number) => {
+  if (!projectId) return;
+
+  try {
+    const res = await getProject(projectId);
+    if (res.data) {
+      // 自动填充基本信息
+      form.value.projectName = res.data.projectName;
+      form.value.description = res.data.description;
+      form.value.repositoryUrl = res.data.repositoryUrl;
+      form.value.websiteUrl = res.data.websiteUrl;
+      form.value.license = res.data.license;
+      form.value.starCount = res.data.starCount;
+      form.value.forkCount = res.data.forkCount;
+      form.value.issuesCount = res.data.issuesCount;
+      form.value.prCount = res.data.prCount;
+
+      proxy?.$modal.msgSuccess('已自动填充项目信息');
     }
-    if (programmingLanguage && programmingLanguage.length > 0) {
-      filteredProgrammingLanguage.value = [...programmingLanguage];
+  } catch (error) {
+    console.error('获取项目信息失败:', error);
+    proxy?.$modal.msgError('获取项目信息失败');
+  }
+};
+
+/** 获取孵化申请信息 */
+const getInfo = async (applicationId: string) => {
+  try {
+    const res = await getProject(applicationId);
+    if (res.data) {
+      // 填充表单数据
+      form.value = {
+        applicationId: res.data.projectId,
+        applicationType: res.data.applicationType,
+        projectName: res.data.projectName,
+        description: res.data.description,
+        repositoryUrl: res.data.repositoryUrl,
+        websiteUrl: res.data.websiteUrl,
+        license: res.data.license,
+        applicationReason: res.data.applicationReason,
+        contribution: res.data.contribution,
+        currentStatus: res.data.currentStatus,
+        upgradeReason: res.data.upgradeReason,
+        communityImpact: res.data.communityImpact,
+        starCount: res.data.starCount,
+        forkCount: res.data.forkCount,
+        issuesCount: res.data.issuesCount,
+        prCount: res.data.prCount,
+        contactEmail: res.data.contactEmail,
+        contactPhone: res.data.contactPhone,
+        remarks: res.data.remarks,
+        applicationStatus: res.data.applicationStatus || 'draft'
+      };
     }
-  },
-  { immediate: true }
-);
+  } catch (error) {
+    console.error('获取孵化申请信息失败:', error);
+    proxy?.$modal.msgError('获取申请信息失败');
+  }
+};
 
 onMounted(async () => {
-  // 等待一下确保computed属性已经计算完成
-  await nextTick();
-
-  // 初始化过滤后的数组
-  filteredProgrammingLanguage.value = [...programmingLanguageDict.value];
-  filteredTechStack.value = [...techStackDict.value];
-
-  console.log('技术栈选项:', filteredTechStack.value);
-  console.log('编程语言选项:', filteredProgrammingLanguage.value);
-
-  const projectId = route.query.projectId;
-  if (projectId) {
-    getInfo(projectId as string);
+  const applicationId = route.query.applicationId;
+  if (applicationId) {
+    await getInfo(applicationId as string);
   }
+
+  // 获取社区项目列表
+  await getCommunityProjects();
 
   // 启动自动保存
   startAutoSave();
@@ -631,6 +778,10 @@ onBeforeUnmount(() => {
   }
 }
 
+.type-description {
+  margin-top: 16px;
+}
+
 :deep(.el-form-item) {
   margin-bottom: 24px;
 
@@ -644,34 +795,8 @@ onBeforeUnmount(() => {
   color: var(--el-text-color-regular);
 }
 
-.url-input {
-  :deep(.el-input-group__append) {
-    padding: 0;
-
-    .el-button {
-      margin: 0;
-      border: none;
-      height: 32px;
-      width: 40px;
-      border-radius: 0;
-      padding: 8px;
-    }
-  }
-}
-
-.logo-uploader {
-  :deep(.el-upload) {
-    border: 1px dashed var(--el-border-color);
-    border-radius: 6px;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-    transition: var(--el-transition-duration);
-
-    &:hover {
-      border-color: var(--el-color-primary);
-    }
-  }
+:deep(.el-input-number) {
+  width: 100%;
 }
 
 .form-actions {
@@ -714,6 +839,10 @@ onBeforeUnmount(() => {
   margin-bottom: 16px;
 }
 
+.mt-4 {
+  margin-top: 16px;
+}
+
 .mr-2 {
   margin-right: 8px;
 }
@@ -728,5 +857,19 @@ onBeforeUnmount(() => {
 
 :deep(.el-card__body) {
   padding: 24px;
+}
+
+:deep(.el-radio-group) {
+  display: flex;
+  flex-direction: row;
+  gap: 24px;
+
+  .el-radio {
+    margin-right: 24px;
+
+    &:last-child {
+      margin-right: 0;
+    }
+  }
 }
 </style>
