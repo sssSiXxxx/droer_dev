@@ -17,9 +17,6 @@
             <el-option v-for="item in filteredProjectOptions" :key="item.projectId" :label="item.projectName" :value="item.projectId">
               <div class="project-option">
                 <div class="project-name">{{ item.projectName }}</div>
-                <div class="project-desc" v-if="item.description" :title="item.description">
-                  {{ item.description.length > 30 ? item.description.substring(0, 30) + '...' : item.description }}
-                </div>
               </div>
             </el-option>
             <template #empty>
@@ -139,10 +136,10 @@
             @visible-change="handleSelectVisibleChange"
             no-data-text="暂无匹配项目"
           >
-            <el-option 
-              v-for="item in filteredProjectOptions" 
-              :key="item.projectId" 
-              :label="getProjectLabel(item)" 
+            <el-option
+              v-for="item in filteredProjectOptions"
+              :key="item.projectId"
+              :label="getProjectLabel(item)"
               :value="item.projectId"
               class="custom-project-option"
             >
@@ -424,14 +421,14 @@ const loadProjects = async (showLoading = true) => {
       projectSearchLoading.value = true;
     }
     console.log('开始加载项目列表...');
-    
+
     // 移除status过滤，加载所有项目
-    const res = await listProjectForOss({ 
-      pageNum: 1, 
+    const res = await listProjectForOss({
+      pageNum: 1,
       pageSize: 1000
       // 不再过滤status，加载所有项目
     });
-    
+
     console.log('项目列表响应:', res);
 
     // 检查响应结构
@@ -455,7 +452,7 @@ const loadProjects = async (showLoading = true) => {
       // 活跃项目优先显示
       if (a.status === '1' && b.status !== '1') return -1;
       if (a.status !== '1' && b.status === '1') return 1;
-      
+
       // 然后按创建时间倒序（最新的在前）
       const timeA = new Date(a.createTime || 0).getTime();
       const timeB = new Date(b.createTime || 0).getTime();
@@ -464,13 +461,13 @@ const loadProjects = async (showLoading = true) => {
 
     projectOptions.value = projectData;
     filteredProjectOptions.value = [...projectData];
-    
+
     console.log('最终projectOptions.value:', projectOptions.value);
 
     // 数据统计和提示
     const activeCount = projectData.filter(p => p.status === '1').length;
     const totalCount = projectData.length;
-    
+
     if (totalCount === 0) {
       console.warn('项目列表为空，显示提示信息');
       if (showLoading) {
@@ -484,7 +481,7 @@ const loadProjects = async (showLoading = true) => {
     }
   } catch (error: any) {
     console.error('获取项目列表失败:', error);
-    
+
     // 更丰富的模拟数据，包含不同状态的项目
     projectOptions.value = [
       {
@@ -552,14 +549,14 @@ const loadProjects = async (showLoading = true) => {
 /** 项目搜索处理（防抖优化） - 修复版 */
 const handleProjectSearch = debounce(async (query: string) => {
   console.log('项目搜索查询:', query);
-  
+
   // 如果查询为空，显示所有项目
   if (!query || query.trim() === '') {
     console.log('空查询，显示所有项目');
     filteredProjectOptions.value = [...projectOptions.value];
     return;
   }
-  
+
   projectSearchLoading.value = true;
   try {
     // 如果项目列表为空，先加载所有项目
@@ -575,14 +572,14 @@ const handleProjectSearch = debounce(async (query: string) => {
       const projectName = (item.projectName || '').toString().toLowerCase();
       const projectCode = (item.projectCode || '').toString().toLowerCase();
       const description = (item.description || '').toString().toLowerCase();
-      
+
       // 支持多关键词搜索（用空格分隔）
       const searchKeywords = searchQuery.split(/\s+/).filter(keyword => keyword.length > 0);
-      
+
       // 每个关键词都需要在某个字段中出现
       return searchKeywords.every(keyword => {
-        return projectName.includes(keyword) || 
-               projectCode.includes(keyword) || 
+        return projectName.includes(keyword) ||
+               projectCode.includes(keyword) ||
                description.includes(keyword);
       });
     });
@@ -595,29 +592,29 @@ const handleProjectSearch = debounce(async (query: string) => {
       const bName = (b.projectName || '').toString().toLowerCase();
       const aCode = (a.projectCode || '').toString().toLowerCase();
       const bCode = (b.projectCode || '').toString().toLowerCase();
-      
+
       // 项目名称完全匹配优先级最高
       const aNameExact = aName === searchQuery;
       const bNameExact = bName === searchQuery;
       if (aNameExact && !bNameExact) return -1;
       if (!aNameExact && bNameExact) return 1;
-      
+
       // 项目编码完全匹配次之
       const aCodeExact = aCode === searchQuery;
       const bCodeExact = bCode === searchQuery;
       if (aCodeExact && !bCodeExact) return -1;
       if (!aCodeExact && bCodeExact) return 1;
-      
+
       // 项目名称开头匹配
       const aNameStarts = aName.startsWith(searchQuery);
       const bNameStarts = bName.startsWith(searchQuery);
       if (aNameStarts && !bNameStarts) return -1;
       if (!aNameStarts && bNameStarts) return 1;
-      
+
       // 最后按项目状态和创建时间排序
       if (a.status === '1' && b.status !== '1') return -1;
       if (a.status !== '1' && b.status === '1') return 1;
-      
+
       const timeA = new Date(a.createTime || 0).getTime();
       const timeB = new Date(b.createTime || 0).getTime();
       return timeB - timeA;
@@ -625,16 +622,16 @@ const handleProjectSearch = debounce(async (query: string) => {
 
     filteredProjectOptions.value = filtered;
     console.log(`项目搜索完成："${query}" 找到 ${filtered.length} 个匹配项目`);
-    
+
     // 输出搜索结果详情以便调试
     if (filtered.length > 0) {
-      console.log('搜索结果:', filtered.map(p => ({ 
-        name: p.projectName, 
-        code: p.projectCode, 
-        status: p.status 
+      console.log('搜索结果:', filtered.map(p => ({
+        name: p.projectName,
+        code: p.projectCode,
+        status: p.status
       })));
     }
-    
+
   } catch (error) {
     console.error('项目搜索失败:', error);
     proxy?.$modal.msgError('搜索项目失败，请稍后重试');
@@ -730,7 +727,7 @@ const resetQuery = () => {
 const handleDelete = async (row?: any) => {
   try {
     let confirmMessage = '';
-    
+
     if (row) {
       // 单个文件删除
       const fileName = getDisplayFileName(row);
@@ -741,13 +738,13 @@ const handleDelete = async (row?: any) => {
         proxy?.$modal.msgWarning('请选择要删除的文件');
         return;
       }
-      
+
       // 获取选中文件的名称列表
       const selectedFiles = fileList.value
         .filter((item: any) => ids.value.includes(item.ossId))
         .map((item: any) => getDisplayFileName(item))
         .slice(0, 3); // 最多显示3个文件名
-      
+
       if (ids.value.length === 1) {
         confirmMessage = `是否确认删除文件"${selectedFiles[0]}"？`;
       } else if (ids.value.length <= 3) {
@@ -756,9 +753,9 @@ const handleDelete = async (row?: any) => {
         confirmMessage = `是否确认删除以下文件：\n${selectedFiles.join('\n')}\n...等共${ids.value.length}个文件？`;
       }
     }
-    
+
     await proxy?.$modal.confirm(confirmMessage);
-    
+
     const ossIds = row?.ossId || ids.value;
     await delOss(ossIds);
     await getList();
@@ -777,7 +774,7 @@ const handleUpload = async () => {
     projectId: undefined,
     fileType: undefined
   };
-  
+
   // 如果项目列表为空，预先加载
   if (projectOptions.value.length === 0) {
     console.log('预先加载项目列表以便用户选择');
@@ -904,7 +901,7 @@ const getFileUrl = (item: any) => {
     }
     return item.url;
   }
-  
+
   // 如果没有URL，返回占位符
   return '/static/images/file-placeholder.png';
 };
@@ -1026,7 +1023,7 @@ onMounted(() => {
   transition: all 0.3s ease;
   border-radius: 8px;
   overflow: hidden;
-  height: 320px;  
+  height: 320px;
   display: flex;
   flex-direction: column;
   animation: fadeIn 0.5s ease-out;
@@ -1085,7 +1082,7 @@ onMounted(() => {
       .is-loading {
         animation: spin 1s linear infinite;
       }
-      
+
       .error-detail {
         font-size: 10px;
         color: var(--el-text-color-placeholder);
@@ -1348,7 +1345,7 @@ onMounted(() => {
     border-radius: 6px;
     transition: all 0.2s ease;
   }
-  
+
   .el-input__inner:focus {
     border-color: var(--el-color-primary);
     box-shadow: 0 0 0 2px rgba(var(--el-color-primary-rgb), 0.2);
@@ -1370,7 +1367,7 @@ onMounted(() => {
   .el-icon {
     animation: none;
   }
-  
+
   .is-loading {
     animation: spin 1s linear infinite;
   }
