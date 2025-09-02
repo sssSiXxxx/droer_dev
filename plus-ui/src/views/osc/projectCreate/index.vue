@@ -449,7 +449,8 @@ const autoSave = async () => {
     const submitData: any = {
       ...form.value,
       applicationStatus: 'draft',
-      userId: userId
+      userId: userId,
+      status: '1' // 添加默认项目状态为活跃状态
     };
 
     const applicationId = route.query.applicationId;
@@ -526,7 +527,8 @@ const submitForm = async (isSubmitAudit: boolean) => {
     const submitData: any = {
       ...form.value,
       applicationStatus: isSubmitAudit ? 'pending' : 'draft',
-      userId: userId
+      userId: userId,
+      status: '1' // 添加默认项目状态为活跃状态
     };
 
     console.log('提交孵化申请数据:', submitData);

@@ -66,7 +66,7 @@ public class ProjectBo extends BaseEntity {
     /**
      * 项目状态
      */
-    @NotBlank(message = "项目状态不能为空", groups = { AddGroup.class, EditGroup.class })
+//    @NotBlank(message = "项目状态不能为空", groups = { AddGroup.class, EditGroup.class })
     private String status;
 
     /**
@@ -196,7 +196,7 @@ public class ProjectBo extends BaseEntity {
     /**
      * 联系电话
      */
-    @NotBlank(message = "联系电话不能为空", groups = { AddGroup.class, EditGroup.class })
+//    @NotBlank(message = "联系电话不能为空", groups = { AddGroup.class, EditGroup.class })
     private String contactPhone;
 
     /**
