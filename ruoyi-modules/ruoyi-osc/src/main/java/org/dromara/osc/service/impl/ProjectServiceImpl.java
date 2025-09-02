@@ -110,14 +110,18 @@ public class ProjectServiceImpl implements IProjectService {
             lqw.orderByDesc(Project::getCreateTime);  // 默认按创建时间倒序排序
         }
         
-        log.info("构建查询条件 - 项目名称: {}, 项目描述: {}, 负责人用户ID: {}, 创建者: {}, 排序: {} {}", 
-                bo.getProjectName(), bo.getDescription(), bo.getUserId(), bo.getCreateBy(), orderByColumn, isAsc);
+        log.info("构建查询条件 - 项目名称: {}, 项目描述: {}, 负责人用户ID: {}, 创建者: {}, 申请状态: {}, 排序: {} {}", 
+                bo.getProjectName(), bo.getDescription(), bo.getUserId(), bo.getCreateBy(), bo.getApplicationStatus(), orderByColumn, isAsc);
         
         // 处理基本查询条件
         lqw.like(StringUtils.isNotBlank(bo.getProjectName()), Project::getProjectName, bo.getProjectName());
         lqw.like(StringUtils.isNotBlank(bo.getDescription()), Project::getDescription, bo.getDescription());
         lqw.eq(bo.getUserId() != null, Project::getUserId, bo.getUserId());
         lqw.eq(bo.getCreateBy() != null, Project::getCreateBy, bo.getCreateBy());  // 添加创建者条件
+        lqw.eq(StringUtils.isNotBlank(bo.getApplicationStatus()), Project::getApplicationStatus, bo.getApplicationStatus());
+        
+        // 排除已删除的申请（applicationStatus为deleted的记录）
+        lqw.ne(Project::getApplicationStatus, "deleted");
         
         log.info("查询条件构建完成");
         return lqw;

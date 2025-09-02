@@ -83,7 +83,20 @@
             <div class="audit-actions">
               <el-button type="success" @click="handleQuickAudit(item.projectId, '2')">通过</el-button>
               <el-button type="danger" @click="openRejectDialog(item)">驳回</el-button>
-              <el-button type="warning" @click="openAuditDialog(item)">详细审核</el-button>
+              <el-button 
+                v-if="item.applicationType === 'personal'"
+                type="primary" 
+                @click="openProjectJoinDialog(item)"
+              >
+                加入项目列表
+              </el-button>
+              <el-button 
+                v-else
+                type="warning" 
+                @click="openAuditDialog(item)"
+              >
+                详细审核
+              </el-button>
             </div>
             <div class="delete-action">
               <el-button type="danger" link icon="Delete" @click="handleDeleteSingle(item)">删除</el-button>
@@ -240,6 +253,69 @@
         </div>
       </template>
     </el-dialog>
+
+    <!-- 个人项目加入对话框 -->
+    <el-dialog title="个人项目加入项目列表" v-model="projectJoinDialog.visible" width="600px" append-to-body>
+      <div class="join-dialog-content">
+        <!-- 项目基本信息 -->
+        <div class="project-info-section">
+          <h4>项目信息</h4>
+          <div class="project-basic-info">
+            <div class="info-row">
+              <strong>项目名称：</strong>
+              <span>{{ currentJoinItem.projectName }}</span>
+            </div>
+            <div class="info-row">
+              <strong>项目描述：</strong>
+              <span>{{ currentJoinItem.description }}</span>
+            </div>
+            <div class="info-row">
+              <strong>代码仓库：</strong>
+              <el-link :href="currentJoinItem.repositoryUrl" target="_blank" type="primary">
+                {{ currentJoinItem.repositoryUrl }}
+              </el-link>
+            </div>
+          </div>
+        </div>
+
+        <!-- 加入选择 -->
+        <div class="join-selection-section">
+          <h4>加入选择</h4>
+          <el-radio-group v-model="joinForm.joinOption">
+            <el-radio value="approve">
+              <div class="option-content">
+                <div class="option-title">通过申请并加入项目列表</div>
+                <div class="option-desc">审核通过，项目将显示在项目列表中</div>
+              </div>
+            </el-radio>
+            <el-radio value="approve_only">
+              <div class="option-content">
+                <div class="option-title">仅通过申请</div>
+                <div class="option-desc">审核通过，但不加入项目列表</div>
+              </div>
+            </el-radio>
+          </el-radio-group>
+        </div>
+
+        <!-- 审核意见 -->
+        <div class="opinion-section">
+          <h4>审核意见</h4>
+          <el-input 
+            v-model="joinForm.auditOpinion" 
+            type="textarea" 
+            :rows="3"
+            placeholder="请输入审核意见（可选）"
+          />
+        </div>
+      </div>
+      
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button type="primary" @click="handleProjectJoin">确 定</el-button>
+          <el-button @click="projectJoinDialog.visible = false">取 消</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -266,7 +342,7 @@ const queryParams = ref<ProjectQuery>({
   pageSize: 10,
   projectName: undefined,
   applicationType: undefined,
-  applicationStatus: undefined // 先不限制状态，查询所有项目
+  applicationStatus: 'pending' // 默认只查询待审核的申请
 });
 
 // 驳回对话框
@@ -302,6 +378,19 @@ const auditRules = {
   auditStatus: [{ required: true, message: '请选择审核状态', trigger: 'change' }],
   auditOpinion: [{ required: true, message: '请输入审核意见', trigger: 'blur' }]
 };
+
+// 个人项目加入对话框
+const projectJoinDialog = reactive({
+  visible: false
+});
+
+const currentJoinItem = ref<any>({});
+
+const joinForm = ref({
+  projectId: undefined,
+  joinOption: 'approve', // approve: 通过并加入, approve_only: 仅通过
+  auditOpinion: ''
+});
 
 /** 查询项目审核列表 */
 const getList = async () => {
@@ -395,6 +484,37 @@ const submitAudit = () => {
       await getList();
     }
   });
+};
+
+/** 打开个人项目加入对话框 */
+const openProjectJoinDialog = (row: any) => {
+  currentJoinItem.value = row;
+  joinForm.value = {
+    projectId: row.projectId,
+    joinOption: 'approve',
+    auditOpinion: ''
+  };
+  projectJoinDialog.visible = true;
+};
+
+/** 处理个人项目加入 */
+const handleProjectJoin = async () => {
+  try {
+    const auditData = {
+      projectId: joinForm.value.projectId,
+      auditStatus: '2', // 通过状态
+      auditOpinion: joinForm.value.auditOpinion || '审核通过',
+      joinProjectList: joinForm.value.joinOption === 'approve' // 是否加入项目列表
+    };
+    
+    await auditProject(auditData);
+    proxy?.$modal.msgSuccess('操作成功');
+    projectJoinDialog.visible = false;
+    await getList();
+  } catch (error) {
+    console.error('操作失败:', error);
+    proxy?.$modal.msgError('操作失败');
+  }
 };
 
 /** 获取申请状态标签 */

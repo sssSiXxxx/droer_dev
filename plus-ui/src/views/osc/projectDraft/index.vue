@@ -98,7 +98,7 @@
 </template>
 
 <script setup name="ProjectDraft" lang="ts">
-import { listProject, delProject } from '@/api/osc/project';
+import { listProject, delProject, updateProject } from '@/api/osc/project';
 import { ProjectVO, ProjectQuery } from '@/api/osc/project/types';
 import { getCurrentInstance, ref, onMounted } from 'vue';
 import { useUserStore } from '@/store/modules/user';
@@ -245,8 +245,13 @@ const handleEdit = (row: ProjectVO) => {
 /** 删除按钮操作 */
 const handleDelete = async (row: ProjectVO) => {
   try {
-    await proxy?.$modal.confirm('是否确认删除该草稿？');
-    await delProject((row as any).projectId);
+    await proxy?.$modal.confirm('是否确认删除该草稿？删除后将无法恢复。');
+    // 软删除：只删除孵化申请，不影响项目列表
+    const updateData = {
+      projectId: (row as any).projectId,
+      applicationStatus: 'deleted' // 将申请状态设为deleted
+    };
+    await updateProject(updateData);
     proxy?.$modal.msgSuccess('删除成功');
     await getList();
   } catch (error) {
@@ -262,10 +267,17 @@ const handleBatchDelete = async () => {
       return;
     }
     
-    await proxy?.$modal.confirm(`是否确认删除选中的 ${multipleSelection.value.length} 个草稿？`);
+    await proxy?.$modal.confirm(`是否确认删除选中的 ${multipleSelection.value.length} 个草稿？删除后将无法恢复。`);
     
-    const ids = multipleSelection.value.map(item => (item as any).projectId);
-    await delProject(ids);
+    // 批量软删除：逐个更新申请状态
+    const promises = multipleSelection.value.map(item => 
+      updateProject({
+        projectId: (item as any).projectId,
+        applicationStatus: 'deleted' // 将申请状态设为deleted
+      })
+    );
+    
+    await Promise.all(promises);
     
     proxy?.$modal.msgSuccess('批量删除成功');
     multipleSelection.value = [];

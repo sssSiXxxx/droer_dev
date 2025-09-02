@@ -21,8 +21,7 @@ public interface SysOssMapper extends BaseMapperPlus<SysOss, SysOssVo> {
      */
     @Select("SELECT o.*, p.project_name as projectName " +
             "FROM sys_oss o " +
-            "LEFT JOIN os_project p ON o.project_id = p.id " +
-            "WHERE o.del_flag = '0' " +
+            "LEFT JOIN os_project p ON o.project_id = p.project_id " +
             "ORDER BY o.create_time DESC")
     List<SysOssVo> selectOssWithProjectName();
     
@@ -31,8 +30,7 @@ public interface SysOssMapper extends BaseMapperPlus<SysOss, SysOssVo> {
      */
     @Select("SELECT o.*, p.project_name as projectName " +
             "FROM sys_oss o " +
-            "LEFT JOIN os_project p ON o.project_id = p.id " +
-            "WHERE o.del_flag = '0' " +
+            "LEFT JOIN os_project p ON o.project_id = p.project_id " +
             "${ew.customSqlSegment}")
     Page<SysOssVo> selectOssPageWithProjectName(Page<SysOssVo> page, LambdaQueryWrapper<SysOss> ew);
 }

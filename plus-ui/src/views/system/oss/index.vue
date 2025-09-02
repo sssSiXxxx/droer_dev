@@ -97,11 +97,11 @@
             <dict-tag :options="fileTypeOptions" :value="row.fileType" />
           </template>
         </el-table-column>
-        <el-table-column label="文件大小" align="center" prop="size" min-width="100">
-          <template #default="{ row }">
-            {{ formatSize(row.size) }}
-          </template>
-        </el-table-column>
+<!--        <el-table-column label="文件大小" align="center" prop="size" min-width="100">-->
+<!--          <template #default="{ row }">-->
+<!--            {{ formatSize(row.size) }}-->
+<!--          </template>-->
+<!--        </el-table-column>-->
         <el-table-column label="上传时间" align="center" prop="createTime" width="180">
           <template #default="{ row }">
             <span>{{ parseTime(row.createTime) }}</span>
@@ -192,37 +192,38 @@
           </el-select>
         </el-form-item>
         <el-form-item label="文件上传" prop="file">
-          <el-upload
-            ref="uploadRef"
-            :action="upload.url"
+          <div class="upload-container">
+            <el-upload
+                ref="uploadRef"
+                action="/dev-api/system/oss/upload"
             :headers="upload.headers"
             :file-list="upload.fileList"
-            :data="upload.form"
-            :limit="upload.limit"
+            :data="getUploadData"
+            :limit="1"
             :on-progress="handleFileUploadProgress"
             :on-success="handleFileSuccess"
             :on-error="handleFileError"
             :on-exceed="handleFileExceed"
             :before-upload="handleBeforeUpload"
             :on-remove="handleFileRemove"
-            multiple
+            :on-change="handleFileChange"
+            :auto-upload="false"
             :show-file-list="true"
             drag
-          >
+            class="upload-block"
+            >
             <el-icon class="el-icon--upload"><upload-filled /></el-icon>
             <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
-            <template #tip>
-              <div class="el-upload__tip text-center">
-                <span>支持任意类型文件，且不超过 {{ upload.fileSize }}MB</span>
-              </div>
-            </template>
-          </el-upload>
+            <div class="el-upload__tip">请先选择项目和文档类型，然后选择文件进行上传。每次只能上传一个文件。</div>
+            </el-upload>
+          </div>
         </el-form-item>
+
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitUpload">确 定</el-button>
-          <el-button @click="upload.open = false">取 消</el-button>
+          <el-button type="primary" @click="handleSubmitUpload" :loading="upload.isUploading">确 定</el-button>
+          <el-button @click="cancelUpload">取 消</el-button>
         </div>
       </template>
     </el-dialog>
@@ -302,33 +303,24 @@ const queryParams = ref({
 
 // 上传参数
 const upload = ref({
-  // 是否显示弹出层
   open: false,
-  // 弹出层标题
   title: '上传文件',
-  // 是否禁用上传
   isUploading: false,
-  // 设置上传的请求头部
+  uploadId: null as string | null, // 添加上传ID防止重复
   get headers() {
     return {
       Authorization: 'Bearer ' + getToken(),
       clientid: import.meta.env.VITE_APP_CLIENT_ID
     };
   },
-  // 上传的地址
   url: import.meta.env.VITE_APP_BASE_API + '/system/oss/upload',
-  // 上传的文件列表
-  fileList: [],
-  // 上传文件大小限制
+  fileList: [] as any[],
   fileSize: 5,
-  // 限制上传数量
-  limit: 10,
-  // 表单参数
+  limit: 1, // 改为1，每次只能上传一个文件
   form: {
     projectId: undefined,
     fileType: undefined
   },
-  // 表单校验
   rules: {
     projectId: [{ required: true, message: '请选择所属项目', trigger: 'change' }],
     fileType: [{ required: true, message: '请选择文档类型', trigger: 'change' }]
@@ -342,73 +334,45 @@ const getList = async () => {
     const res = await listOss(proxy?.addDateRange(queryParams.value, dateRange.value));
     console.log('OSS列表响应:', res);
     console.log('OSS数据行:', res.rows);
+    console.log('响应总数:', res.total);
 
-    // 调试每个文件的项目信息
-    if (res.rows && Array.isArray(res.rows)) {
-      res.rows.forEach((item: any, index: number) => {
-        console.log(`文件 ${index + 1}:`, {
-          fileName: item.fileName,
-          projectId: item.projectId,
-          projectName: item.projectName,
-          hasProjectName: !!item.projectName,
-          projectNameType: typeof item.projectName
+    // 检查响应数据结构
+    if (res && res.rows !== undefined) {
+      fileList.value = res.rows || [];
+      total.value = res.total || 0;
+
+      console.log('成功设置文件列表，数量:', fileList.value.length);
+
+      // 调试每个文件的项目信息
+      if (fileList.value.length > 0) {
+        fileList.value.forEach((item: any, index: number) => {
+          console.log(`文件 ${index + 1}:`, {
+            ossId: item.ossId,
+            fileName: item.fileName,
+            originalName: item.originalName,
+            projectId: item.projectId,
+            projectName: item.projectName,
+            fileType: item.fileType,
+            createTime: item.createTime
+          });
         });
-      });
+      } else {
+        console.log('文件列表为空');
+      }
+    } else {
+      console.warn('响应数据结构异常，使用空数据');
+      fileList.value = [];
+      total.value = 0;
     }
-
-    fileList.value = res.rows;
-    total.value = res.total;
   } catch (error) {
     console.error('获取OSS列表失败:', error);
-    // 提供模拟数据确保页面显示
-    fileList.value = [
-      {
-        ossId: 1,
-        fileName: 'random-generated-uuid.png',
-        originalName: 'project-logo.png',
-        projectId: 1,
-        projectName: 'RuoYi-Vue-Plus项目',
-        fileType: 'logo',
-        size: 1024000,
-        url: 'https://via.placeholder.com/300x200/409eff/ffffff?text=Logo', // 测试图片URL
-        createTime: '2024-01-01 09:00:00'
-      },
-      {
-        ossId: 2,
-        fileName: 'random-generated-uuid.pdf',
-        originalName: 'requirements.pdf',
-        projectId: 2,
-        projectName: 'Dromara社区管理系统',
-        fileType: 'requirement',
-        size: 2048000,
-        url: '/static/docs/requirements.pdf',
-        createTime: '2024-01-02 10:00:00'
-      },
-      {
-        ossId: 3,
-        fileName: 'random-generated-uuid.md',
-        originalName: 'api-docs.md',
-        projectId: 1,
-        projectName: 'RuoYi-Vue-Plus项目',
-        fileType: 'api',
-        size: 512000,
-        url: '/static/docs/api-docs.md',
-        createTime: '2024-01-03 14:00:00'
-      },
-      {
-        ossId: 4,
-        fileName: 'random-generated-uuid.jpg',
-        originalName: 'screenshot.jpg',
-        projectId: 2,
-        projectName: 'Dromara社区管理系统',
-        fileType: 'design',
-        size: 3024000,
-        url: 'https://via.placeholder.com/400x300/67c23a/ffffff?text=Design', // 测试图片URL
-        createTime: '2024-01-04 15:30:00'
-      }
-    ];
-    total.value = fileList.value.length;
-    proxy?.$modal.msgWarning('API接口连接失败，显示模拟数据');
+    console.error('错误详情:', error.response || error.message || error);
+
+    // API调用失败时设置空数组，不使用模拟数据
+    fileList.value = [];
+    total.value = 0;
+
+    proxy?.$modal.msgError('获取文件列表失败，请检查网络连接或联系管理员');
   } finally {
     loading.value = false;
   }
@@ -767,13 +731,20 @@ const handleDelete = async (row?: any) => {
 
 /** 上传按钮操作 - 优化版 */
 const handleUpload = async () => {
-  // 重置表单
+  // 重置表单和状态
   upload.value.open = true;
+  upload.value.isUploading = false;
+  upload.value.uploadId = null;
   upload.value.fileList = [];
   upload.value.form = {
     projectId: undefined,
     fileType: undefined
   };
+
+  // 清空上传组件
+  if (uploadRef.value) {
+    uploadRef.value.clearFiles();
+  }
 
   // 如果项目列表为空，预先加载
   if (projectOptions.value.length === 0) {
@@ -785,36 +756,163 @@ const handleUpload = async () => {
   }
 };
 
-/** 提交上传文件 */
-const submitUpload = async () => {
-  (proxy?.$refs['uploadRef'] as any)?.submit();
+import { ElUpload } from "element-plus";
+
+// 1. 定义 ref 来拿到 el-upload 实例
+const uploadRef = ref<InstanceType<typeof ElUpload> | null>(null);
+
+// 获取上传数据（动态生成，确保数据一致性）
+const getUploadData = () => {
+  const data = {
+    projectId: upload.value.form.projectId || null,
+    fileType: upload.value.form.fileType || 'other'
+  };
+  console.log('获取上传数据:', data);
+
+  // 验证数据完整性
+  if (!data.projectId) {
+    console.warn('警告：projectId为空');
+  }
+  if (!data.fileType) {
+    console.warn('警告：fileType为空，使用默认值other');
+    data.fileType = 'other';
+  }
+
+  return data;
+};
+
+// 验证并提交上传
+const handleSubmitUpload = async () => {
+  // 防止重复提交
+  if (upload.value.isUploading) {
+    console.log('已在上传中，忽略重复提交');
+    return;
+  }
+
+  console.log('当前状态检查:');
+  console.log('- 项目ID:', upload.value.form.projectId);
+  console.log('- 文件类型:', upload.value.form.fileType);
+  console.log('- 文件列表长度:', upload.value.fileList.length);
+  console.log('- 文件列表详情:', upload.value.fileList);
+
+  // 验证必填字段
+  if (!upload.value.form.projectId) {
+    proxy?.$modal.msgError('请选择所属项目');
+    return;
+  }
+  if (!upload.value.form.fileType) {
+    proxy?.$modal.msgError('请选择文档类型');
+    return;
+  }
+  if (!upload.value.fileList || upload.value.fileList.length === 0) {
+    proxy?.$modal.msgError('请选择要上传的文件');
+    return;
+  }
+
+  // 生成唯一的上传ID
+  const uploadId = `upload_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  upload.value.uploadId = uploadId;
+
+  console.log(`开始提交上传 [${uploadId}]，文件数量:`, upload.value.fileList.length);
+  console.log('上传数据:', getUploadData());
+
+  // 手动提交上传
+  if (uploadRef.value) {
+    upload.value.isUploading = true;
+    try {
+      uploadRef.value.submit();
+      console.log(`上传提交完成 [${uploadId}]`);
+    } catch (error) {
+      console.error(`上传提交失败 [${uploadId}]:`, error);
+      upload.value.isUploading = false;
+      upload.value.uploadId = null;
+      proxy?.$modal.msgError('上传提交失败');
+    }
+  }
+};
+
+// 取消上传
+const cancelUpload = () => {
+  upload.value.open = false;
+  upload.value.isUploading = false;
+  upload.value.uploadId = null;
+  upload.value.fileList = [];
+  upload.value.form = {
+    projectId: undefined,
+    fileType: undefined
+  };
+
+  // 清空上传组件
+  if (uploadRef.value) {
+    uploadRef.value.clearFiles();
+  }
 };
 
 /** 文件上传中处理 */
 const handleFileUploadProgress = (event: any, file: any) => {
+  console.log('文件上传中:', file.name, '进度:', Math.round(event.percent) + '%');
   upload.value.isUploading = true;
 };
 
-/** 文件上传成功处理 */
-const handleFileSuccess = async (response: any, file: any) => {
-  upload.value.isUploading = false;
-  console.log('文件上传响应:', response);
-  console.log('文件信息:', file);
+// /** 文件上传成功处理 */
+// const handleFileSuccess = async (response: any, file: any) => {
+//   upload.value.isUploading = false;
+//   console.log('文件上传响应:', response);
+//   console.log('文件信息:', file);
+//
+//   if (response.code === 200) {
+//     proxy?.$modal.msgSuccess('上传成功');
+//     upload.value.open = false;
+//     // 重置上传表单
+//     upload.value.fileList = [];
+//     upload.value.form = {
+//       projectId: undefined,
+//       fileType: undefined
+//     };
+//     // 刷新文件列表
+//     await getList();
+//   } else {
+//     console.error('上传失败响应:', response);
+//     proxy?.$modal.msgError(`上传失败: ${response.msg || '未知错误'}`);
+//   }
+// };
 
-  if (response.code === 200) {
-    proxy?.$modal.msgSuccess('上传成功');
+
+/** 文件上传成功处理 */
+const handleFileSuccess = async (response: any, file: any, fileList: any) => {
+  const currentUploadId = upload.value.uploadId;
+  console.log(`文件上传响应 [${currentUploadId}]:`, response);
+  console.log(`上传的文件 [${currentUploadId}]:`, file.name);
+  console.log(`文件列表状态 [${currentUploadId}]:`, fileList);
+
+  // 立即重置上传状态，防止重复处理
+  upload.value.isUploading = false;
+  upload.value.uploadId = null;
+
+  if (response && response.code === 200) {
+    proxy?.$modal.msgSuccess(`${file.name} 上传成功`);
+
+    // 关闭对话框并重置表单
     upload.value.open = false;
-    // 重置上传表单
     upload.value.fileList = [];
     upload.value.form = {
       projectId: undefined,
       fileType: undefined
     };
+
+    // 清空上传组件的文件列表
+    if (uploadRef.value) {
+      uploadRef.value.clearFiles();
+    }
+
     // 刷新文件列表
+    console.log(`开始刷新文件列表 [${currentUploadId}]`);
     await getList();
+    console.log(`文件列表刷新完成 [${currentUploadId}]`);
   } else {
-    console.error('上传失败响应:', response);
-    proxy?.$modal.msgError(`上传失败: ${response.msg || '未知错误'}`);
+    const errorMsg = response?.msg || response?.message || '上传失败';
+    console.error(`上传失败 [${currentUploadId}]:`, errorMsg);
+    proxy?.$modal.msgError(`文件 ${file.name} 上传失败: ${errorMsg}`);
   }
 };
 
@@ -834,24 +932,64 @@ const handleFileError = (error: any, file: any) => {
   }
 };
 
+/** 文件选择变化处理 */
+const handleFileChange = (file: any, fileList: any) => {
+  console.log('文件选择变化:', file.name, '状态:', file.status);
+  console.log('当前文件列表长度:', fileList.length);
+
+  // 更新文件列表
+  upload.value.fileList = fileList;
+
+  // 如果文件状态是ready，表示文件已经选择好了
+  if (file.status === 'ready') {
+    console.log('文件已准备就绪，可以上传');
+  }
+};
+
 /** 文件删除处理 */
 const handleFileRemove = (file: any, fileList: any) => {
+  console.log('文件被移除:', file.name);
+  console.log('当前文件列表长度:', fileList.length);
   upload.value.fileList = fileList;
+
+  // 如果所有文件都被移除了，重置上传状态
+  if (fileList.length === 0) {
+    upload.value.isUploading = false;
+    console.log('所有文件已移除，重置上传状态');
+  }
 };
 
 /** 文件上传超出数量限制处理 */
 const handleFileExceed = (files: any, fileList: any) => {
-  proxy?.$modal.msgError(`上传文件数量不能超过 ${upload.value.limit} 个!`);
+  proxy?.$modal.msgError('每次只能上传1个文件，请先移除已选择的文件再添加新文件！');
 };
 
 /** 上传前处理 */
 const handleBeforeUpload = (file: any) => {
+  console.log('上传前检查文件:', file.name);
+  console.log('当前上传数据:', getUploadData());
+
+  // 文件大小检查
   const isLt = file.size / 1024 / 1024 < upload.value.fileSize;
   if (!isLt) {
     proxy?.$modal.msgError(`文件大小不能超过 ${upload.value.fileSize} MB!`);
     return false;
   }
+
+  // 必填字段检查
+  if (!upload.value.form.projectId) {
+    proxy?.$modal.msgError('请先选择所属项目');
+    return false;
+  }
+  if (!upload.value.form.fileType) {
+    proxy?.$modal.msgError('请先选择文档类型');
+    return false;
+  }
+
+  // 手动上传模式下，需要将文件添加到文件列表中
   upload.value.fileList = [file];
+  console.log('文件已添加到列表，当前文件数量:', upload.value.fileList.length);
+  console.log('文件检查通过，准备上传');
   return true;
 };
 
@@ -859,7 +997,7 @@ const handleBeforeUpload = (file: any) => {
 const handleDownload = (row: any) => {
   console.log('下载文件:', row);
   const fileName = row.originalName || row.fileName || '下载文件';
-  proxy?.download('/system/oss/download/' + row.ossId, {}, fileName);
+  proxy?.download('/system/oss/download/' + row.ossId, {}, fileName, 'get');
 };
 
 /** 多选框选中数据 */
@@ -932,21 +1070,21 @@ const getFileTypeLabel = (fileType: string) => {
   }
 };
 
-/** 格式化文件大小 */
-const formatSize = (size: number | null | undefined) => {
-  if (!size || size === 0) return '0 B';
-
-  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-  let index = 0;
-  let fileSize = size;
-
-  while (fileSize >= 1024 && index < units.length - 1) {
-    fileSize /= 1024;
-    index++;
-  }
-
-  return `${fileSize.toFixed(1)} ${units[index]}`;
-};
+// /** 格式化文件大小 */
+// const formatSize = (size: number | null | undefined) => {
+//   if (!size || size === 0) return '0 B';
+//
+//   const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+//   let index = 0;
+//   let fileSize = size;
+//
+//   while (fileSize >= 1024 && index < units.length - 1) {
+//     fileSize /= 1024;
+//     index++;
+//   }
+//
+//   return `${fileSize.toFixed(1)} ${units[index]}`;
+// };
 
 /** 图片加载失败处理 */
 const handleImageError = (e: any) => {
@@ -1372,4 +1510,15 @@ onMounted(() => {
     animation: spin 1s linear infinite;
   }
 }
+
+.upload-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.upload-btn {
+  text-align: center;
+}
+
 </style>

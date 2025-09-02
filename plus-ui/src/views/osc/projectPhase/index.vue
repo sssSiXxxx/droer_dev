@@ -66,15 +66,15 @@
     <el-card class="mb-4">
       <el-form :model="queryParams" ref="queryRef" :inline="true">
         <el-form-item label="项目" prop="projectId">
-          <el-select 
-            v-model="queryParams.projectId" 
-            placeholder="请选择或搜索项目" 
-            clearable 
+          <el-select
+            v-model="queryParams.projectId"
+            placeholder="请选择或搜索项目"
+            clearable
             filterable
             remote
             :remote-method="handleProjectSearch"
             :loading="projectSearchLoading"
-            style="width: 280px" 
+            style="width: 280px"
             @change="handleProjectChange"
           >
             <el-option v-for="item in filteredProjectOptions" :key="item.projectId" :label="item.projectName" :value="item.projectId">
@@ -198,14 +198,14 @@
               >
                 完成
               </el-button>
-              <el-button 
-                type="info" 
-                link 
-                icon="Right" 
-                v-if="scope.row.status === '2'" 
+              <el-button
+                type="info"
+                link
+                icon="Right"
+                v-if="scope.row.status === '2'"
                 @click="handleAdvanceNext(scope.row)"
-              > 
-                推进下一阶段 
+              >
+                推进下一阶段
               </el-button>
               <el-button type="warning" link icon="VideoPause" v-if="scope.row.status === '1'" @click="handlePause(scope.row)"> 暂停 </el-button>
               <el-button type="info" link icon="VideoPlay" v-if="scope.row.status === '3'" @click="handleResume(scope.row)"> 恢复 </el-button>
@@ -340,7 +340,6 @@ import { listProject } from '@/api/osc/project';
 import type { FormInstance } from 'element-plus';
 import GanttChart from './components/GanttChart.vue';
 import { parseTime } from '@/utils/ruoyi';
-import { download } from '@/utils/request';
 
 // 防抖函数
 const debounce = (func: Function, wait: number) => {
@@ -449,7 +448,7 @@ const loadProjects = async () => {
     const res = await listProject();
     projectOptions.value = res.rows || [];
     filteredProjectOptions.value = [...projectOptions.value];
-    
+
     // 如果没有数据，提供模拟数据
     if (projectOptions.value.length === 0) {
       projectOptions.value = [
@@ -504,7 +503,7 @@ const handleProjectSearch = debounce(async (query: string) => {
       if (projectOptions.value.length === 0) {
         await loadProjects();
       }
-      
+
       // 本地过滤项目
       filteredProjectOptions.value = projectOptions.value.filter(
         (item) =>
@@ -761,12 +760,12 @@ const handleAdvanceNext = async (row: any) => {
     // 先获取下一阶段信息
     const nextPhaseRes = await getNextPhase(row.projectId, row.phaseId);
     const nextPhase = nextPhaseRes.data;
-    
+
     if (!nextPhase) {
       proxy?.$modal.msgInfo('当前已是最后一个阶段，无法推进');
       return;
     }
-    
+
     await proxy?.$modal.confirm(`是否确认推进到下一阶段"${nextPhase.phaseName}"？当前阶段将标记为完成，下一阶段将自动开始。`);
     await advanceToNextPhase(row.phaseId);
     await getList();
@@ -1222,7 +1221,7 @@ onMounted(() => {
     font-size: 14px;
     margin-bottom: 2px;
   }
-  
+
   .project-desc {
     font-size: 12px;
     color: var(--el-text-color-secondary);

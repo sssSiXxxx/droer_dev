@@ -84,12 +84,12 @@ public class SysOssController extends BaseController {
     }
 
     /**
-     * 下载OSS对象
+     * 下载OSS对象（同时支持GET和POST）
      *
      * @param ossId OSS对象ID
      */
     @SaCheckPermission("system:oss:download")
-    @GetMapping("/download/{ossId}")
+    @RequestMapping(value = "/download/{ossId}", method = {RequestMethod.GET, RequestMethod.POST})
     public void download(@PathVariable Long ossId, HttpServletResponse response) throws IOException {
         ossService.download(ossId, response);
     }

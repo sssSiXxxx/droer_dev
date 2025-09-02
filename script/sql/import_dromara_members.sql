@@ -117,4 +117,14 @@ INSERT INTO sys_user (user_id, dept_id, user_name, nick_name, user_type, email, 
 -- 5. password: 设置为空字符串，需要管理员重置密码
 -- 6. status: 设置为0(正常状态)
 -- 7. create_by: 设置为1(系统管理员)
--- 8. 执行前请确保dept_id=100的部门存在，或调整为实际的部门ID
+
+-- 初始所有用户密码为666666
+UPDATE sys_user
+SET password = '$10$.p75A0bk57nn6cDRhpt7dujdO9G2iVmvgUaWvWOQMhUa5pkGhAgGW'
+WHERE user_id BETWEEN 10000 AND 10103;
+
+UPDATE sys_user
+SET password = '$10$.p75A0bk57nn6cDRhpt7dujdO9G2iVmvgUaWvWOQMhUa5pkGhAgGW'
+WHERE user_id = 2;
+
+
