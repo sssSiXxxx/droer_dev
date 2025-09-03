@@ -83,16 +83,16 @@
             <div class="audit-actions">
               <el-button type="success" @click="handleQuickAudit(item.projectId, '2')">通过</el-button>
               <el-button type="danger" @click="openRejectDialog(item)">驳回</el-button>
-              <el-button 
+              <el-button
                 v-if="item.applicationType === 'personal'"
-                type="primary" 
+                type="primary"
                 @click="openProjectJoinDialog(item)"
               >
                 加入项目列表
               </el-button>
-              <el-button 
+              <el-button
                 v-else
-                type="warning" 
+                type="warning"
                 @click="openAuditDialog(item)"
               >
                 详细审核
@@ -123,118 +123,107 @@
       </template>
     </el-dialog>
 
-    <!-- 详细审核对话框 -->
-    <el-dialog title="孵化申请详细审核" v-model="auditDialog.visible" width="800px" append-to-body>
+    <el-dialog
+        title="孵化申请详细审核"
+        v-model="auditDialog.visible"
+        width="800px"
+        append-to-body
+    >
       <div class="audit-detail-content">
         <!-- 基本信息 -->
         <div class="info-section">
           <h4>基本信息</h4>
-          <div class="info-grid">
-            <div class="info-item">
-              <strong>项目名称：</strong>
-              <span>{{ currentAuditItem.projectName }}</span>
-            </div>
-            <div class="info-item">
-              <strong>申请类型：</strong>
-              <el-tag :type="currentAuditItem.applicationType === 'personal' ? 'success' : 'warning'" size="small">
+          <el-descriptions :column="2" border>
+            <el-descriptions-item label="项目名称">
+              {{ currentAuditItem.projectName }}
+            </el-descriptions-item>
+            <el-descriptions-item label="申请类型">
+              <el-tag
+                  :type="currentAuditItem.applicationType === 'personal' ? 'success' : 'warning'"
+                  size="small"
+              >
                 {{ currentAuditItem.applicationType === 'personal' ? '个人项目' : '社区项目' }}
               </el-tag>
-            </div>
-            <div class="info-item">
-              <strong>开源协议：</strong>
-              <span>{{ currentAuditItem.license || '未选择' }}</span>
-            </div>
-            <div class="info-item full-width">
-              <strong>项目描述：</strong>
-              <p class="description-text">{{ currentAuditItem.description }}</p>
-            </div>
-            <div class="info-item">
-              <strong>代码仓库：</strong>
+            </el-descriptions-item>
+            <el-descriptions-item label="开源协议">
+              {{ currentAuditItem.license || '未选择' }}
+            </el-descriptions-item>
+            <el-descriptions-item label="代码仓库">
               <el-link :href="currentAuditItem.repositoryUrl" target="_blank" type="primary">
                 {{ currentAuditItem.repositoryUrl }}
               </el-link>
-            </div>
-            <div class="info-item" v-if="currentAuditItem.websiteUrl">
-              <strong>项目网站：</strong>
+            </el-descriptions-item>
+            <el-descriptions-item label="项目网站" v-if="currentAuditItem.websiteUrl">
               <el-link :href="currentAuditItem.websiteUrl" target="_blank" type="primary">
                 {{ currentAuditItem.websiteUrl }}
               </el-link>
-            </div>
-          </div>
+            </el-descriptions-item>
+            <el-descriptions-item label="项目描述" :span="2">
+              <div class="description-text">{{ currentAuditItem.description }}</div>
+            </el-descriptions-item>
+          </el-descriptions>
         </div>
 
         <!-- 个人项目特有信息 -->
         <div class="info-section" v-if="currentAuditItem.applicationType === 'personal'">
           <h4>个人项目信息</h4>
-          <div class="info-grid">
-            <div class="info-item full-width">
-              <strong>申请理由：</strong>
-              <p class="description-text">{{ currentAuditItem.applicationReason }}</p>
-            </div>
-            <div class="info-item full-width">
-              <strong>预期贡献：</strong>
-              <p class="description-text">{{ currentAuditItem.contribution }}</p>
-            </div>
-            <div class="info-item full-width">
-              <strong>项目现状：</strong>
-              <p class="description-text">{{ currentAuditItem.currentStatus }}</p>
-            </div>
-          </div>
+          <el-descriptions :column="1" border>
+            <el-descriptions-item label="申请理由">
+              <div class="description-text">{{ currentAuditItem.applicationReason }}</div>
+            </el-descriptions-item>
+            <el-descriptions-item label="预期贡献">
+              <div class="description-text">{{ currentAuditItem.contribution }}</div>
+            </el-descriptions-item>
+            <el-descriptions-item label="项目现状">
+              <div class="description-text">{{ currentAuditItem.currentStatus }}</div>
+            </el-descriptions-item>
+          </el-descriptions>
         </div>
 
         <!-- 社区项目特有信息 -->
         <div class="info-section" v-if="currentAuditItem.applicationType === 'community'">
           <h4>社区项目信息</h4>
-          <div class="info-grid">
-            <div class="info-item full-width">
-              <strong>升级理由：</strong>
-              <p class="description-text">{{ currentAuditItem.upgradeReason }}</p>
-            </div>
-            <div class="info-item full-width">
-              <strong>社区影响：</strong>
-              <p class="description-text">{{ currentAuditItem.communityImpact }}</p>
-            </div>
-            <div class="info-item">
-              <strong>Star数量：</strong>
-              <span>{{ currentAuditItem.starCount || 0 }}</span>
-            </div>
-            <div class="info-item">
-              <strong>Fork数量：</strong>
-              <span>{{ currentAuditItem.forkCount || 0 }}</span>
-            </div>
-            <div class="info-item">
-              <strong>Issues数量：</strong>
-              <span>{{ currentAuditItem.issuesCount || 0 }}</span>
-            </div>
-            <div class="info-item">
-              <strong>PR数量：</strong>
-              <span>{{ currentAuditItem.prCount || 0 }}</span>
-            </div>
-          </div>
+          <el-descriptions :column="2" border>
+            <el-descriptions-item label="升级理由" :span="2">
+              <div class="description-text">{{ currentAuditItem.upgradeReason }}</div>
+            </el-descriptions-item>
+            <el-descriptions-item label="社区影响" :span="2">
+              <div class="description-text">{{ currentAuditItem.communityImpact }}</div>
+            </el-descriptions-item>
+            <el-descriptions-item label="Star 数量">
+              {{ currentAuditItem.starCount || 0 }}
+            </el-descriptions-item>
+            <el-descriptions-item label="Fork 数量">
+              {{ currentAuditItem.forkCount || 0 }}
+            </el-descriptions-item>
+            <el-descriptions-item label="Issues 数量">
+              {{ currentAuditItem.issuesCount || 0 }}
+            </el-descriptions-item>
+            <el-descriptions-item label="PR 数量">
+              {{ currentAuditItem.prCount || 0 }}
+            </el-descriptions-item>
+          </el-descriptions>
         </div>
 
         <!-- 联系信息 -->
         <div class="info-section">
           <h4>联系信息</h4>
-          <div class="info-grid">
-            <div class="info-item">
-              <strong>联系邮箱：</strong>
-              <span>{{ currentAuditItem.contactEmail || '未提供' }}</span>
-            </div>
-            <div class="info-item">
-              <strong>联系电话：</strong>
-              <span>{{ currentAuditItem.contactPhone || '未提供' }}</span>
-            </div>
-            <div class="info-item full-width" v-if="currentAuditItem.remarks">
-              <strong>备注：</strong>
-              <p class="description-text">{{ currentAuditItem.remarks }}</p>
-            </div>
-          </div>
+          <el-descriptions :column="2" border>
+            <el-descriptions-item label="联系邮箱">
+              {{ currentAuditItem.contactEmail || '未提供' }}
+            </el-descriptions-item>
+            <el-descriptions-item label="联系电话">
+              {{ currentAuditItem.contactPhone || '未提供' }}
+            </el-descriptions-item>
+            <el-descriptions-item label="备注" v-if="currentAuditItem.remarks" :span="2">
+              <div class="description-text">{{ currentAuditItem.remarks }}</div>
+            </el-descriptions-item>
+          </el-descriptions>
         </div>
       </div>
 
       <el-divider />
-      
+
       <el-form ref="auditFormRef" :model="auditForm" :rules="auditRules" label-width="100px">
         <el-form-item label="审核状态" prop="auditStatus">
           <el-radio-group v-model="auditForm.auditStatus">
@@ -300,15 +289,15 @@
         <!-- 审核意见 -->
         <div class="opinion-section">
           <h4>审核意见</h4>
-          <el-input 
-            v-model="joinForm.auditOpinion" 
-            type="textarea" 
+          <el-input
+            v-model="joinForm.auditOpinion"
+            type="textarea"
             :rows="3"
             placeholder="请输入审核意见（可选）"
           />
         </div>
       </div>
-      
+
       <template #footer>
         <div class="dialog-footer">
           <el-button type="primary" @click="handleProjectJoin">确 定</el-button>
@@ -506,7 +495,7 @@ const handleProjectJoin = async () => {
       auditOpinion: joinForm.value.auditOpinion || '审核通过',
       joinProjectList: joinForm.value.joinOption === 'approve' // 是否加入项目列表
     };
-    
+
     await auditProject(auditData);
     proxy?.$modal.msgSuccess('操作成功');
     projectJoinDialog.visible = false;
@@ -551,39 +540,39 @@ const handleViewProject = async (row: any) => {
       `
        <div style="text-align: left; width: 100%; margin: 0; padding: 0;">
          <h3 style="margin: 0 0 20px 0; color: #333; text-align: center; background-color: #fdfde7; padding: 15px; border-radius: 6px;">${projectData.projectName}</h3>
-         
+
          <div style="margin: 0 0 2px 0; padding: 12px; background-color: white; width: 100%; box-sizing: border-box;">
            <strong style="color: #333;">申请类型：</strong>
            <p style="margin: 5px 0; color: #666;">${projectData.applicationType === 'personal' ? '个人项目加入社区' : '社区项目升级为顶级项目'}</p>
          </div>
-         
+
          <div style="margin: 0 0 2px 0; padding: 12px; background-color: #f0f9f0; width: 100%; box-sizing: border-box;">
            <strong style="color: #333;">项目描述：</strong>
            <p style="margin: 5px 0; color: #666;">${projectData.description || '暂无描述'}</p>
          </div>
-         
+
          <div style="margin: 0 0 2px 0; padding: 12px; background-color: white; width: 100%; box-sizing: border-box;">
            <strong style="color: #333;">开源协议：</strong>
            <p style="margin: 5px 0; color: #666;">${projectData.license || '未选择'}</p>
          </div>
-         
+
          <div style="margin: 0 0 2px 0; padding: 12px; background-color: #f0f9f0; width: 100%; box-sizing: border-box;">
            <strong style="color: #333;">代码仓库：</strong>
            <p style="margin: 5px 0;">
              <a href="${projectData.repositoryUrl}" target="_blank" style="color: #409EFF;">${projectData.repositoryUrl || '暂无仓库地址'}</a>
            </p>
          </div>
-         
+
          <div style="margin: 0 0 2px 0; padding: 12px; background-color: white; width: 100%; box-sizing: border-box;">
            <strong style="color: #333;">联系邮箱：</strong>
            <p style="margin: 5px 0; color: #666;">${projectData.contactEmail || '未提供'}</p>
          </div>
-         
+
          <div style="margin: 0 0 2px 0; padding: 12px; background-color: #f0f9f0; width: 100%; box-sizing: border-box;">
            <strong style="color: #333;">申请状态：</strong>
            <p style="margin: 5px 0; color: #666;">${getApplicationStatusLabel(projectData.applicationStatus) || '暂无状态信息'}</p>
          </div>
-         
+
          <div style="margin: 0 0 2px 0; padding: 12px; background-color: white; width: 100%; box-sizing: border-box;">
            <strong style="color: #333;">备注：</strong>
            <p style="margin: 5px 0; color: #666;">${projectData.remarks || '暂无备注'}</p>
@@ -627,12 +616,12 @@ const handleBatchDelete = async () => {
       proxy?.$modal.msgWarning('请选择要删除的记录');
       return;
     }
-    
+
     await proxy?.$modal.confirm(`是否确认删除选中的 ${multipleSelection.value.length} 条记录？`);
-    
+
     const ids = multipleSelection.value.map(item => item.projectId!);
     await delProject(ids);
-    
+
     proxy?.$modal.msgSuccess('批量删除成功');
     multipleSelection.value = [];
     // 清除选中状态
@@ -771,5 +760,26 @@ onMounted(() => {
 .delete-action {
   display: flex;
   align-items: center;
+}
+
+.audit-detail-content {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.info-section {
+  margin-bottom: 20px;
+}
+
+.info-section h4 {
+  margin-bottom: 12px;
+  font-weight: bold;
+  color: #333;
+}
+
+.description-text {
+  white-space: pre-wrap;
+  line-height: 1.6;
 }
 </style>

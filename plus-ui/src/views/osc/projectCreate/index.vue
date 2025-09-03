@@ -557,7 +557,29 @@ const submitForm = async (isSubmitAudit: boolean) => {
       // 提交审核成功
       proxy?.$modal.msgSuccess('孵化申请提交成功，等待审核');
       // 跳转到孵化申请列表
-      router.push('/osc/incubation');
+      router.push('/osc/projectCreate');
+      //随后清空表单数据
+      form.value = {
+        applicationType: undefined,
+        projectName: undefined,
+        description: undefined,
+        repositoryUrl: undefined,
+        websiteUrl: undefined,
+        license: undefined,
+        applicationReason: undefined,
+        contribution: undefined,
+        currentStatus: undefined,
+        upgradeReason: undefined,
+        communityImpact: undefined,
+        starCount: undefined,
+        forkCount: undefined,
+        issuesCount: undefined,
+        prCount: undefined,
+        contactEmail: undefined,
+        contactPhone: undefined,
+        remarks: undefined,
+        applicationStatus: 'draft'
+      }
     } else {
       proxy?.$modal.msgSuccess('草稿保存成功');
       // 跳转到草稿箱

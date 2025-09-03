@@ -50,7 +50,7 @@ public class ProjectBo extends BaseEntity {
     /**
      * 代码仓库
      */
-    @NotBlank(message = "代码仓库不能为空", groups = { AddGroup.class, EditGroup.class })
+    @NotBlank(message = "代码仓库不能为空", groups = { AddGroup.class, EditGroup.class})
     private String repositoryUrl;
 
     /**
