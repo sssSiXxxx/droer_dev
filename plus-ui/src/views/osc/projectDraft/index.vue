@@ -196,11 +196,27 @@ const getList = async () => {
     if (!queryParams.value.createBy) {
       queryParams.value.createBy = userStore.userId;
     }
-    console.log('查询参数:', queryParams.value);
+    
+    // 确保只查询草稿状态
+    queryParams.value.applicationStatus = 'draft';
+    
+    console.log('草稿箱查询参数:', queryParams.value);
+    console.log('用户ID:', userStore.userId);
+    console.log('查询状态:', queryParams.value.applicationStatus);
+    
     const res = await listProject(queryParams.value);
-    console.log('查询结果:', res);
+    console.log('草稿箱查询结果:', res);
+    
     draftList.value = res.rows || [];
     total.value = res.total || 0;
+
+    console.log('草稿数量:', total.value);
+    console.log('草稿列表:', draftList.value.map(item => ({
+      id: item.projectId,
+      name: item.projectName,
+      status: item.applicationStatus,
+      createBy: item.createBy
+    })));
 
     // 调试时间字段
     if (draftList.value.length > 0) {

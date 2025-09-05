@@ -132,7 +132,7 @@ export const dynamicRoutes: RouteRecordRaw[] = [
         path: 'projectCreate',
         component: () => import('@/views/osc/projectCreate/index.vue'),
         name: 'ProjectCreateClient',
-        meta: { title: '创建项目', icon: 'edit' },
+        meta: { title: '项目孵化申请', icon: 'edit' },
         hidden: true,
         permissions: ['osc:projectCreate:list']
       },

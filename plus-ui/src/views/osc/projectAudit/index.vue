@@ -387,18 +387,41 @@ const joinForm = ref({
 const getList = async () => {
   loading.value = true;
   try {
-    console.log('查询参数:', queryParams.value);
+    console.log('审核列表查询参数:', queryParams.value);
+    console.log('查询状态:', queryParams.value.applicationStatus);
+    
     const res = await listProjectAudit(queryParams.value);
-    console.log('查询结果:', res);
-    projectAuditList.value = res.rows;
-    total.value = res.total;
+    console.log('审核列表查询结果:', res);
+    console.log('返回记录数:', res.rows ? res.rows.length : 0);
+    
+    projectAuditList.value = res.rows || [];
+    total.value = res.total || 0;
+
+    // 调试每条记录的状态
+    if (projectAuditList.value.length > 0) {
+      console.log('审核列表状态分布:');
+      projectAuditList.value.forEach((item, index) => {
+        console.log(`记录${index + 1}:`, {
+          name: item.projectName,
+          applicationStatus: item.applicationStatus,
+          auditStatus: item.auditStatus || '未设置',
+          id: item.projectId
+        });
+      });
+    }
 
     // 如果没有数据，显示提示信息
     if (!projectAuditList.value || projectAuditList.value.length === 0) {
-      proxy?.$modal.msgInfo('暂无待审核项目');
+      console.log('当前查询条件下无数据');
+      if (queryParams.value.applicationStatus === 'pending') {
+        proxy?.$modal.msgInfo('暂无待审核项目');
+      } else {
+        proxy?.$modal.msgInfo('暂无符合条件的项目');
+      }
     }
   } catch (error) {
     console.error('查询失败:', error);
+    proxy?.$modal.msgError('查询审核列表失败');
   } finally {
     loading.value = false;
   }
@@ -419,15 +442,23 @@ const resetQuery = () => {
 /** 一键审核操作 */
 const handleQuickAudit = async (projectId: number, status: string) => {
   try {
-    await auditProject({
+    const auditData = {
       projectId,
       auditStatus: status,
       auditOpinion: status === '1' ? '孵化申请审核通过' : '孵化申请审核不通过'
-    });
+    };
+    
+    console.log('快速审核数据:', auditData);
+    console.log('审核状态映射:', status === '1' ? '通过' : '拒绝');
+    
+    await auditProject(auditData);
     proxy?.$modal.msgSuccess('审核成功');
+    
+    // 审核完成后重新加载列表
     await getList();
   } catch (error) {
     console.error('审核失败:', error);
+    proxy?.$modal.msgError('审核失败');
   }
 };
 
@@ -442,11 +473,15 @@ const openRejectDialog = (row: any) => {
 const handleReject = () => {
   proxy?.$refs['rejectFormRef'].validate(async (valid: boolean) => {
     if (valid) {
-      await auditProject({
+      const auditData = {
         projectId: rejectForm.value.projectId,
-        auditStatus: '2',
+        auditStatus: '2', // 驳回状态
         auditOpinion: rejectForm.value.auditOpinion
-      });
+      };
+      
+      console.log('驳回审核数据:', auditData);
+      
+      await auditProject(auditData);
       proxy?.$modal.msgSuccess('驳回成功');
       rejectDialog.visible = false;
       await getList();

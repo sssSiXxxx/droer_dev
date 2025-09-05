@@ -121,20 +121,29 @@
             </div>
           </template>
 
-          <el-form-item label="申请理由" prop="applicationReason">
-            <el-input v-model="form.applicationReason" type="textarea" :rows="3"
-              placeholder="请说明为什么希望将此项目加入到开源社区" :maxlength="500" show-word-limit />
-          </el-form-item>
+          <el-row :gutter="20" style="margin-bottom: 12px;">
+            <el-col :span="24">
+              <el-form-item label="申请理由" prop="applicationReason">
+                <el-input v-model="form.applicationReason" type="textarea" :rows="2"
+                          placeholder="请说明为什么希望将此项目加入到开源社区" :maxlength="500" show-word-limit />
+              </el-form-item>
+            </el-col>
+          </el-row>
 
-          <el-form-item label="预期贡献" prop="contribution">
-            <el-input v-model="form.contribution" type="textarea" :rows="2"
-              placeholder="请描述您计划对社区做出的贡献" :maxlength="300" show-word-limit />
-          </el-form-item>
-
-          <el-form-item label="项目现状" prop="currentStatus">
-            <el-input v-model="form.currentStatus" type="textarea" :rows="2"
-              placeholder="请描述项目的当前状态、功能完成度等" :maxlength="300" show-word-limit />
-          </el-form-item>
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item label="预期贡献" prop="contribution">
+                <el-input v-model="form.contribution" type="textarea" :rows="2"
+                          placeholder="请描述您计划对社区做出的贡献" :maxlength="300" show-word-limit />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="项目现状" prop="currentStatus">
+                <el-input v-model="form.currentStatus" type="textarea" :rows="2"
+                          placeholder="请描述项目的当前状态、功能完成度等" :maxlength="300" show-word-limit />
+              </el-form-item>
+            </el-col>
+          </el-row>
         </el-card>
 
         <!-- 社区项目特有字段 -->
@@ -168,15 +177,20 @@
             </el-select>
           </el-form-item>
 
-          <el-form-item label="升级理由" prop="upgradeReason">
-            <el-input v-model="form.upgradeReason" type="textarea" :rows="3"
-              placeholder="请说明项目为什么达到了升级为顶级项目的标准" :maxlength="500" show-word-limit />
-          </el-form-item>
-
-          <el-form-item label="社区影响" prop="communityImpact">
-            <el-input v-model="form.communityImpact" type="textarea" :rows="3"
-              placeholder="请描述项目对社区的积极影响和贡献" :maxlength="500" show-word-limit />
-          </el-form-item>
+          <el-row :gutter="20" style="margin-bottom: 16px;">
+            <el-col :span="12">
+              <el-form-item label="升级理由" prop="upgradeReason">
+                <el-input v-model="form.upgradeReason" type="textarea" :rows="3"
+                          placeholder="请说明项目为什么达到了升级为顶级项目的标准" :maxlength="500" show-word-limit />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="社区影响" prop="communityImpact">
+                <el-input v-model="form.communityImpact" type="textarea" :rows="3"
+                          placeholder="请描述项目对社区的积极影响和贡献" :maxlength="500" show-word-limit />
+              </el-form-item>
+            </el-col>
+          </el-row>
 
           <el-row :gutter="20">
             <el-col :span="6">
@@ -451,24 +465,33 @@ const autoSave = async () => {
 
   isAutoSaving.value = true;
   try {
+    // 自动保存固定为草稿状态
     const submitData: any = {
       ...form.value,
-      applicationStatus: 'draft',
+      applicationStatus: 'draft', // 自动保存只能是草稿状态
       userId: userId,
       status: '1' // 添加默认项目状态为活跃状态
     };
+
+    console.log('自动保存数据:', {
+      projectName: submitData.projectName,
+      applicationStatus: submitData.applicationStatus,
+      userId: submitData.userId
+    });
 
     const applicationId = route.query.applicationId;
     if (applicationId && form.value.applicationId) {
       // 编辑模式：更新现有申请
       submitData.projectId = applicationId;
       await updateProject(submitData);
+      console.log('自动保存更新成功，ID:', applicationId);
     } else {
       // 新建模式：创建新申请
       const result = await addProject(submitData);
       // 如果是首次保存，更新URL以包含applicationId
       if (result && result.data) {
         const newApplicationId = result.data;
+        console.log('自动保存新建成功，获得ID:', newApplicationId);
         router.replace({
           path: '/osc/projectCreate',
           query: { applicationId: newApplicationId }
@@ -478,6 +501,7 @@ const autoSave = async () => {
     }
 
     lastSaveTime.value = new Date().toLocaleTimeString();
+    console.log('自动保存成功，时间:', lastSaveTime.value);
   } catch (error) {
     console.error('自动保存失败:', error);
   } finally {
@@ -529,16 +553,19 @@ const submitForm = async (isSubmitAudit: boolean) => {
     // 进行表单验证
     await formRef.value?.validate();
 
+    // 明确设置applicationStatus状态
+    const applicationStatus = isSubmitAudit ? 'pending' : 'draft';
     const submitData: any = {
       ...form.value,
-      applicationStatus: isSubmitAudit ? 'pending' : 'draft',
+      applicationStatus: applicationStatus,
       userId: userId,
       status: '1' // 添加默认项目状态为活跃状态
     };
 
     console.log('提交孵化申请数据:', submitData);
     console.log('是否提交审核:', isSubmitAudit);
-    console.log('申请状态:', submitData.applicationStatus);
+    console.log('申请状态:', applicationStatus);
+    console.log('目标状态应该是:', isSubmitAudit ? 'pending(审核列表)' : 'draft(草稿箱)');
 
     let result;
     const applicationId = route.query.applicationId;
@@ -561,8 +588,8 @@ const submitForm = async (isSubmitAudit: boolean) => {
     if (isSubmitAudit) {
       // 提交审核成功
       proxy?.$modal.msgSuccess('孵化申请提交成功，等待审核');
-      // 跳转到孵化申请列表
-      router.push('/osc/projectCreate');
+      // 跳转回我的创建页面，而不是创建表单页面
+      router.push('/osc/myProject');
       //随后清空表单数据
       form.value = {
         applicationType: undefined,
@@ -587,9 +614,11 @@ const submitForm = async (isSubmitAudit: boolean) => {
       }
     } else {
       proxy?.$modal.msgSuccess('草稿保存成功');
-      // 跳转到草稿箱
+      console.log('草稿保存成功，即将跳转到草稿箱');
+      // 跳转到草稿箱，确保带上用户ID参数
       router.push({
-        path: '/osc/projectDraft'
+        path: '/osc/projectDraft',
+        query: { createBy: userId }
       });
     }
   } catch (error) {
