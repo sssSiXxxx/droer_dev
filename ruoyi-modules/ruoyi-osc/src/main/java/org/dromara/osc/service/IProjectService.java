@@ -1,5 +1,6 @@
 package org.dromara.osc.service;
 
+import org.dromara.osc.domain.Project;
 import org.dromara.osc.domain.vo.ProjectVo;
 import org.dromara.osc.domain.bo.ProjectBo;
 import org.dromara.common.mybatis.core.page.TableDataInfo;

@@ -71,11 +71,20 @@
                   target="_blank"
                   type="primary"
                   :underline="false"
-                  class="project-name-link"
+                  :class="['project-name-link', {
+                    'super-project-name': scope.row.applicationType === 'community' && scope.row.applicationStatus === 'approved'
+                  }]"
                 >
                   {{ scope.row.projectName }}
                 </el-link>
-                <span v-else class="project-name-text">{{ scope.row.projectName }}</span>
+                <span 
+                  v-else 
+                  :class="['project-name-text', {
+                    'super-project-name': scope.row.applicationType === 'community' && scope.row.applicationStatus === 'approved'
+                  }]"
+                >
+                  {{ scope.row.projectName }}
+                </span>
               </div>
               <div v-if="scope.row.description" class="project-description">
                 {{ scope.row.description }}
@@ -164,18 +173,18 @@
         </el-form-item>
 
         <el-form-item label="项目负责人" prop="userId">
-          <el-select 
-            v-model="form.userId" 
-            placeholder="请选择项目负责人" 
-            filterable 
+          <el-select
+            v-model="form.userId"
+            placeholder="请选择项目负责人"
+            filterable
             clearable
             style="width: 100%"
             @focus="getUserList"
           >
-            <el-option 
-              v-for="user in userList" 
-              :key="user.userId" 
-              :label="user.nickName" 
+            <el-option
+              v-for="user in userList"
+              :key="user.userId"
+              :label="user.nickName"
               :value="user.userId"
             >
               <span>{{ user.nickName }}</span>
@@ -184,9 +193,27 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="项目Logo" prop="logoUrl">
-          <image-upload v-model="form.logoUrl" />
+<!--        <el-form-item label="项目Logo" prop="logoUrl">-->
+<!--          <image-upload v-model="form.logoUrl" />-->
+<!--        </el-form-item>-->
+        <!-- Star数、Fork数-->
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="Star数" prop="starCount">
+              <el-input-number v-model="form.starCount" controls-position="right" :min="0" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="Fork数" prop="forkCount">
+              <el-input-number v-model="form.forkCount" controls-position="right" :min="0" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <!-- 创建时间 -->
+        <el-form-item label="创建时间" prop="createTime">
+          <el-date-picker v-model="form.createTime" type="datetime" placeholder="请选择创建时间" />
         </el-form-item>
+
       </el-form>
       <template #footer>
         <div class="dialog-footer">
@@ -198,31 +225,31 @@
 
     <!-- 导入对话框 -->
     <el-dialog :title="upload.title" v-model="upload.open" width="400px" append-to-body>
-      <el-upload
-        ref="uploadRef"
-        :limit="1"
-        accept=".xlsx,.xls"
-        :headers="upload.headers"
-        :action="upload.url + '?updateSupport=' + upload.updateSupport"
-        :disabled="upload.isUploading"
-        :on-progress="handleFileUploadProgress"
-        :on-success="handleFileSuccess"
-        :auto-upload="false"
-        drag
-      >
-        <el-icon class="el-icon--upload"><upload-filled /></el-icon>
-        <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
-        <template #tip>
-          <div class="el-upload__tip">
-            <el-checkbox v-model="upload.updateSupport" />
-            是否更新已经存在的数据，仅更新模式支持。
-            <br />
-            <span>仅允许导入xls、xlsx格式文件。</span>
-            <br />
-            <span>模板下载：<el-button type="text" @click="downloadTemplate">下载模板</el-button></span>
-          </div>
-        </template>
-      </el-upload>
+<!--      <el-upload-->
+<!--        ref="uploadRef"-->
+<!--        :limit="1"-->
+<!--        accept=".xlsx,.xls"-->
+<!--        :headers="upload.headers"-->
+<!--        :action="upload.url + '?updateSupport=' + upload.updateSupport"-->
+<!--        :disabled="upload.isUploading"-->
+<!--        :on-progress="handleFileUploadProgress"-->
+<!--        :on-success="handleFileSuccess"-->
+<!--        :auto-upload="false"-->
+<!--        drag-->
+<!--      >-->
+<!--        <el-icon class="el-icon&#45;&#45;upload"><upload-filled /></el-icon>-->
+<!--        <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>-->
+<!--        <template #tip>-->
+<!--          <div class="el-upload__tip">-->
+<!--            <el-checkbox v-model="upload.updateSupport" />-->
+<!--            是否更新已经存在的数据，仅更新模式支持。-->
+<!--            <br />-->
+<!--            <span>仅允许导入xls、xlsx格式文件。</span>-->
+<!--            <br />-->
+<!--            <span>模板下载：<el-button type="text" @click="downloadTemplate">下载模板</el-button></span>-->
+<!--          </div>-->
+<!--        </template>-->
+<!--      </el-upload>-->
       <template #footer>
         <div class="dialog-footer">
           <el-button type="primary" @click="submitFileForm">确 定</el-button>
@@ -583,7 +610,7 @@ const submitForm = () => {
       buttonLoading.value = true;
 
       const submitData = { ...form.value };
-      
+
       console.log('提交数据:', submitData);
 
       if (form.value.projectId) {
@@ -675,41 +702,41 @@ const showProjectDetail = (row: ProjectVO) => {
     `
     <div style="text-align: left;">
       <h3 style="margin-bottom: 20px; color: #333; text-align: center; background-color: #fdfde7; padding: 15px;">${row.projectName}</h3>
-      
+
       <div style="margin-bottom: 2px; padding: 12px; background-color: white;">
         <strong style="color: #333;">项目描述：</strong>
         <p style="margin: 5px 0; color: #666;">${row.description || '暂无描述'}</p>
       </div>
-      
+
       <div style="margin-bottom: 2px; padding: 12px; background-color: #f0f9f0;">
         <strong style="color: #333;">技术栈：</strong>
         <p style="margin: 5px 0; color: #666;">${formatMultiSelect(row.techStack, techStackDict.value)}</p>
       </div>
-      
+
       <div style="margin-bottom: 2px; padding: 12px; background-color: white;">
         <strong style="color: #333;">编程语言：</strong>
         <p style="margin: 5px 0; color: #666;">${formatMultiSelect(row.programmingLanguage, programmingLanguageDict.value)}</p>
       </div>
-      
+
       <div style="margin-bottom: 2px; padding: 12px; background-color: #f0f9f0;">
         <strong style="color: #333;">代码仓库：</strong>
         <p style="margin: 5px 0;">
           <a href="${row.repositoryUrl}" target="_blank" style="color: #409EFF;">${row.repositoryUrl || '暂无仓库地址'}</a>
         </p>
       </div>
-      
+
       <div style="margin-bottom: 2px; padding: 12px; background-color: white;">
         <strong style="color: #333;">项目网站：</strong>
         <p style="margin: 5px 0;">
           <a href="${row.websiteUrl}" target="_blank" style="color: #409EFF;">${row.websiteUrl || '暂无网站地址'}</a>
         </p>
       </div>
-      
+
       <div style="margin-bottom: 2px; padding: 12px; background-color: #f0f9f0;">
         <strong style="color: #333;">项目状态：</strong>
         <p style="margin: 5px 0; color: #666;">${getDictLabelFromValue(osc_project_status.value, row.status) || '暂无状态信息'}</p>
       </div>
-      
+
       <div style="margin-bottom: 2px; padding: 12px; background-color: white;">
         <strong style="color: #333;">备注：</strong>
         <p style="margin: 5px 0; color: #666;">${row.remark || '暂无备注'}</p>
@@ -812,6 +839,41 @@ onMounted(() => {
   font-size: 15px;
   margin-bottom: 4px;
   line-height: 1.4;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* 超级项目名称样式 */
+.super-project-name {
+  background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700 !important;
+  text-shadow: 0 1px 2px rgba(243, 156, 18, 0.3);
+  position: relative;
+}
+
+.super-project-name::after {
+  content: '👑';
+  position: absolute;
+  right: -20px;
+  top: -2px;
+  font-size: 12px;
+  animation: crown-glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes crown-glow {
+  from {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1.1);
+  }
 }
 
 .project-name-text {

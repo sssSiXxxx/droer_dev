@@ -10,7 +10,7 @@
             <p class="slogan">国产开源生态聚合平台</p>
             <p class="desc">Dromara 致力于打造中国领先的开源生态，聚合优质国产项目，推动中国开源力量！</p>
             <div class="quick-links">
-              <el-button type="primary" size="small" @click="openLink('https://dromara.org/')">官网首页</el-button>
+              <el-button type="danger" size="small" @click="openLink('https://dromara.org/')">官网首页</el-button>
               <el-button type="success" size="small" @click="openLink('https://gitee.com/dromara')">Gitee 主页</el-button>
               <el-button type="info" size="small" @click="openLink('https://dromara.org/zh-cn/docs/')">文档中心</el-button>
               <el-button type="warning" size="small" @click="openLink('https://jq.qq.com/?_wv=1027&k=5yqR5QO')">加入QQ群</el-button>
@@ -693,13 +693,13 @@ const getRankClass = (index: number): string => {
 // 验证头像 URL 是否有效 - 简化版本，更宽松的验证
 const isValidAvatarUrl = (url: string): boolean => {
   if (!url || url.trim() === '') return false;
-  
+
   // 简化验证：只要不是明显无效的URL就认为有效
   const trimmedUrl = url.trim();
-  
+
   // 检查基本的URL格式
-  return trimmedUrl.startsWith('http://') || 
-         trimmedUrl.startsWith('https://') || 
+  return trimmedUrl.startsWith('http://') ||
+         trimmedUrl.startsWith('https://') ||
          trimmedUrl.startsWith('/') ||
          trimmedUrl.includes('avatar') ||
          trimmedUrl.includes('gitee.com');
@@ -710,7 +710,7 @@ const handleAvatarError = (contributor: any, index?: number) => {
   console.log('头像加载失败:', contributor.name || contributor.login, contributor.avatar_url);
   // 标记头像加载失败，触发响应式更新
   contributor.avatarError = true;
-  
+
   // 强制触发响应式更新
   if (index !== undefined) {
     // 更新特定索引的贡献者
@@ -719,7 +719,7 @@ const handleAvatarError = (contributor: any, index?: number) => {
     // 强制更新整个列表
     weeklyContributors.value = [...weeklyContributors.value];
   }
-  
+
   // 强制重新渲染
   nextTick(() => {
     console.log('头像错误状态更新完成，将显示首字母头像');
@@ -729,18 +729,18 @@ const handleAvatarError = (contributor: any, index?: number) => {
 // 获取用户名首字母
 const getInitials = (name: string): string => {
   if (!name || name.trim() === '') return '?';
-  
+
   const trimmedName = name.trim();
-  
+
   // 处理中文名
   if (/[\u4e00-\u9fa5]/.test(trimmedName)) {
     // 中文名取第一个字
     return trimmedName.charAt(0);
   }
-  
+
   // 处理英文名或其他字符
   const words = trimmedName.split(/[\s\-_.]+/).filter(word => word.length > 0);
-  
+
   if (words.length === 0) {
     return trimmedName.charAt(0).toUpperCase();
   } else if (words.length === 1) {
@@ -757,21 +757,20 @@ const getInitials = (name: string): string => {
 // 获取头像样式（基于用户名生成颜色）
 const getAvatarStyle = (contributor: any) => {
   const name = contributor.name || contributor.login || '';
-  
-  // 预定义的颜色组合（使用柔和的渐变色）
+
+  // GitHub 风格的低饱和配色（纯色而非渐变）
   const colorCombinations = [
-    { bg: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: '#fff' },
-    { bg: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', color: '#fff' },
-    { bg: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', color: '#fff' },
-    { bg: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', color: '#fff' },
-    { bg: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', color: '#fff' },
-    { bg: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)', color: '#666' },
-    { bg: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)', color: '#666' },
-    { bg: 'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)', color: '#fff' },
-    { bg: 'linear-gradient(135deg, #fad0c4 0%, #ffd1ff 100%)', color: '#666' },
-    { bg: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)', color: '#666' }
+    { bg: '#68dcc6', color: '#fff' },  // teal
+    { bg: '#49dc86', color: '#fff' },  // green
+    { bg: '#81c1ea', color: '#fff' },  // blue
+    { bg: '#d284f3', color: '#fff' },  // purple
+    { bg: '#f3a661', color: '#fff' },  // orange
+    { bg: '#f8695a', color: '#fff' },  // red
+    { bg: '#eecf59', color: '#fff' },  // yellow (文字仍用白色)
+    { bg: '#4cf6d2', color: '#fff' },  // dark teal
+    { bg: '#449bef', color: '#fff' },  // dark gray-blue
   ];
-  
+
   // 基于用户名计算哈希值选择颜色
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
@@ -779,10 +778,10 @@ const getAvatarStyle = (contributor: any) => {
     hash = ((hash << 5) - hash) + char;
     hash = hash & hash; // 转换为32位整数
   }
-  
+
   const colorIndex = Math.abs(hash) % colorCombinations.length;
   const colors = colorCombinations[colorIndex];
-  
+
   return {
     background: colors.bg,
     color: colors.color
@@ -800,9 +799,9 @@ onMounted(async () => {
 
   // 并行加载所有数据以提高性能
   await Promise.all([
-    fetchDashboardData(), 
-    refreshHotProjects(), 
-    refreshContributors(), 
+    fetchDashboardData(),
+    refreshHotProjects(),
+    refreshContributors(),
     refreshTechStats(),
     refreshChartData() // 添加图表数据加载
   ]);
@@ -852,7 +851,7 @@ onUnmounted(() => {
 <style scoped>
 /* 统一浅绿色主题设计 */
 .community-header {
-  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 50%, #86efac 100%);
+  background: linear-gradient(135deg, #9fdbcf 0%, #9fdbcf 50%, #9fdbcf 100%);
   color: #065f46;
   padding: 60px 0;
   position: relative;
@@ -1857,20 +1856,25 @@ onUnmounted(() => {
   border-color: rgba(255, 255, 255, 0.3);
 }
 
+/* 头像容器 */
 .contributor-avatar {
   width: 36px;
   height: 36px;
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
-  border: 3px solid #e5e7eb;
+  border: 2px solid #e5e7eb;
   background: #f3f4f6;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  font-weight: 600;
+  font-size: 14px;
+  color: #fff; /* 字母统一白色 */
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
 
+/* 图片模式 */
 .contributor-avatar img {
   width: 100%;
   height: 100%;
@@ -1879,21 +1883,21 @@ onUnmounted(() => {
 }
 
 .contributor-avatar:hover img {
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
 
+/* 字母模式 */
 .contributor-avatar .avatar-letter {
   width: 100%;
   height: 100%;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  font-weight: 600;
-  border-radius: 50%;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  transition: transform 0.3s ease;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .contributor-avatar:hover .avatar-letter {
@@ -2113,14 +2117,14 @@ onUnmounted(() => {
 .activity-item:hover {
   background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
   transform: translateX(6px);
-  border-color: #10b981;
+  border-color: #71e0bb;
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
 }
 
 .activity-dot {
   width: 10px;
   height: 10px;
-  background: #10b981;
+  background: #beecdd;
   border-radius: 50%;
   margin-top: 8px;
   flex-shrink: 0;
@@ -2249,7 +2253,7 @@ onUnmounted(() => {
 }
 
 .todo-item:hover {
-  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  background: linear-gradient(135deg, #f8fcf9 0%, #f1f6f4 100%);
   transform: translateX(6px);
   border-color: #10b981;
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);

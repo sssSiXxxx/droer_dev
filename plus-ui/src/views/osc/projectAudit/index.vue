@@ -15,15 +15,15 @@
             </el-form-item>
             <el-form-item label="审核状态" prop="applicationStatus">
               <el-select v-model="queryParams.applicationStatus" placeholder="请选择审核状态" clearable>
-                <el-option label="待审核" value="1" />
-                <el-option label="已通过" value="2" />
-                <el-option label="已拒绝" value="3" />
+                <el-option label="待审核" value="pending" />
+                <el-option label="已通过" value="approved" />
+                <el-option label="已拒绝" value="rejected" />
               </el-select>
             </el-form-item>
             <el-form-item>
               <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
               <el-button icon="Refresh" @click="resetQuery">重置</el-button>
-              <el-button type="danger" icon="Delete" :disabled="multipleSelection.length === 0" @click="handleBatchDelete">批量删除</el-button>
+              <el-button type="info" icon="Document" @click="goToAuditRecords">审核记录</el-button>
             </el-form-item>
           </el-form>
         </el-card>
@@ -79,9 +79,9 @@
           </div>
 
           <!-- 审核操作区域 -->
-          <div class="mt-4 flex justify-between" v-if="item.applicationStatus === 'pending' || item.applicationStatus === '1' || item.status === '1'">
+          <div class="mt-4 flex justify-between" v-if="item.applicationStatus === 'pending' || item.status === '1'">
             <div class="audit-actions">
-              <el-button type="success" @click="handleQuickAudit(item.projectId, '2')">通过</el-button>
+              <el-button type="success" @click="handleQuickAudit(item.projectId, '1')">通过</el-button>
               <el-button type="danger" @click="openRejectDialog(item)">驳回</el-button>
               <el-button
                 v-if="item.applicationType === 'personal'"
@@ -310,12 +310,14 @@
 
 <script setup name="ProjectAudit" lang="ts">
 import { listProject, getProject } from '@/api/osc/project';
-import { auditProject } from '@/api/osc/projectAudit';
+import { listProjectAudit, auditProject } from '@/api/osc/projectAudit';
 import { ProjectVO, ProjectQuery } from '@/api/osc/project/types';
 import { View } from '@element-plus/icons-vue';
 import { ElMessageBox } from 'element-plus';
+import { useRouter } from 'vue-router';
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
+const router = useRouter();
 
 const projectAuditList = ref<ProjectVO[]>([]);
 const loading = ref(true);
@@ -386,14 +388,14 @@ const getList = async () => {
   loading.value = true;
   try {
     console.log('查询参数:', queryParams.value);
-    const res = await listProject(queryParams.value);
+    const res = await listProjectAudit(queryParams.value);
     console.log('查询结果:', res);
     projectAuditList.value = res.rows;
     total.value = res.total;
 
     // 如果没有数据，显示提示信息
     if (!projectAuditList.value || projectAuditList.value.length === 0) {
-      console.log('暂无待审核的孵化申请');
+      proxy?.$modal.msgInfo('暂无待审核项目');
     }
   } catch (error) {
     console.error('查询失败:', error);
@@ -420,7 +422,7 @@ const handleQuickAudit = async (projectId: number, status: string) => {
     await auditProject({
       projectId,
       auditStatus: status,
-      auditOpinion: status === '2' ? '孵化申请审核通过' : '孵化申请审核不通过'
+      auditOpinion: status === '1' ? '孵化申请审核通过' : '孵化申请审核不通过'
     });
     proxy?.$modal.msgSuccess('审核成功');
     await getList();
@@ -442,7 +444,7 @@ const handleReject = () => {
     if (valid) {
       await auditProject({
         projectId: rejectForm.value.projectId,
-        auditStatus: '3',
+        auditStatus: '2',
         auditOpinion: rejectForm.value.auditOpinion
       });
       proxy?.$modal.msgSuccess('驳回成功');
@@ -491,7 +493,7 @@ const handleProjectJoin = async () => {
   try {
     const auditData = {
       projectId: joinForm.value.projectId,
-      auditStatus: '2', // 通过状态
+      auditStatus: '1', // 通过状态
       auditOpinion: joinForm.value.auditOpinion || '审核通过',
       joinProjectList: joinForm.value.joinOption === 'approve' // 是否加入项目列表
     };
@@ -532,8 +534,43 @@ const getApplicationStatusType = (status: string) => {
 /** 查看项目详情 */
 const handleViewProject = async (row: any) => {
   try {
-    const response = await getProject(row.projectId);
-    const projectData = response.data;
+    // 直接使用审核列表中的项目数据，这些数据已经包含了完整信息
+    const projectData = row;
+
+    // 添加申请类型特有字段的显示
+    let specificFields = '';
+    if (projectData.applicationType === 'personal') {
+      // 个人项目的特有字段
+      specificFields = `
+        <div style="margin: 0 0 2px 0; padding: 12px; background-color: #e8f4fd; width: 100%; box-sizing: border-box;">
+          <strong style="color: #333;">申请理由：</strong>
+          <p style="margin: 5px 0; color: #666;">${projectData.applicationReason || '未填写'}</p>
+        </div>
+        
+        <div style="margin: 0 0 2px 0; padding: 12px; background-color: white; width: 100%; box-sizing: border-box;">
+          <strong style="color: #333;">预期贡献：</strong>
+          <p style="margin: 5px 0; color: #666;">${projectData.contribution || '未填写'}</p>
+        </div>
+        
+        <div style="margin: 0 0 2px 0; padding: 12px; background-color: #e8f4fd; width: 100%; box-sizing: border-box;">
+          <strong style="color: #333;">项目现状：</strong>
+          <p style="margin: 5px 0; color: #666;">${projectData.currentStatus || '未填写'}</p>
+        </div>
+      `;
+    } else if (projectData.applicationType === 'community') {
+      // 社区项目的特有字段
+      specificFields = `
+        <div style="margin: 0 0 2px 0; padding: 12px; background-color: #fef7e6; width: 100%; box-sizing: border-box;">
+          <strong style="color: #333;">升级理由：</strong>
+          <p style="margin: 5px 0; color: #666;">${projectData.upgradeReason || '未填写'}</p>
+        </div>
+        
+        <div style="margin: 0 0 2px 0; padding: 12px; background-color: white; width: 100%; box-sizing: border-box;">
+          <strong style="color: #333;">社区影响：</strong>
+          <p style="margin: 5px 0; color: #666;">${projectData.communityImpact || '未填写'}</p>
+        </div>
+      `;
+    }
 
     // 使用孵化申请样式的项目详情
     ElMessageBox.alert(
@@ -564,9 +601,23 @@ const handleViewProject = async (row: any) => {
          </div>
 
          <div style="margin: 0 0 2px 0; padding: 12px; background-color: white; width: 100%; box-sizing: border-box;">
+           <strong style="color: #333;">项目网站：</strong>
+           <p style="margin: 5px 0;">
+             <a href="${projectData.websiteUrl || '#'}" target="_blank" style="color: #409EFF;">${projectData.websiteUrl || '暂无网站地址'}</a>
+           </p>
+         </div>
+
+         <div style="margin: 0 0 2px 0; padding: 12px; background-color: #f0f9f0; width: 100%; box-sizing: border-box;">
            <strong style="color: #333;">联系邮箱：</strong>
            <p style="margin: 5px 0; color: #666;">${projectData.contactEmail || '未提供'}</p>
          </div>
+
+         <div style="margin: 0 0 2px 0; padding: 12px; background-color: white; width: 100%; box-sizing: border-box;">
+           <strong style="color: #333;">联系电话：</strong>
+           <p style="margin: 5px 0; color: #666;">${projectData.contactPhone || '未提供'}</p>
+         </div>
+
+         ${specificFields}
 
          <div style="margin: 0 0 2px 0; padding: 12px; background-color: #f0f9f0; width: 100%; box-sizing: border-box;">
            <strong style="color: #333;">申请状态：</strong>
@@ -574,7 +625,7 @@ const handleViewProject = async (row: any) => {
          </div>
 
          <div style="margin: 0 0 2px 0; padding: 12px; background-color: white; width: 100%; box-sizing: border-box;">
-           <strong style="color: #333;">备注：</strong>
+           <strong style="color: #333;">备注信息：</strong>
            <p style="margin: 5px 0; color: #666;">${projectData.remarks || '暂无备注'}</p>
          </div>
        </div>
@@ -590,6 +641,11 @@ const handleViewProject = async (row: any) => {
     console.error('获取孵化申请详情失败:', error);
     proxy?.$modal.msgError('获取申请详情失败');
   }
+};
+
+/** 跳转到审核记录页面 */
+const goToAuditRecords = () => {
+  router.push('/osc/auditRecords');
 };
 
 /** 多选框选中数据 */

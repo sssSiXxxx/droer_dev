@@ -113,7 +113,7 @@
 
     <!--  底部  -->
     <div class="el-login-footer">
-      <span>Copyright © 2018-2025 疯狂的狮子Li All Rights Reserved.</span>
+      <span>Copyright © 2025 - Dromara 开源社区 All Rights Reserved.</span>
     </div>
   </div>
 </template>

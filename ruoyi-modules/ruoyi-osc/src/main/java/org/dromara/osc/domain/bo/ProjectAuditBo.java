@@ -54,4 +54,9 @@ public class ProjectAuditBo extends BaseEntity {
      */
     private String projectName;
 
+    /**
+     *是否加入项目列表
+     */
+    private Boolean joinProjectList;
+
 }

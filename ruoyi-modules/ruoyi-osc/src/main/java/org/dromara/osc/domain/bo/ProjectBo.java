@@ -11,7 +11,10 @@ import jakarta.validation.constraints.*;
 import jakarta.validation.constraints.Email;
 import org.dromara.common.translation.annotation.Translation;
 import org.dromara.common.translation.constant.TransConstant;
+import org.mapstruct.Mapping;
+
 import java.util.Date;
+import java.util.List;
 
 /**
  * 项目列表业务对象 os_project

@@ -159,6 +159,22 @@ export const dynamicRoutes: RouteRecordRaw[] = [
         permissions: ['osc:projectAudit:list']
       },
       {
+        path: 'auditRecords',
+        component: () => import('@/views/osc/auditRecords/index.vue'),
+        name: 'AuditRecords',
+        meta: { title: '审核记录', icon: 'document' },
+        hidden: true,
+        permissions: ['osc:projectAudit:list']
+      },
+      {
+        path: 'applicationRecords',
+        component: () => import('@/views/osc/applicationRecords/index.vue'),
+        name: 'ApplicationRecords',
+        meta: { title: '申请记录', icon: 'document' },
+        hidden: true,
+        permissions: ['osc:projectCreate:list']
+      },
+      {
         path: 'project',
         component: () => import('@/views/osc/project/index.vue'),
         name: 'Project',

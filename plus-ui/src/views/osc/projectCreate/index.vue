@@ -7,6 +7,11 @@
         <span>项目孵化申请</span>
       </div>
       <div class="header-actions">
+        <!-- 申请记录按钮 -->
+        <el-button type="success" @click="goToApplicationRecords">
+          <el-icon><Document /></el-icon>
+          申请记录
+        </el-button>
         <el-button type="primary" @click="goDraftBox">
           <el-icon><Document /></el-icon>
           草稿箱
@@ -630,7 +635,10 @@ const cancel = () => {
 
   proxy?.$modal.msgSuccess('表单已清空');
 };
-
+/** 跳转到申请记录 */
+const goToApplicationRecords = () => {
+  router.push('/osc/applicationRecords');
+};
 /** 跳转到草稿箱 */
 const goDraftBox = () => {
   const userId = userStore.userId;

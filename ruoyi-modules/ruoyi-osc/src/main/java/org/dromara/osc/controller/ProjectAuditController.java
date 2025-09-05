@@ -1,6 +1,7 @@
 package org.dromara.osc.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import lombok.RequiredArgsConstructor;
 import jakarta.servlet.http.HttpServletResponse;
@@ -21,6 +22,7 @@ import org.dromara.osc.domain.vo.ProjectAuditVo;
 import org.dromara.osc.domain.bo.ProjectAuditBo;
 import org.dromara.osc.service.IProjectAuditService;
 import org.dromara.common.mybatis.core.page.TableDataInfo;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * 项目审核
@@ -42,6 +44,19 @@ public class ProjectAuditController extends BaseController {
     @SaCheckPermission("osc:projectAudit:list")
     @GetMapping("/list")
     public TableDataInfo<ProjectAuditVo> list(ProjectAuditBo bo, PageQuery pageQuery) {
+        // 参数映射：将前端的applicationStatus映射为后端的auditStatus
+        Map<String, Object> params = bo.getParams();
+        if (params != null && params.containsKey("applicationStatus") && StringUtils.isBlank(bo.getAuditStatus())) {
+            String applicationStatus = (String) params.get("applicationStatus");
+            // 将applicationStatus状态映射为auditStatus
+            if ("pending".equals(applicationStatus)) {
+                bo.setAuditStatus("0"); // 待审核
+            } else if ("approved".equals(applicationStatus)) {
+                bo.setAuditStatus("1"); // 通过
+            } else if ("rejected".equals(applicationStatus)) {
+                bo.setAuditStatus("2"); // 拒绝
+            }
+        }
         return projectAuditService.queryPageList(bo, pageQuery);
     }
 

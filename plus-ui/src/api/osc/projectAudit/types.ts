@@ -65,6 +65,11 @@ export interface ProjectAuditForm extends BaseEntity {
    * 审核意见
    */
   auditOpinion?: string;
+
+  /**
+   * 是否加入项目列表（仅个人项目用）
+   */
+  joinProjectList?: boolean;
 }
 
 export interface ProjectAuditQuery extends PageQuery {

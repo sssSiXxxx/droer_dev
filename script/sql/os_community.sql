@@ -55,6 +55,19 @@ ALTER TABLE os_project ADD COLUMN user_id BIGINT COMMENT '项目负责人用户I
 ALTER TABLE os_project ADD COLUMN maintainer VARCHAR(100) COMMENT '项目负责人姓名';
 ALTER TABLE os_project ADD INDEX idx_user_id (user_id);
 
+-- 添加申请相关字段
+ALTER TABLE os_project ADD COLUMN application_type VARCHAR(50) DEFAULT NULL COMMENT '申请类型 (personal: 个人项目, community: 社区项目)';
+ALTER TABLE os_project ADD COLUMN application_status VARCHAR(50) DEFAULT 'draft' COMMENT '申请状态 (draft: 草稿, pending: 待审核, approved: 已通过, rejected: 已拒绝)';
+ALTER TABLE os_project ADD COLUMN license VARCHAR(100) DEFAULT NULL COMMENT '开源协议';
+ALTER TABLE os_project ADD COLUMN application_reason TEXT COMMENT '申请理由 (个人项目)';
+ALTER TABLE os_project ADD COLUMN contribution TEXT COMMENT '预期贡献 (个人项目)';
+ALTER TABLE os_project ADD COLUMN current_status TEXT COMMENT '项目现状 (个人项目)';
+ALTER TABLE os_project ADD COLUMN upgrade_reason TEXT COMMENT '升级理由 (社区项目)';
+ALTER TABLE os_project ADD COLUMN community_impact TEXT COMMENT '社区影响 (社区项目)';
+ALTER TABLE os_project ADD COLUMN contact_email VARCHAR(100) DEFAULT NULL COMMENT '联系邮箱';
+ALTER TABLE os_project ADD COLUMN contact_phone VARCHAR(20) DEFAULT NULL COMMENT '联系电话';
+ALTER TABLE os_project ADD COLUMN remarks TEXT COMMENT '备注信息';
+
 -- 项目审核表
 CREATE TABLE `os_project_audit` (
   `audit_id` bigint NOT NULL AUTO_INCREMENT COMMENT '审核ID',

@@ -54,5 +54,9 @@ public class ProjectAudit extends BaseEntity {
      */
     private String auditOpinion;
 
+    /**
+     * 是否加入项目列表
+     */
+    private Boolean joinProjectList;
 
 }
