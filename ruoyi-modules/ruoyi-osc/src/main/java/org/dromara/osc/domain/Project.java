@@ -199,5 +199,19 @@ public class Project extends BaseEntity {
      */
     private String remarks;
 
+    /**
+     * Watch数（关注数）
+     */
+    private Integer watchCount;
+
+    /**
+     * 项目大小（KB）
+     */
+    private String projectSize;
+
+    /**
+     * 最后同步时间
+     */
+    private Date lastSyncTime;
 
 }

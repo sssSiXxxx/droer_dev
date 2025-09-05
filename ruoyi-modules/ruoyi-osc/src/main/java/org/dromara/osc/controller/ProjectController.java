@@ -149,4 +149,56 @@ public class ProjectController extends BaseController {
     public void importTemplate(HttpServletResponse response) {
         ExcelUtil.exportExcel(new ArrayList<>(), "项目数据", ProjectImportVo.class, response);
     }
+
+    /**
+     * 同步项目数据（从Git仓库更新Star、Fork等动态数据）
+     */
+    @SaCheckPermission("osc:project:sync")
+    @Log(title = "项目数据同步", businessType = BusinessType.UPDATE)
+    @PostMapping("/sync")
+    public R<String> syncProjectData() {
+        try {
+            log.info("开始同步项目动态数据...");
+            
+            // 先检查数据库字段
+            try {
+                // 测试查询，检查新字段是否存在
+                ProjectVo testProject = projectService.queryById(1L);
+                log.info("数据库字段检查通过");
+            } catch (Exception e) {
+                log.error("数据库字段检查失败，可能需要执行数据库迁移脚本", e);
+                return R.fail("同步失败：数据库字段不完整，请先执行数据库迁移脚本");
+            }
+            
+            int updatedCount = projectService.syncProjectData();
+            log.info("项目数据同步完成，更新了 {} 个项目", updatedCount);
+            return R.ok("数据同步成功，更新了 " + updatedCount + " 个项目", String.valueOf(updatedCount));
+        } catch (Exception e) {
+            log.error("同步项目数据失败", e);
+            return R.fail("同步数据失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 同步单个项目数据
+     */
+    @SaCheckPermission("osc:project:sync")
+    @Log(title = "单个项目数据同步", businessType = BusinessType.UPDATE)
+    @PostMapping("/sync/{projectId}")
+    public R<String> syncSingleProject(@NotNull(message = "项目ID不能为空") @PathVariable Long projectId) {
+        try {
+            log.info("开始同步项目 {} 的动态数据...", projectId);
+            boolean success = projectService.syncSingleProject(projectId);
+            if (success) {
+                log.info("项目 {} 数据同步完成", projectId);
+                return R.ok("项目数据同步成功");
+            } else {
+                log.warn("项目 {} 数据同步失败", projectId);
+                return R.fail("项目数据同步失败");
+            }
+        } catch (Exception e) {
+            log.error("同步项目 {} 数据失败", projectId, e);
+            return R.fail("同步项目数据失败：" + e.getMessage());
+        }
+    }
 }

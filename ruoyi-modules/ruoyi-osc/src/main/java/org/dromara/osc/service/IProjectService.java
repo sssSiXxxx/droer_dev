@@ -76,4 +76,19 @@ public interface IProjectService {
      * @throws Exception 导入异常
      */
     void importData(MultipartFile file, boolean updateSupport) throws Exception;
+
+    /**
+     * 同步项目数据（从Git仓库更新Star、Fork等动态数据）
+     *
+     * @return 更新的项目数量
+     */
+    int syncProjectData();
+
+    /**
+     * 同步单个项目数据
+     *
+     * @param projectId 项目ID
+     * @return 是否同步成功
+     */
+    boolean syncSingleProject(Long projectId);
 }

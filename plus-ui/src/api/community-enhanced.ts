@@ -1612,6 +1612,38 @@ export const refreshAllData = async () => {
   return await getDashboardData();
 };
 
+// 从项目列表页触发的数据刷新
+export const refreshDashboardFromProject = async () => {
+  console.log('🔄 从项目列表触发首页数据刷新...');
+  try {
+    // 清除相关缓存
+    cache.clear();
+    
+    // 重新获取仪表盘数据
+    const freshData = await getDashboardData();
+    
+    // 发送自定义事件通知首页刷新
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('dashboard-refresh', { 
+        detail: { data: freshData, source: 'project-sync' }
+      }));
+    }
+    
+    return {
+      success: true,
+      data: freshData,
+      message: '首页数据刷新完成'
+    };
+  } catch (error: any) {
+    console.error('❌ 首页数据刷新失败:', error);
+    return {
+      success: false,
+      error: error.message,
+      message: '首页数据刷新失败'
+    };
+  }
+};
+
 // 获取数据更新状态
 export const getDataUpdateStatus = () => {
   const cacheKeys = ['community-stats', 'org-repos', 'weekly-contributors'];

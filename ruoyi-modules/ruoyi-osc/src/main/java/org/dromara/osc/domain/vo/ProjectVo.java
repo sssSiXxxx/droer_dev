@@ -267,4 +267,22 @@ public class ProjectVo implements Serializable {
     @ExcelProperty(value = "更新时间")
     private Date updateTime;
 
+    /**
+     * Watch数
+     */
+    @ExcelProperty(value = "Watch数")
+    private Integer watchCount;
+
+    /**
+     * 项目大小
+     */
+    @ExcelProperty(value = "项目大小")
+    private String projectSize;
+
+    /**
+     * 最后同步时间
+     */
+    @ExcelProperty(value = "最后同步时间")
+    private Date lastSyncTime;
+
 }

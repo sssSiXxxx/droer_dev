@@ -178,7 +178,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
 import { use } from 'echarts/core';
 import { CanvasRenderer } from 'echarts/renderers';
 import { LineChart, PieChart } from 'echarts/charts';
@@ -815,6 +815,23 @@ onMounted(async () => {
   } catch (error) {
     console.warn('⚠️ 通知服务启动失败:', error);
   }
+  
+  // 监听来自项目列表的数据刷新事件
+  const handleDashboardRefresh = (event: CustomEvent) => {
+    console.log('🔔 收到首页数据刷新通知:', event.detail);
+    if (event.detail?.source === 'project-sync') {
+      console.log('📊 项目列表触发的数据更新，开始刷新首页...');
+      // 刷新所有数据
+      refreshAllDataAndUI();
+    }
+  };
+  
+  window.addEventListener('dashboard-refresh', handleDashboardRefresh);
+  
+  // 页面卸载时移除事件监听
+  onUnmounted(() => {
+    window.removeEventListener('dashboard-refresh', handleDashboardRefresh);
+  });
 });
 
 // 自动刷新数据（每5分钟）

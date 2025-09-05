@@ -648,8 +648,50 @@ defineExpose({
   }
 }
 
-/* 响应式设计 */
-@media (max-width: 1200px) {
+/* 响应式设计 - 确保大屏幕始终显示6列 */
+@media (min-width: 1440px) {
+  .stats-grid {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 16px;
+  }
+
+  .stats-grid.compact {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+  }
+}
+
+@media (max-width: 1439px) and (min-width: 1200px) {
+  .stats-grid {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+  }
+
+  .stats-grid.compact {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+  }
+
+  .stat-card {
+    padding: 14px;
+    min-height: 90px;
+  }
+
+  .stat-value {
+    font-size: 18px;
+  }
+
+  .stat-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .stat-icon .el-icon {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 1199px) and (min-width: 992px) {
   .stats-grid {
     grid-template-columns: repeat(3, 1fr);
     gap: 14px;
@@ -661,7 +703,19 @@ defineExpose({
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 991px) and (min-width: 768px) {
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  .stats-grid.compact {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+}
+
+@media (max-width: 767px) {
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;

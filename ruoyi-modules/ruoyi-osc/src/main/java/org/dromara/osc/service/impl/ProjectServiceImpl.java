@@ -20,8 +20,14 @@ import org.dromara.osc.domain.vo.ProjectImportVo;
 import org.dromara.osc.domain.Project;
 import org.dromara.osc.mapper.ProjectMapper;
 import org.dromara.osc.service.IProjectService;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.http.ResponseEntity;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.springframework.web.multipart.MultipartFile;
 import org.dromara.common.excel.utils.ExcelUtil;
@@ -339,5 +345,184 @@ public class ProjectServiceImpl implements IProjectService {
         }
 
         log.info("导入完成，成功：{} 条，跳过重复：{} 条，失败：{} 条", successCount, skipCount, errorCount);
+    }
+
+    /**
+     * 同步项目数据（从Git仓库更新Star、Fork等动态数据）
+     *
+     * @return 更新的项目数量
+     */
+    @Override
+    public int syncProjectData() {
+        log.info("开始同步所有项目的动态数据...");
+        
+        try {
+            // 获取所有有代码仓库地址的项目
+            LambdaQueryWrapper<Project> wrapper = Wrappers.lambdaQuery();
+            wrapper.isNotNull(Project::getRepositoryUrl)
+                   .ne(Project::getRepositoryUrl, "");
+            
+            List<Project> projects = baseMapper.selectList(wrapper);
+            log.info("找到 {} 个需要同步的项目", projects.size());
+            
+            if (projects.isEmpty()) {
+                log.info("没有找到需要同步的项目");
+                return 0;
+            }
+            
+            int updatedCount = 0;
+            
+            for (Project project : projects) {
+                try {
+                    if (syncSingleProjectData(project)) {
+                        updatedCount++;
+                    }
+                    
+                    // 添加延迟避免API频率限制
+                    Thread.sleep(1000);
+                    
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                } catch (Exception e) {
+                    log.warn("同步项目 {} 数据失败: {}", project.getProjectName(), e.getMessage());
+                }
+            }
+            
+            log.info("项目数据同步完成，成功更新了 {} 个项目", updatedCount);
+            return updatedCount;
+        } catch (Exception e) {
+            log.error("同步项目数据时发生异常", e);
+            throw new RuntimeException("同步项目数据失败: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 同步单个项目数据
+     *
+     * @param projectId 项目ID
+     * @return 是否同步成功
+     */
+    @Override
+    public boolean syncSingleProject(Long projectId) {
+        log.info("开始同步项目 {} 的动态数据", projectId);
+        
+        try {
+            Project project = baseMapper.selectById(projectId);
+            if (project == null) {
+                log.warn("未找到项目 ID: {}", projectId);
+                return false;
+            }
+            
+            if (StringUtils.isBlank(project.getRepositoryUrl())) {
+                log.warn("项目 {} 没有代码仓库地址", project.getProjectName());
+                return false;
+            }
+            
+            return syncSingleProjectData(project);
+        } catch (Exception e) {
+            log.error("同步项目 {} 数据失败", projectId, e);
+            return false;
+        }
+    }
+
+    /**
+     * 同步单个项目的具体实现
+     */
+    private boolean syncSingleProjectData(Project project) {
+        try {
+            String repoUrl = project.getRepositoryUrl();
+            log.info("正在同步项目: {} - {}", project.getProjectName(), repoUrl);
+            
+            // 解析仓库URL，支持Gitee和GitHub
+            String apiUrl = buildApiUrl(repoUrl);
+            if (apiUrl == null) {
+                log.warn("无法解析仓库URL: {}", repoUrl);
+                return false;
+            }
+            
+            log.info("调用API: {}", apiUrl);
+            
+            // 创建临时RestTemplate和ObjectMapper
+            RestTemplate tempRestTemplate = new RestTemplate();
+            ObjectMapper tempObjectMapper = new ObjectMapper();
+            tempObjectMapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            
+            // 调用API获取仓库信息
+            org.springframework.http.ResponseEntity<String> response = tempRestTemplate.getForEntity(apiUrl, String.class);
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                log.warn("API调用失败，状态码: {}", response.getStatusCode());
+                return false;
+            }
+            
+            com.fasterxml.jackson.databind.JsonNode repoData = tempObjectMapper.readTree(response.getBody());
+            
+            // 提取数据
+            Integer starCount = repoData.path("stargazers_count").asInt(0);
+            Integer forkCount = repoData.path("forks_count").asInt(0);
+            Integer watchCount = repoData.path("watchers_count").asInt(0);
+            Integer issuesCount = repoData.path("open_issues_count").asInt(0);
+            String language = repoData.path("language").asText(null);
+            String size = String.valueOf(repoData.path("size").asLong(0));
+            
+            // 更新项目数据
+            Project updateProject = new Project();
+            updateProject.setProjectId(project.getProjectId());
+            updateProject.setStarCount(starCount);
+            updateProject.setForkCount(forkCount);
+            updateProject.setWatchCount(watchCount);
+            updateProject.setIssuesCount(issuesCount);
+            
+            if (StringUtils.isNotBlank(language)) {
+                updateProject.setTechStack(language);
+            }
+            updateProject.setProjectSize(size);
+            updateProject.setUpdateTime(new Date());
+            updateProject.setLastSyncTime(new Date());
+            
+            int result = baseMapper.updateById(updateProject);
+            
+            if (result > 0) {
+                log.info("项目 {} 数据同步成功: Star={}, Fork={}, Watch={}, Issues={}", 
+                    project.getProjectName(), starCount, forkCount, watchCount, issuesCount);
+                return true;
+            } else {
+                log.warn("项目 {} 数据库更新失败", project.getProjectName());
+                return false;
+            }
+            
+        } catch (Exception e) {
+            log.error("同步项目 {} 数据时发生异常", project.getProjectName(), e);
+            return false;
+        }
+    }
+
+    /**
+     * 根据仓库URL构建API URL
+     */
+    private String buildApiUrl(String repoUrl) {
+        if (StringUtils.isBlank(repoUrl)) {
+            return null;
+        }
+        
+        // 匹配Gitee URL
+        Pattern giteePattern = Pattern.compile("(?:https?://)?(?:www\\.)?gitee\\.com/([^/]+)/([^/]+?)(?:\\.git)?/?$");
+        Matcher giteeMatcher = giteePattern.matcher(repoUrl);
+        if (giteeMatcher.find()) {
+            String owner = giteeMatcher.group(1);
+            String repo = giteeMatcher.group(2);
+            return String.format("https://gitee.com/api/v5/repos/%s/%s", owner, repo);
+        }
+        
+        // 匹配GitHub URL
+        Pattern githubPattern = Pattern.compile("(?:https?://)?(?:www\\.)?github\\.com/([^/]+)/([^/]+?)(?:\\.git)?/?$");
+        Matcher githubMatcher = githubPattern.matcher(repoUrl);
+        if (githubMatcher.find()) {
+            String owner = githubMatcher.group(1);
+            String repo = githubMatcher.group(2);
+            return String.format("https://api.github.com/repos/%s/%s", owner, repo);
+        }
+        
+        return null;
     }
 }

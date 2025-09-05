@@ -33,10 +33,19 @@ public class SseController implements DisposableBean {
      */
     @GetMapping(value = "${sse.path}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter connect() {
-        StpUtil.checkLogin();
-        String tokenValue = StpUtil.getTokenValue();
-        Long userId = LoginHelper.getUserId();
-        return sseEmitterManager.connect(userId, tokenValue);
+        try {
+            StpUtil.checkLogin();
+            String tokenValue = StpUtil.getTokenValue();
+            Long userId = LoginHelper.getUserId();
+            log.info("SSE连接请求 - 用户ID: {}, Token: {}", userId, tokenValue);
+            
+            SseEmitter emitter = sseEmitterManager.connect(userId, tokenValue);
+            log.info("SSE连接成功 - 用户ID: {}", userId);
+            return emitter;
+        } catch (Exception e) {
+            log.error("SSE连接失败", e);
+            throw e;
+        }
     }
 
     /**

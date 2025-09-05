@@ -44,6 +44,9 @@
           <el-col :span="1.5">
             <el-button type="info" plain icon="Upload" @click="handleImport" v-hasPermi="['osc:project:import']">导入</el-button>
           </el-col>
+          <el-col :span="1.5">
+            <el-button type="primary" plain icon="Refresh" @click="handleSyncData" :loading="syncLoading" v-hasPermi="['osc:project:sync']">同步数据</el-button>
+          </el-col>
           <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
         </el-row>
       </template>
@@ -261,7 +264,8 @@
 </template>
 
 <script setup name="Project" lang="ts">
-import { listProject, getProject, delProject, addProject, updateProject } from '@/api/osc/project';
+import { listProject, getProject, delProject, addProject, updateProject, syncProjectData } from '@/api/osc/project';
+import { refreshDashboardFromProject } from '@/api/community-enhanced';
 import { listUser } from '@/api/system/user';
 import { ProjectVO, ProjectQuery, ProjectForm } from '@/api/osc/project/types';
 import { UserVO } from '@/api/system/user/types';
@@ -389,6 +393,7 @@ const projectList = ref<ProjectVO[]>([]);
 const userList = ref<UserVO[]>([]);
 const buttonLoading = ref(false);
 const loading = ref(true);
+const syncLoading = ref(false);
 const showSearch = ref(true);
 const ids = ref<Array<string | number>>([]);
 const single = ref(true);
@@ -678,6 +683,42 @@ const downloadTemplate = () => {
 /** 文件上传中处理 */
 const submitFileForm = () => {
   uploadRef.value.submit();
+};
+
+/** 同步项目数据 */
+const handleSyncData = async () => {
+  try {
+    syncLoading.value = true;
+    proxy?.$modal.msgInfo('正在同步项目数据，请稍候...');
+    
+    await syncProjectData();
+    proxy?.$modal.msgSuccess('项目数据同步完成！');
+    
+    // 刷新当前列表
+    await getList();
+    
+    // 同时刷新首页数据
+    console.log('🔄 开始刷新首页统计数据...');
+    try {
+      const dashboardResult = await refreshDashboardFromProject();
+      if (dashboardResult.success) {
+        proxy?.$modal.msgSuccess('首页数据已同步更新！');
+        console.log('✅ 首页数据刷新成功:', dashboardResult.message);
+      } else {
+        console.warn('⚠️ 首页数据刷新失败:', dashboardResult.message);
+        proxy?.$modal.msgWarning('项目数据同步成功，但首页数据更新失败');
+      }
+    } catch (dashboardError) {
+      console.error('❌ 首页数据刷新异常:', dashboardError);
+      proxy?.$modal.msgWarning('项目数据同步成功，但首页数据更新异常');
+    }
+    
+  } catch (error) {
+    console.error('同步数据失败:', error);
+    proxy?.$modal.msgError('同步数据失败，请稍后重试');
+  } finally {
+    syncLoading.value = false;
+  }
 };
 
 /** 查看项目详情 */

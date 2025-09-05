@@ -80,3 +80,24 @@ export const delProject = (projectId: string | number | Array<string | number>) 
     method: 'delete'
   });
 };
+
+/**
+ * 同步项目数据（从Git仓库更新Star、Fork等动态数据）
+ */
+export const syncProjectData = () => {
+  return request({
+    url: '/osc/project/sync',
+    method: 'post'
+  });
+};
+
+/**
+ * 同步单个项目数据
+ * @param projectId
+ */
+export const syncSingleProject = (projectId: string | number) => {
+  return request({
+    url: '/osc/project/sync/' + projectId,
+    method: 'post'
+  });
+};

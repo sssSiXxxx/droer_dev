@@ -5059,3 +5059,29 @@ INSERT INTO os_project (
     '',
     ''
 );
+
+-- 添加Watch数（关注数）字段
+ALTER TABLE os_project ADD COLUMN watch_count INT DEFAULT 0 COMMENT 'Watch数（关注数）';
+
+-- 添加项目大小字段
+ALTER TABLE os_project ADD COLUMN project_size VARCHAR(50) DEFAULT '0' COMMENT '项目大小（KB）';
+
+-- 添加最后同步时间字段  
+ALTER TABLE os_project ADD COLUMN last_sync_time DATETIME NULL COMMENT '最后同步时间';
+
+-- 创建索引以提高同步查询性能
+CREATE INDEX idx_project_repository_url ON os_project(repository_url);
+CREATE INDEX idx_project_last_sync_time ON os_project(last_sync_time);
+
+-- 更新现有数据的默认值
+UPDATE os_project SET watch_count = 0 WHERE watch_count IS NULL;
+UPDATE os_project SET project_size = '0' WHERE project_size IS NULL;
+
+update os_project
+set application_status = 'approved'
+where project_id between 408 and 488;
+
+update os_project
+set application_type = 'personal'
+where project_id between 408 and 488;
+
