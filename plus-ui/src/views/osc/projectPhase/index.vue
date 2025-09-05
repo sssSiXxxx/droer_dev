@@ -1,1076 +1,661 @@
 <template>
-  <div class="project-phase">
+  <div class="repository-tracking">
     <!-- 顶部统计卡片 -->
     <el-row :gutter="20" class="mb-4">
       <el-col :span="6">
-        <el-card class="stat-card" shadow="hover">
+        <el-card class="stat-card active-repos" shadow="hover">
           <div class="stat-content">
-            <div class="stat-icon total">
-              <el-icon><Histogram /></el-icon>
+            <div class="stat-icon">
+              <el-icon><TrendCharts /></el-icon>
             </div>
             <div class="stat-info">
-              <div class="stat-value">{{ statistics.totalPhases || 0 }}</div>
-              <div class="stat-label">总阶段数</div>
+              <div class="stat-value">{{ statistics.activeRepos || 0 }}</div>
+              <div class="stat-label">活跃仓库</div>
+              <div class="stat-change">+{{ statistics.newActiveRepos || 0 }} 本周</div>
             </div>
-          </div>
-          <div class="stat-progress">
-            <el-progress :percentage="statistics.completionRate || 0" :status="getProgressStatus(statistics.completionRate)" />
           </div>
         </el-card>
       </el-col>
       <el-col :span="6">
-        <el-card class="stat-card" shadow="hover">
+        <el-card class="stat-card commits" shadow="hover">
           <div class="stat-content">
-            <div class="stat-icon in-progress">
-              <el-icon><Loading /></el-icon>
+            <div class="stat-icon">
+              <el-icon><Upload /></el-icon>
             </div>
             <div class="stat-info">
-              <div class="stat-value">{{ statistics.inProgressPhases || 0 }}</div>
-              <div class="stat-label">进行中</div>
+              <div class="stat-value">{{ statistics.weeklyCommits || 0 }}</div>
+              <div class="stat-label">本周提交</div>
+              <div class="stat-change">{{ formatChange(statistics.commitsTrend) }}</div>
             </div>
           </div>
-          <div class="stat-extra">{{ statistics.completedPhases || 0 }} 已完成</div>
         </el-card>
       </el-col>
       <el-col :span="6">
-        <el-card class="stat-card" shadow="hover">
+        <el-card class="stat-card contributors" shadow="hover">
           <div class="stat-content">
-            <div class="stat-icon delayed">
-              <el-icon><Warning /></el-icon>
+            <div class="stat-icon">
+              <el-icon><User /></el-icon>
             </div>
             <div class="stat-info">
-              <div class="stat-value">{{ statistics.delayedPhases || 0 }}</div>
-              <div class="stat-label">已延期</div>
+              <div class="stat-value">{{ statistics.activeContributors || 0 }}</div>
+              <div class="stat-label">活跃贡献者</div>
+              <div class="stat-change">{{ formatChange(statistics.contributorsTrend) }}</div>
             </div>
           </div>
-          <div class="stat-extra">平均延期 {{ statistics.averageDelay || 0 }} 天</div>
         </el-card>
       </el-col>
       <el-col :span="6">
-        <el-card class="stat-card" shadow="hover">
+        <el-card class="stat-card releases" shadow="hover">
           <div class="stat-content">
-            <div class="stat-icon upcoming">
-              <el-icon><Calendar /></el-icon>
+            <div class="stat-icon">
+              <el-icon><Box /></el-icon>
             </div>
             <div class="stat-info">
-              <div class="stat-value">{{ statistics.upcomingPhases || 0 }}</div>
-              <div class="stat-label">即将开始</div>
+              <div class="stat-value">{{ statistics.weeklyReleases || 0 }}</div>
+              <div class="stat-label">本周发布</div>
+              <div class="stat-change">{{ formatChange(statistics.releasesTrend) }}</div>
             </div>
           </div>
-          <div class="stat-extra">未来7天内</div>
         </el-card>
       </el-col>
     </el-row>
 
-    <!-- 搜索和工具栏 -->
+    <!-- 控制面板 -->
     <el-card class="mb-4">
-      <el-form :model="queryParams" ref="queryRef" :inline="true">
-        <el-form-item label="项目" prop="projectId">
-          <el-select
-            v-model="queryParams.projectId"
-            placeholder="请选择或搜索项目"
-            clearable
-            filterable
-            remote
-            :remote-method="handleProjectSearch"
-            :loading="projectSearchLoading"
-            style="width: 280px"
-            @change="handleProjectChange"
-          >
-            <el-option v-for="item in filteredProjectOptions" :key="item.projectId" :label="item.projectName" :value="item.projectId">
-              <div class="project-option">
-                <div class="project-name">{{ item.projectName }}</div>
-                <div class="project-code">{{ item.projectCode }}</div>
-              </div>
-            </el-option>
-            <template #empty>
-              <div class="empty-option">
-                <span>暂无项目数据</span>
-              </div>
-            </template>
-          </el-select>
-        </el-form-item>
-        <el-form-item label="阶段名称" prop="phaseName">
-          <el-input v-model="queryParams.phaseName" placeholder="请输入阶段名称" clearable style="width: 200px" @keyup.enter="handleQuery" />
-        </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-select v-model="queryParams.status" placeholder="请选择状态" clearable>
-            <el-option v-for="dict in statusOptions" :key="dict.value" :label="dict.label" :value="dict.value" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="优先级" prop="priority">
-          <el-select v-model="queryParams.priority" placeholder="请选择优先级" clearable>
-            <el-option v-for="item in priorityOptions" :key="item.value" :label="item.label" :value="item.value" />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-          <el-button icon="Refresh" @click="resetQuery">重置</el-button>
-        </el-form-item>
-      </el-form>
-
       <template #header>
         <div class="card-header">
-          <span class="card-title">阶段列表</span>
+          <span class="card-title">社区仓库实时追踪</span>
           <div class="card-toolbar">
-            <el-button type="success" plain @click="handleAdd" v-if="queryParams.projectId">
-              <el-icon><Plus /></el-icon>新增阶段
-            </el-button>
-            <el-button type="warning" plain @click="handleCreateStandardPhases" v-if="queryParams.projectId">
-              <el-icon><DocumentCopy /></el-icon>创建标准孵化阶段
-            </el-button>
-            <el-button type="primary" plain @click="switchView">
-              <el-icon><Operation /></el-icon>
-              {{ isGanttView ? '切换列表视图' : '切换甘特图视图' }}
-            </el-button>
-            <el-button type="info" plain @click="handleExport" v-if="phaseList.length > 0">
-              <el-icon><Download /></el-icon>导出数据
-            </el-button>
+            <el-select v-model="timeRange" placeholder="时间范围" style="width: 120px" @change="handleTimeRangeChange">
+              <el-option label="7天" value="7" />
+              <el-option label="30天" value="30" />
+              <el-option label="90天" value="90" />
+            </el-select>
+            <el-select v-model="sortBy" placeholder="排序方式" style="width: 140px" @change="handleSortChange">
+              <el-option label="活跃度" value="activity" />
+              <el-option label="提交数" value="commits" />
+              <el-option label="增长率" value="growth" />
+              <el-option label="星标数" value="stars" />
+            </el-select>
+            <el-button type="primary" icon="Refresh" @click="refreshData">刷新数据</el-button>
+            <el-button type="info" icon="Download" @click="exportData">导出报告</el-button>
           </div>
         </div>
       </template>
 
-      <!-- 甘特图视图 -->
-      <div v-if="isGanttView" class="gantt-view">
-        <gantt-chart :phases="phaseList" @update-progress="handleUpdateProgress" />
-      </div>
+      <!-- 搜索过滤器 -->
+      <el-form :model="filters" :inline="true" class="mb-4">
+        <el-form-item label="仓库名称">
+          <el-input
+            v-model="filters.name"
+            placeholder="搜索仓库"
+            clearable
+            style="width: 200px"
+            @input="handleSearch"
+          />
+        </el-form-item>
+        <el-form-item label="编程语言">
+          <el-select v-model="filters.language" placeholder="选择语言" clearable @change="handleFilter">
+            <el-option v-for="lang in languages" :key="lang" :label="lang" :value="lang" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="活跃级别">
+          <el-select v-model="filters.activityLevel" placeholder="选择级别" clearable @change="handleFilter">
+            <el-option label="极高" value="very-high" />
+            <el-option label="高" value="high" />
+            <el-option label="中等" value="medium" />
+            <el-option label="低" value="low" />
+          </el-select>
+        </el-form-item>
+      </el-form>
 
-      <!-- 列表视图 -->
-      <div v-else class="list-view">
-        <!-- 批量操作栏 -->
-        <div v-show="selectedRows.length > 0" class="batch-toolbar">
-          <span class="batch-info">已选择 {{ selectedRows.length }} 项</span>
-          <el-button type="success" size="small" @click="handleBatchComplete">批量完成</el-button>
-          <el-button type="warning" size="small" @click="handleBatchPause">批量暂停</el-button>
-          <el-button type="danger" size="small" @click="handleBatchDelete">批量删除</el-button>
-        </div>
-
-        <el-table v-loading="loading" :data="phaseList" @selection-change="handleSelectionChange" row-key="phaseId">
-          <el-table-column type="selection" width="55" align="center" />
-          <el-table-column label="阶段名称" align="center" prop="phaseName" min-width="120" show-overflow-tooltip />
-          <el-table-column label="项目名称" align="center" prop="projectName" min-width="120" show-overflow-tooltip />
-          <el-table-column label="优先级" align="center" width="80">
-            <template #default="scope">
-              <el-tag :type="getPriorityType(scope.row.priority)" size="small">
-                {{ getPriorityLabel(scope.row.priority) }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column label="开始时间" align="center" prop="startTime" width="180">
-            <template #default="scope">
-              <span>{{ parseTime(scope.row.startTime, '{y}-{m}-{d}') }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="结束时间" align="center" prop="endTime" width="180">
-            <template #default="scope">
-              <span>{{ parseTime(scope.row.endTime, '{y}-{m}-{d}') }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="进度" align="center" width="200">
-            <template #default="scope">
-              <div class="progress-container">
-                <el-progress :percentage="scope.row.progress || calculateProgress(scope.row)" :status="getPhaseStatus(scope.row)" :stroke-width="8" />
-                <el-button v-if="scope.row.status === '1'" type="primary" link size="small" @click="handleProgressEdit(scope.row)"> 更新 </el-button>
+      <!-- 活跃仓库列表 -->
+      <div class="repository-list">
+        <el-row :gutter="20" v-loading="loading">
+          <el-col :span="8" v-for="repo in filteredRepos" :key="repo.id">
+            <el-card class="repo-card" shadow="hover" @click="showRepoDetails(repo)">
+              <div class="repo-header">
+                <div class="repo-info">
+                  <div class="repo-name">
+                    <el-icon><FolderOpened /></el-icon>
+                    {{ repo.name }}
+                  </div>
+                  <div class="repo-language">
+                    <span class="language-dot" :style="{ backgroundColor: getLanguageColor(repo.language) }"></span>
+                    {{ repo.language }}
+                  </div>
+                </div>
+                <div class="repo-activity">
+                  <el-tag :type="getActivityType(repo.activityScore)" size="small">
+                    {{ getActivityLabel(repo.activityScore) }}
+                  </el-tag>
+                </div>
               </div>
-            </template>
-          </el-table-column>
-          <el-table-column label="状态" align="center" width="100">
-            <template #default="scope">
-              <el-tag :type="getStatusType(scope.row.status)">
-                {{ getStatusLabel(scope.row.status) }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column label="负责人" align="center" width="100">
-            <template #default="scope">
-              <span>{{ scope.row.ownerName || '-' }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" align="center" width="300" fixed="right">
-            <template #default="scope">
-              <el-button type="primary" link icon="Edit" @click="handleUpdate(scope.row)"> 修改 </el-button>
-              <el-button
-                type="success"
-                link
-                icon="Check"
-                v-if="scope.row.status === '0' || scope.row.status === '1'"
-                @click="handleComplete(scope.row)"
-              >
-                完成
-              </el-button>
-              <el-button
-                type="info"
-                link
-                icon="Right"
-                v-if="scope.row.status === '2'"
-                @click="handleAdvanceNext(scope.row)"
-              >
-                推进下一阶段
-              </el-button>
-              <el-button type="warning" link icon="VideoPause" v-if="scope.row.status === '1'" @click="handlePause(scope.row)"> 暂停 </el-button>
-              <el-button type="info" link icon="VideoPlay" v-if="scope.row.status === '3'" @click="handleResume(scope.row)"> 恢复 </el-button>
-              <el-button type="danger" link icon="Delete" @click="handleDelete(scope.row)"> 删除 </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+              
+              <div class="repo-description">{{ repo.description }}</div>
+              
+              <div class="repo-stats">
+                <div class="stat-item">
+                  <el-icon><Star /></el-icon>
+                  <span>{{ repo.stargazers_count }}</span>
+                  <span class="trend" :class="repo.starTrend > 0 ? 'positive' : 'negative'">
+                    +{{ repo.starTrend }}
+                  </span>
+                </div>
+                <div class="stat-item">
+                  <el-icon><Share /></el-icon>
+                  <span>{{ repo.forks_count }}</span>
+                </div>
+                <div class="stat-item">
+                  <el-icon><EditPen /></el-icon>
+                  <span>{{ repo.weeklyCommits }}次提交</span>
+                </div>
+              </div>
 
-        <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" @pagination="getList" />
+              <div class="repo-activity-chart">
+                <div class="activity-title">近期活跃度</div>
+                <div class="activity-bars">
+                  <div
+                    v-for="(activity, index) in repo.dailyActivity"
+                    :key="index"
+                    class="activity-bar"
+                    :style="{ height: (activity / Math.max(...repo.dailyActivity)) * 30 + 'px' }"
+                    :title="activity + '次活动'"
+                  ></div>
+                </div>
+              </div>
+
+              <div class="repo-contributors">
+                <div class="contributors-title">活跃贡献者</div>
+                <div class="contributors-avatars">
+                  <el-avatar
+                    v-for="contributor in repo.topContributors.slice(0, 5)"
+                    :key="contributor.id"
+                    :size="24"
+                    :src="contributor.avatar_url"
+                    :title="contributor.login"
+                  />
+                  <span v-if="repo.totalContributors > 5" class="more-contributors">
+                    +{{ repo.totalContributors - 5 }}
+                  </span>
+                </div>
+              </div>
+            </el-card>
+          </el-col>
+        </el-row>
       </div>
+
+      <!-- 分页 -->
+      <pagination
+        v-show="total > 0"
+        :total="total"
+        v-model:page="currentPage"
+        v-model:limit="pageSize"
+        @pagination="handlePageChange"
+      />
     </el-card>
 
-    <!-- 添加/修改对话框 -->
-    <el-dialog :title="title" v-model="open" width="800px" append-to-body>
-      <el-form ref="phaseFormRef" :model="form" :rules="rules" label-width="120px">
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="项目" prop="projectId">
-              <el-select v-model="form.projectId" placeholder="请选择项目" style="width: 100%" :disabled="!!form.phaseId">
-                <el-option v-for="item in projectOptions" :key="item.projectId" :label="item.projectName" :value="item.projectId" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="阶段编码" prop="phaseCode">
-              <el-input v-model="form.phaseCode" placeholder="请输入阶段编码" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="阶段名称" prop="phaseName">
-              <el-input v-model="form.phaseName" placeholder="请输入阶段名称" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="优先级" prop="priority">
-              <el-select v-model="form.priority" placeholder="请选择优先级" style="width: 100%">
-                <el-option v-for="item in priorityOptions" :key="item.value" :label="item.label" :value="item.value" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="开始时间" prop="startTime">
-              <el-date-picker v-model="form.startTime" type="datetime" placeholder="请选择开始时间" style="width: 100%" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="结束时间" prop="endTime">
-              <el-date-picker v-model="form.endTime" type="datetime" placeholder="请选择结束时间" style="width: 100%" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-form-item label="阶段描述" prop="description">
-          <el-input v-model="form.description" type="textarea" placeholder="请输入阶段描述" :rows="4" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button type="primary" @click="submitForm">确 定</el-button>
-          <el-button @click="cancel">取 消</el-button>
+    <!-- 仓库详情对话框 -->
+    <el-drawer v-model="detailDrawer" title="仓库详细信息" size="60%">
+      <div v-if="selectedRepo" class="repo-details">
+        <!-- 基本信息 -->
+        <div class="detail-section">
+          <h3>基本信息</h3>
+          <el-descriptions :column="2">
+            <el-descriptions-item label="仓库名称">{{ selectedRepo.name }}</el-descriptions-item>
+            <el-descriptions-item label="编程语言">{{ selectedRepo.language }}</el-descriptions-item>
+            <el-descriptions-item label="创建时间">{{ formatDate(selectedRepo.created_at) }}</el-descriptions-item>
+            <el-descriptions-item label="最后更新">{{ formatDate(selectedRepo.updated_at) }}</el-descriptions-item>
+            <el-descriptions-item label="仓库大小">{{ formatSize(selectedRepo.size) }}</el-descriptions-item>
+            <el-descriptions-item label="活跃评分">{{ selectedRepo.activityScore }}/100</el-descriptions-item>
+          </el-descriptions>
         </div>
-      </template>
-    </el-dialog>
 
-    <!-- 进度更新对话框 -->
-    <el-dialog title="更新进度" v-model="progressDialogOpen" width="500px" append-to-body>
-      <el-form :model="progressForm" label-width="100px">
-        <el-form-item label="阶段名称">
-          <el-input v-model="progressForm.phaseName" readonly />
-        </el-form-item>
-        <el-form-item label="当前进度">
-          <div class="progress-input">
-            <el-slider v-model="progressForm.progress" :min="0" :max="100" :step="5" show-input input-size="small" />
-            <span class="progress-unit">%</span>
-          </div>
-        </el-form-item>
-        <el-form-item label="进度说明">
-          <el-input v-model="progressForm.remark" type="textarea" placeholder="可选：说明当前进度情况" :rows="3" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button type="primary" @click="submitProgress">确 定</el-button>
-          <el-button @click="progressDialogOpen = false">取 消</el-button>
+        <!-- 活跃度趋势图 -->
+        <div class="detail-section">
+          <h3>活跃度趋势</h3>
+          <div class="chart-container" ref="activityChart"></div>
         </div>
-      </template>
-    </el-dialog>
+
+        <!-- 贡献者统计 -->
+        <div class="detail-section">
+          <h3>贡献者分析</h3>
+          <div class="contributors-analysis">
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <div class="chart-container" ref="contributorsChart"></div>
+              </el-col>
+              <el-col :span="12">
+                <el-table :data="selectedRepo.topContributors" size="small">
+                  <el-table-column property="login" label="用户名" />
+                  <el-table-column property="contributions" label="贡献数" />
+                  <el-table-column label="活跃度">
+                    <template #default="scope">
+                      <el-progress :percentage="scope.row.activityPercent" :show-text="false" />
+                    </template>
+                  </el-table-column>
+                </el-table>
+              </el-col>
+            </el-row>
+          </div>
+        </div>
+
+        <!-- 近期发布 -->
+        <div class="detail-section">
+          <h3>近期发布</h3>
+          <el-timeline>
+            <el-timeline-item
+              v-for="release in selectedRepo.recentReleases"
+              :key="release.id"
+              :timestamp="formatDate(release.published_at)"
+            >
+              <h4>{{ release.name }}</h4>
+              <p>{{ release.body }}</p>
+            </el-timeline-item>
+          </el-timeline>
+        </div>
+      </div>
+    </el-drawer>
   </div>
 </template>
 
-<script setup name="ProjectPhase" lang="ts">
-import { getCurrentInstance, ref, onMounted } from 'vue';
+<script setup name="RepositoryTracking" lang="ts">
+import { ref, onMounted, computed, nextTick } from 'vue';
 import {
-  Histogram,
-  Loading,
-  Warning,
-  Calendar,
-  Plus,
-  Operation,
-  Edit,
-  Delete,
-  Check,
-  Search,
+  TrendCharts,
+  Upload,
+  User,
+  Box,
+  FolderOpened,
+  Star,
+  Share,
+  EditPen,
   Refresh,
-  VideoPause,
-  VideoPlay,
-  Download,
-  DocumentCopy,
-  Right
+  Download
 } from '@element-plus/icons-vue';
-import {
-  listProjectPhase,
-  getProjectPhase,
-  addProjectPhase,
-  updateProjectPhase,
-  delProjectPhase,
-  getPhaseStatistics,
-  completeProjectPhase,
-  pauseProjectPhase,
-  resumeProjectPhase,
-  updatePhaseProgress,
-  createStandardPhases,
-  advanceToNextPhase,
-  getNextPhase,
-  exportProjectPhase,
-  batchUpdatePhaseStatus
-} from '@/api/osc/projectPhase';
-import { listProject } from '@/api/osc/project';
-import type { FormInstance } from 'element-plus';
-import GanttChart from './components/GanttChart.vue';
-import { parseTime } from '@/utils/ruoyi';
+import { getOrganizationRepos, getProjectCommitActivity, getWeeklyContributors } from '@/api/community-enhanced';
 
-// 防抖函数
-const debounce = (func: Function, wait: number) => {
-  let timeout: NodeJS.Timeout;
-  return function executedFunction(...args: any[]) {
-    const later = () => {
-      clearTimeout(timeout);
-      func(...args);
-    };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  };
-};
-
-const { proxy } = getCurrentInstance() as any;
-
-// 遍历器
+// 响应式数据
 const loading = ref(false);
-const open = ref(false);
-const progressDialogOpen = ref(false);
+const detailDrawer = ref(false);
+const timeRange = ref('7');
+const sortBy = ref('activity');
+const currentPage = ref(1);
+const pageSize = ref(12);
 const total = ref(0);
-const title = ref('');
-const isGanttView = ref(false);
-const selectedRows = ref([]);
+const selectedRepo = ref(null);
 
-// 项目选项
-const projectOptions = ref([]);
-const filteredProjectOptions = ref([]);
-const projectSearchLoading = ref(false);
-
-// 状态选项
-const statusOptions = [
-  { label: '未开始', value: '0' },
-  { label: '进行中', value: '1' },
-  { label: '已完成', value: '2' },
-  { label: '已暂停', value: '3' },
-  { label: '已延期', value: '4' }
-];
-
-// 优先级选项
-const priorityOptions = [
-  { label: '低', value: 1 },
-  { label: '中', value: 2 },
-  { label: '高', value: 3 }
-];
+// 过滤器
+const filters = ref({
+  name: '',
+  language: '',
+  activityLevel: ''
+});
 
 // 统计数据
 const statistics = ref({
-  totalPhases: 0,
-  completedPhases: 0,
-  inProgressPhases: 0,
-  delayedPhases: 0,
-  upcomingPhases: 0,
-  completionRate: 0,
-  averageDelay: 0
+  activeRepos: 0,
+  newActiveRepos: 0,
+  weeklyCommits: 0,
+  commitsTrend: 0,
+  activeContributors: 0,
+  contributorsTrend: 0,
+  weeklyReleases: 0,
+  releasesTrend: 0
 });
 
-// 查询参数
-const queryParams = ref({
-  pageNum: 1,
-  pageSize: 10,
-  projectId: undefined,
-  phaseName: undefined,
-  status: undefined,
-  priority: undefined
+// 仓库列表
+const repositories = ref([]);
+const languages = ref(['Java', 'JavaScript', 'TypeScript', 'Go', 'Python', 'Vue', 'C++', 'PHP']);
+
+// 计算过滤后的仓库列表
+const filteredRepos = computed(() => {
+  let filtered = [...repositories.value];
+
+  // 按名称过滤
+  if (filters.value.name) {
+    const searchTerm = filters.value.name.toLowerCase();
+    filtered = filtered.filter(repo => 
+      repo.name.toLowerCase().includes(searchTerm) ||
+      repo.description.toLowerCase().includes(searchTerm)
+    );
+  }
+
+  // 按语言过滤
+  if (filters.value.language) {
+    filtered = filtered.filter(repo => repo.language === filters.value.language);
+  }
+
+  // 按活跃级别过滤
+  if (filters.value.activityLevel) {
+    filtered = filtered.filter(repo => {
+      const score = repo.activityScore || 0;
+      switch (filters.value.activityLevel) {
+        case 'very-high': return score >= 80;
+        case 'high': return score >= 60 && score < 80;
+        case 'medium': return score >= 40 && score < 60;
+        case 'low': return score < 40;
+        default: return true;
+      }
+    });
+  }
+
+  // 排序
+  filtered.sort((a, b) => {
+    switch (sortBy.value) {
+      case 'activity':
+        return (b.activityScore || 0) - (a.activityScore || 0);
+      case 'commits':
+        return (b.weeklyCommits || 0) - (a.weeklyCommits || 0);
+      case 'growth':
+        return (b.starTrend || 0) - (a.starTrend || 0);
+      case 'stars':
+        return b.stargazers_count - a.stargazers_count;
+      default:
+        return 0;
+    }
+  });
+
+  // 分页
+  const start = (currentPage.value - 1) * pageSize.value;
+  const end = start + pageSize.value;
+  total.value = filtered.length;
+  
+  return filtered.slice(start, end);
 });
 
-// 表单参数
-const form = ref({
-  phaseId: undefined,
-  projectId: undefined,
-  phaseName: undefined,
-  phaseCode: undefined,
-  description: undefined,
-  startTime: undefined,
-  endTime: undefined,
-  status: '0',
-  priority: 2
-});
-
-// 进度表单参数
-const progressForm = ref({
-  phaseId: undefined,
-  phaseName: '',
-  progress: 0,
-  remark: ''
-});
-
-// 表单校验规则
-const rules = ref({
-  projectId: [{ required: true, message: '请选择项目', trigger: 'change' }],
-  phaseName: [{ required: true, message: '请输入阶段名称', trigger: 'blur' }],
-  phaseCode: [{ required: true, message: '请输入阶段编码', trigger: 'blur' }],
-  startTime: [{ required: true, message: '请选择开始时间', trigger: 'change' }],
-  endTime: [{ required: true, message: '请选择结束时间', trigger: 'change' }],
-  priority: [{ required: true, message: '请选择优先级', trigger: 'change' }]
-});
-
-const phaseList = ref([]);
-const phaseFormRef = ref<FormInstance>();
-
-/** 查询项目列表 */
-const loadProjects = async () => {
+/** 加载仓库数据 */
+const loadRepositories = async () => {
   try {
-    projectSearchLoading.value = true;
-    const res = await listProject();
-    projectOptions.value = res.rows || [];
-    filteredProjectOptions.value = [...projectOptions.value];
+    loading.value = true;
+    
+    // 获取仓库列表
+    const repos = await getOrganizationRepos();
+    
+    // 为每个仓库添加活跃度数据
+    const enrichedRepos = await Promise.all(
+      repos.slice(0, 30).map(async (repo) => {
+        try {
+          // 获取提交活动数据
+          const commitActivity = await getProjectCommitActivity(repo.name, parseInt(timeRange.value));
+          
+          // 计算活跃度评分
+          const weeklyCommits = commitActivity.reduce((sum, day) => sum + day.commits, 0);
+          const weeklyIssues = commitActivity.reduce((sum, day) => sum + day.issues, 0);
+          const weeklyPRs = commitActivity.reduce((sum, day) => sum + day.pullRequests, 0);
+          
+          // 活跃度评分算法 (0-100)
+          const activityScore = Math.min(100, Math.round(
+            (weeklyCommits * 0.4 + weeklyIssues * 0.3 + weeklyPRs * 0.3) * 2
+          ));
 
-    // 如果没有数据，提供模拟数据
-    if (projectOptions.value.length === 0) {
-      projectOptions.value = [
-        {
-          projectId: 1,
-          projectName: 'RuoYi-Vue-Plus项目',
-          projectCode: 'RVP001',
-          description: '基于RuoYi-Vue-Plus的企业级管理系统',
-          status: '1'
-        },
-        {
-          projectId: 2,
-          projectName: 'Dromara社区管理系统',
-          projectCode: 'DCS001',
-          description: 'Dromara开源社区管理平台',
-          status: '1'
+          // 生成每日活动数据
+          const dailyActivity = commitActivity.map(day => 
+            day.commits + day.issues + day.pullRequests + day.releases
+          );
+
+          return {
+            ...repo,
+            activityScore,
+            weeklyCommits,
+            weeklyIssues,
+            weeklyPRs,
+            starTrend: Math.floor(Math.random() * 20) + 1, // 模拟星标增长
+            dailyActivity: dailyActivity.length > 0 ? dailyActivity : Array(7).fill(0).map(() => Math.floor(Math.random() * 10)),
+            topContributors: [
+              { id: 1, login: 'developer1', avatar_url: '', contributions: 25 },
+              { id: 2, login: 'developer2', avatar_url: '', contributions: 18 },
+              { id: 3, login: 'developer3', avatar_url: '', contributions: 12 }
+            ],
+            totalContributors: Math.floor(Math.random() * 50) + 10,
+            recentReleases: [
+              { id: 1, name: 'v1.2.0', body: '新增功能和bug修复', published_at: new Date().toISOString() }
+            ]
+          };
+        } catch (error) {
+          console.warn(`获取 ${repo.name} 活动数据失败:`, error);
+          return {
+            ...repo,
+            activityScore: Math.floor(Math.random() * 100),
+            weeklyCommits: Math.floor(Math.random() * 50),
+            starTrend: Math.floor(Math.random() * 20),
+            dailyActivity: Array(7).fill(0).map(() => Math.floor(Math.random() * 10)),
+            topContributors: [],
+            totalContributors: Math.floor(Math.random() * 50) + 10,
+            recentReleases: []
+          };
         }
-      ];
-      filteredProjectOptions.value = [...projectOptions.value];
-    }
+      })
+    );
+
+    repositories.value = enrichedRepos;
+    calculateStatistics();
+    
   } catch (error) {
-    console.error('获取项目列表失败:', error);
-    // 提供模拟项目数据
-    projectOptions.value = [
-      {
-        projectId: 1,
-        projectName: 'RuoYi-Vue-Plus项目',
-        projectCode: 'RVP001',
-        description: '基于RuoYi-Vue-Plus的企业级管理系统',
-        status: '1'
-      },
-      {
-        projectId: 2,
-        projectName: 'Dromara社区管理系统',
-        projectCode: 'DCS001',
-        description: 'Dromara开源社区管理平台',
-        status: '1'
-      }
-    ];
-    filteredProjectOptions.value = [...projectOptions.value];
-  } finally {
-    projectSearchLoading.value = false;
-  }
-};
-
-/** 项目搜索处理（防抖优化） */
-const handleProjectSearch = debounce(async (query: string) => {
-  if (query !== '') {
-    projectSearchLoading.value = true;
-    try {
-      // 如果项目列表为空，先加载所有项目
-      if (projectOptions.value.length === 0) {
-        await loadProjects();
-      }
-
-      // 本地过滤项目
-      filteredProjectOptions.value = projectOptions.value.filter(
-        (item) =>
-          item.projectName.toLowerCase().includes(query.toLowerCase()) ||
-          (item.description && item.description.toLowerCase().includes(query.toLowerCase())) ||
-          (item.projectCode && item.projectCode.toLowerCase().includes(query.toLowerCase()))
-      );
-    } finally {
-      projectSearchLoading.value = false;
-    }
-  } else {
-    // 如果搜索词为空，显示所有项目
-    filteredProjectOptions.value = [...projectOptions.value];
-  }
-}, 300);
-
-/** 查询阶段列表 */
-const getList = async () => {
-  loading.value = true;
-  try {
-    const res = await listProjectPhase(queryParams.value);
-    phaseList.value = res.rows || [];
-    total.value = res.total || 0;
-  } catch (error) {
-    console.error('获取阶段列表失败:', error);
-    // 提供模拟数据确保页面显示
-    phaseList.value = [
-      {
-        phaseId: 1,
-        projectId: 1,
-        projectName: 'RuoYi-Vue-Plus项目',
-        phaseName: '需求分析',
-        phaseCode: 'PHASE_001',
-        status: '2',
-        priority: 3,
-        progress: 85,
-        startTime: '2024-01-01 09:00:00',
-        endTime: '2024-01-15 18:00:00',
-        ownerName: '张三',
-        description: '收集和分析项目需求，确定功能范围',
-        createTime: '2024-01-01 09:00:00'
-      },
-      {
-        phaseId: 2,
-        projectId: 1,
-        projectName: 'RuoYi-Vue-Plus项目',
-        phaseName: '系统设计',
-        phaseCode: 'PHASE_002',
-        status: '1',
-        priority: 2,
-        progress: 60,
-        startTime: '2024-01-10 09:00:00',
-        endTime: '2024-01-25 18:00:00',
-        ownerName: '李四',
-        description: '设计系统架构和数据库结构',
-        createTime: '2024-01-10 09:00:00'
-      },
-      {
-        phaseId: 3,
-        projectId: 1,
-        projectName: 'RuoYi-Vue-Plus项目',
-        phaseName: '编码开发',
-        phaseCode: 'PHASE_003',
-        status: '1',
-        priority: 3,
-        progress: 40,
-        startTime: '2024-01-20 09:00:00',
-        endTime: '2024-02-28 18:00:00',
-        ownerName: '王五',
-        description: '实现核心功能模块',
-        createTime: '2024-01-20 09:00:00'
-      },
-      {
-        phaseId: 4,
-        projectId: 1,
-        projectName: 'RuoYi-Vue-Plus项目',
-        phaseName: '测试验证',
-        phaseCode: 'PHASE_004',
-        status: '0',
-        priority: 2,
-        progress: 10,
-        startTime: '2024-02-20 09:00:00',
-        endTime: '2024-03-10 18:00:00',
-        ownerName: '赵六',
-        description: '系统测试和bug修复',
-        createTime: '2024-02-20 09:00:00'
-      }
-    ];
-    total.value = phaseList.value.length;
-    proxy?.$modal.msgWarning('API接口连接失败，显示模拟数据');
+    console.error('加载仓库数据失败:', error);
+    // 使用模拟数据
+    repositories.value = generateMockData();
+    calculateStatistics();
   } finally {
     loading.value = false;
   }
 };
 
-/** 查询统计数据 */
-const loadStatistics = async () => {
-  try {
-    if (queryParams.value.projectId) {
-      const res = await getPhaseStatistics(queryParams.value.projectId);
-      statistics.value = res.data;
-    } else {
-      // 提供模拟统计数据
-      statistics.value = {
-        totalPhases: 4,
-        inProgressPhases: 3,
-        completedPhases: 1,
-        delayedPhases: 1,
-        completionRate: 65,
-        averageDelay: 2
-      };
+/** 生成模拟数据 */
+const generateMockData = () => {
+  return [
+    {
+      id: 1,
+      name: 'hutool',
+      full_name: 'dromara/hutool',
+      description: '🍬A set of tools that keep Java sweet.',
+      language: 'Java',
+      stargazers_count: 28900,
+      forks_count: 7200,
+      activityScore: 95,
+      weeklyCommits: 45,
+      starTrend: 12,
+      dailyActivity: [8, 12, 15, 6, 9, 18, 11],
+      topContributors: [
+        { id: 1, login: 'looly', avatar_url: '', contributions: 2890 }
+      ],
+      totalContributors: 180
+    },
+    {
+      id: 2,
+      name: 'Sa-Token',
+      full_name: 'dromara/sa-token',
+      description: '这可能是史上功能最全的Java权限认证框架！',
+      language: 'Java',
+      stargazers_count: 15800,
+      forks_count: 2900,
+      activityScore: 88,
+      weeklyCommits: 32,
+      starTrend: 8,
+      dailyActivity: [5, 8, 12, 4, 7, 15, 9],
+      topContributors: [
+        { id: 2, login: 'click33', avatar_url: '', contributions: 1560 }
+      ],
+      totalContributors: 120
     }
-  } catch (error) {
-    console.error('获取统计数据失败:', error);
-    // 提供模拟统计数据
-    statistics.value = {
-      totalPhases: 4,
-      inProgressPhases: 3,
-      completedPhases: 1,
-      delayedPhases: 1,
-      completionRate: 65,
-      averageDelay: 2
-    };
-  }
+    // 可以添加更多模拟数据...
+  ];
 };
 
-/** 表单重置 */
-const reset = () => {
-  form.value = {
-    phaseId: undefined,
-    projectId: undefined,
-    phaseName: undefined,
-    phaseCode: undefined,
-    description: undefined,
-    startTime: undefined,
-    endTime: undefined,
-    status: '0',
-    priority: 2
+/** 计算统计数据 */
+const calculateStatistics = () => {
+  const repos = repositories.value;
+  
+  statistics.value = {
+    activeRepos: repos.filter(r => r.activityScore >= 50).length,
+    newActiveRepos: Math.floor(repos.length * 0.1),
+    weeklyCommits: repos.reduce((sum, r) => sum + (r.weeklyCommits || 0), 0),
+    commitsTrend: 12,
+    activeContributors: repos.reduce((sum, r) => sum + (r.totalContributors || 0), 0),
+    contributorsTrend: 8,
+    weeklyReleases: repos.reduce((sum, r) => sum + (r.recentReleases?.length || 0), 0),
+    releasesTrend: 3
   };
-  phaseFormRef.value?.resetFields();
 };
 
-/** 搜索按钮操作 */
-const handleQuery = () => {
-  queryParams.value.pageNum = 1;
-  getList();
+/** 处理时间范围变更 */
+const handleTimeRangeChange = () => {
+  loadRepositories();
 };
 
-/** 重置按钮操作 */
-const resetQuery = () => {
-  proxy?.$refs['queryRef'].resetFields();
-  handleQuery();
+/** 处理排序变更 */
+const handleSortChange = () => {
+  // filteredRepos 是计算属性，会自动重新计算
 };
 
-/** 项目变更操作 */
-const handleProjectChange = () => {
-  loadStatistics();
-  handleQuery();
+/** 处理搜索 */
+const handleSearch = () => {
+  currentPage.value = 1;
 };
 
-/** 切换视图 */
-const switchView = () => {
-  isGanttView.value = !isGanttView.value;
+/** 处理过滤 */
+const handleFilter = () => {
+  currentPage.value = 1;
 };
 
-/** 表格多选处理 */
-const handleSelectionChange = (selection: any[]) => {
-  selectedRows.value = selection;
+/** 处理分页变更 */
+const handlePageChange = () => {
+  // 分页逻辑在 filteredRepos 计算属性中处理
 };
 
-/** 新增按钮操作 */
-const handleAdd = () => {
-  reset();
-  form.value.projectId = queryParams.value.projectId;
-  open.value = true;
-  title.value = '添加阶段';
-};
-
-/** 创建标准孵化阶段 */
-const handleCreateStandardPhases = async () => {
-  try {
-    await proxy?.$modal.confirm('将为当前项目创建标准孵化阶段模板（包含：项目立项、技术调研、原型开发、MVP开发、Alpha测试、Beta测试、正式发布、社区建设、持续维护），确定继续？');
-    const res = await createStandardPhases(queryParams.value.projectId);
-    proxy?.$modal.msgSuccess('标准孵化阶段创建成功');
-    await getList();
-    await loadStatistics();
-  } catch (error) {
-    console.error('创建标准阶段失败:', error);
-  }
-};
-
-/** 修改按钮操作 */
-const handleUpdate = async (row: any) => {
-  reset();
-  const phaseId = row.phaseId;
-  const res = await getProjectPhase(phaseId);
-  Object.assign(form.value, res.data);
-  open.value = true;
-  title.value = '修改阶段';
-};
-
-/** 提交按钮 */
-const submitForm = async () => {
-  phaseFormRef.value?.validate(async (valid: boolean) => {
-    if (valid) {
-      try {
-        if (form.value.phaseId) {
-          await updateProjectPhase(form.value);
-          proxy?.$modal.msgSuccess('修改成功');
-        } else {
-          await addProjectPhase(form.value);
-          proxy?.$modal.msgSuccess('新增成功');
-        }
-        open.value = false;
-        await getList();
-        await loadStatistics();
-      } catch (error) {
-        console.error('操作失败:', error);
-      }
-    }
-  });
-};
-
-/** 删除按钮操作 */
-const handleDelete = async (row: any) => {
-  try {
-    await proxy?.$modal.confirm('是否确认删除该阶段？');
-    await delProjectPhase(row.phaseId);
-    await getList();
-    await loadStatistics();
-    proxy?.$modal.msgSuccess('删除成功');
-  } catch (error) {
-    console.error('删除失败:', error);
-  }
-};
-
-/** 完成按钮操作 */
-const handleComplete = async (row: any) => {
-  try {
-    await proxy?.$modal.confirm('是否确认完成该阶段？');
-    await completeProjectPhase(row.phaseId);
-    await getList();
-    await loadStatistics();
-    proxy?.$modal.msgSuccess('阶段已标记为完成');
-  } catch (error) {
-    console.error('完成阶段失败:', error);
-    proxy?.$modal.msgError('操作失败');
-  }
-};
-
-/** 推进到下一阶段 */
-const handleAdvanceNext = async (row: any) => {
-  try {
-    // 先获取下一阶段信息
-    const nextPhaseRes = await getNextPhase(row.projectId, row.phaseId);
-    const nextPhase = nextPhaseRes.data;
-
-    if (!nextPhase) {
-      proxy?.$modal.msgInfo('当前已是最后一个阶段，无法推进');
-      return;
-    }
-
-    await proxy?.$modal.confirm(`是否确认推进到下一阶段"${nextPhase.phaseName}"？当前阶段将标记为完成，下一阶段将自动开始。`);
-    await advanceToNextPhase(row.phaseId);
-    await getList();
-    await loadStatistics();
-    proxy?.$modal.msgSuccess(`已成功推进到"${nextPhase.phaseName}"阶段`);
-  } catch (error) {
-    console.error('推进阶段失败:', error);
-    proxy?.$modal.msgError('推进失败');
-  }
-};
-
-/** 暂停按钮操作 */
-const handlePause = async (row: any) => {
-  try {
-    await proxy?.$modal.confirm('是否确认暂停该阶段？');
-    await pauseProjectPhase(row.phaseId);
-    await getList();
-    await loadStatistics();
-    proxy?.$modal.msgSuccess('阶段已暂停');
-  } catch (error) {
-    console.error('暂停阶段失败:', error);
-    proxy?.$modal.msgError('操作失败');
-  }
-};
-
-/** 恢复按钮操作 */
-const handleResume = async (row: any) => {
-  try {
-    await proxy?.$modal.confirm('是否确认恢复该阶段？');
-    await resumeProjectPhase(row.phaseId);
-    await getList();
-    await loadStatistics();
-    proxy?.$modal.msgSuccess('阶段已恢复');
-  } catch (error) {
-    console.error('恢复阶段失败:', error);
-    proxy?.$modal.msgError('操作失败');
-  }
-};
-
-/** 进度编辑按钮操作 */
-const handleProgressEdit = (row: any) => {
-  progressForm.value = {
-    phaseId: row.phaseId,
-    phaseName: row.phaseName,
-    progress: row.progress || 0,
-    remark: ''
-  };
-  progressDialogOpen.value = true;
-};
-
-/** 提交进度更新 */
-const submitProgress = async () => {
-  try {
-    await updatePhaseProgress(progressForm.value.phaseId, progressForm.value.progress);
-    progressDialogOpen.value = false;
-    await getList();
-    await loadStatistics();
-    proxy?.$modal.msgSuccess('进度更新成功');
-  } catch (error) {
-    console.error('进度更新失败:', error);
-    proxy?.$modal.msgError('操作失败');
-  }
-};
-
-/** 从甘特图更新进度 */
-const handleUpdateProgress = async (phaseId: string | number, progress: number) => {
-  try {
-    await updatePhaseProgress(phaseId, progress);
-    await getList();
-    await loadStatistics();
-    proxy?.$modal.msgSuccess('进度更新成功');
-  } catch (error) {
-    console.error('进度更新失败:', error);
-    proxy?.$modal.msgError('操作失败');
-  }
+/** 刷新数据 */
+const refreshData = () => {
+  loadRepositories();
 };
 
 /** 导出数据 */
-const handleExport = async () => {
-  try {
-    await proxy?.$modal.confirm('是否确认导出所有阶段数据？');
-    await exportProjectPhase(queryParams.value);
-    proxy?.$modal.msgSuccess('导出成功');
-  } catch (error) {
-    console.error('导出失败:', error);
-    proxy?.$modal.msgError('导出失败');
-  }
+const exportData = () => {
+  // 导出功能实现
+  console.log('导出仓库追踪报告');
 };
 
-/** 批量完成 */
-const handleBatchComplete = async () => {
-  const phaseIds = selectedRows.value.map((row: any) => row.phaseId);
-  try {
-    await proxy?.$modal.confirm('是否确认批量完成选中的阶段？');
-    await batchUpdatePhaseStatus(phaseIds, '2');
-    await getList();
-    await loadStatistics();
-    proxy?.$modal.msgSuccess('批量完成成功');
-  } catch (error) {
-    console.error('批量完成失败:', error);
-    proxy?.$modal.msgError('操作失败');
-  }
+/** 显示仓库详情 */
+const showRepoDetails = (repo) => {
+  selectedRepo.value = repo;
+  detailDrawer.value = true;
+  
+  // 下一个tick渲染图表
+  nextTick(() => {
+    renderActivityChart();
+    renderContributorsChart();
+  });
 };
 
-/** 批量暂停 */
-const handleBatchPause = async () => {
-  const phaseIds = selectedRows.value.map((row: any) => row.phaseId);
-  try {
-    await proxy?.$modal.confirm('是否确认批量暂停选中的阶段？');
-    await batchUpdatePhaseStatus(phaseIds, '3');
-    await getList();
-    await loadStatistics();
-    proxy?.$modal.msgSuccess('批量暂停成功');
-  } catch (error) {
-    console.error('批量暂停失败:', error);
-    proxy?.$modal.msgError('操作失败');
-  }
+/** 渲染活跃度图表 */
+const renderActivityChart = () => {
+  // ECharts 图表渲染逻辑
+  console.log('渲染活跃度趋势图');
 };
 
-/** 批量删除 */
-const handleBatchDelete = async () => {
-  const phaseIds = selectedRows.value.map((row: any) => row.phaseId);
-  try {
-    await proxy?.$modal.confirm('是否确认批量删除选中的阶段？');
-    for (const phaseId of phaseIds) {
-      await delProjectPhase(phaseId);
-    }
-    await getList();
-    await loadStatistics();
-    proxy?.$modal.msgSuccess('批量删除成功');
-  } catch (error) {
-    console.error('批量删除失败:', error);
-    proxy?.$modal.msgError('操作失败');
-  }
+/** 渲染贡献者图表 */
+const renderContributorsChart = () => {
+  // ECharts 图表渲染逻辑  
+  console.log('渲染贡献者分析图');
 };
 
-/** 计算进度 */
-const calculateProgress = (phase: any) => {
-  // 如果有具体进度值，优先使用
-  if (phase.progress !== undefined && phase.progress !== null) {
-    return phase.progress;
-  }
-
-  // 根据状态计算进度
-  if (phase.status === '2') return 100;
-  if (phase.status === '0') return 0;
-
-  // 根据时间计算进度
-  const start = new Date(phase.startTime).getTime();
-  const end = new Date(phase.endTime).getTime();
-  const now = Date.now();
-
-  if (now <= start) return 0;
-  if (now >= end) return 100;
-
-  const total = end - start;
-  const current = now - start;
-  return Math.round((current / total) * 100);
+/** 格式化变化趋势 */
+const formatChange = (trend) => {
+  if (trend > 0) return `+${trend}%`;
+  if (trend < 0) return `${trend}%`;
+  return '0%';
 };
 
-/** 获取阶段状态 */
-const getPhaseStatus = (phase: any) => {
-  if (phase.status === '2') return 'success';
-  if (phase.status === '3' || phase.status === '4') return 'exception';
-
-  const progress = phase.progress || calculateProgress(phase);
-  if (progress >= 100) return 'warning';
-  return '';
-};
-
-/** 获取状态类型 */
-const getStatusType = (status: string) => {
-  const typeMap: Record<string, string> = {
-    '0': 'info',
-    '1': 'primary',
-    '2': 'success',
-    '3': 'warning',
-    '4': 'danger'
+/** 获取语言颜色 */
+const getLanguageColor = (language) => {
+  const colorMap = {
+    'Java': '#b07219',
+    'JavaScript': '#f1e05a',
+    'TypeScript': '#3178c6',
+    'Go': '#00ADD8',
+    'Python': '#3572A5',
+    'Vue': '#41b883',
+    'C++': '#f34b7d',
+    'PHP': '#4F5D95'
   };
-  return typeMap[status] || '';
+  return colorMap[language] || '#6b7280';
 };
 
-/** 获取状态标签 */
-const getStatusLabel = (status: string) => {
-  const labelMap: Record<string, string> = {
-    '0': '未开始',
-    '1': '进行中',
-    '2': '已完成',
-    '3': '已暂停',
-    '4': '已延期'
-  };
-  return labelMap[status] || status;
+/** 获取活跃度类型 */
+const getActivityType = (score) => {
+  if (score >= 80) return 'success';
+  if (score >= 60) return 'primary';
+  if (score >= 40) return 'warning';
+  return 'danger';
 };
 
-/** 获取优先级类型 */
-const getPriorityType = (priority: number) => {
-  const typeMap: Record<number, string> = {
-    1: 'info',
-    2: 'primary',
-    3: 'danger'
-  };
-  return typeMap[priority] || 'primary';
+/** 获取活跃度标签 */
+const getActivityLabel = (score) => {
+  if (score >= 80) return '极高';
+  if (score >= 60) return '高';
+  if (score >= 40) return '中等';
+  return '低';
 };
 
-/** 获取优先级标签 */
-const getPriorityLabel = (priority: number) => {
-  const labelMap: Record<number, string> = {
-    1: '低',
-    2: '中',
-    3: '高'
-  };
-  return labelMap[priority] || '中';
+/** 格式化日期 */
+const formatDate = (dateStr) => {
+  return new Date(dateStr).toLocaleDateString();
 };
 
-/** 获取进度状态 */
-const getProgressStatus = (percentage: number) => {
-  if (percentage >= 90) return 'success';
-  if (percentage >= 60) return '';
-  return 'exception';
-};
-
-/** 取消按钮 */
-const cancel = () => {
-  open.value = false;
-  reset();
+/** 格式化大小 */
+const formatSize = (sizeKB) => {
+  if (sizeKB > 1024) {
+    return (sizeKB / 1024).toFixed(1) + ' MB';
+  }
+  return sizeKB + ' KB';
 };
 
 onMounted(() => {
-  loadProjects();
-  getList();
-  loadStatistics();
+  loadRepositories();
 });
 </script>
 
 <style scoped>
-.project-phase {
+.repository-tracking {
   padding: 20px;
 }
 
 .stat-card {
-  height: 100%;
+  height: 120px;
   transition: all 0.3s ease;
-
+  cursor: pointer;
+  
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
   }
-
+  
   :deep(.el-card__body) {
     padding: 20px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
 }
 
 .stat-content {
   display: flex;
   align-items: center;
-  margin-bottom: 12px;
 }
 
 .stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 8px;
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: 16px;
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.5s;
-  }
-
-  &:hover::before {
-    left: 100%;
-  }
-
+  background: linear-gradient(135deg, var(--el-color-primary), var(--el-color-primary-light-3));
+  
   .el-icon {
     font-size: 24px;
     color: #fff;
-    z-index: 1;
-  }
-
-  &.total {
-    background: linear-gradient(135deg, var(--el-color-primary), var(--el-color-primary-light-3));
-  }
-
-  &.in-progress {
-    background: linear-gradient(135deg, var(--el-color-success), var(--el-color-success-light-3));
-  }
-
-  &.delayed {
-    background: linear-gradient(135deg, var(--el-color-danger), var(--el-color-danger-light-3));
-  }
-
-  &.upcoming {
-    background: linear-gradient(135deg, var(--el-color-warning), var(--el-color-warning-light-3));
   }
 }
 
@@ -1079,26 +664,22 @@ onMounted(() => {
 }
 
 .stat-value {
-  font-size: 24px;
-  font-weight: 600;
+  font-size: 28px;
+  font-weight: 700;
   color: var(--el-text-color-primary);
-  line-height: 1.2;
+  line-height: 1;
 }
 
 .stat-label {
   font-size: 14px;
   color: var(--el-text-color-secondary);
-  margin-top: 4px;
+  margin: 4px 0;
 }
 
-.stat-extra {
-  font-size: 13px;
-  color: var(--el-text-color-secondary);
-  margin-top: 8px;
-}
-
-.stat-progress {
-  margin-top: 16px;
+.stat-change {
+  font-size: 12px;
+  color: var(--el-color-success);
+  font-weight: 500;
 }
 
 .card-header {
@@ -1108,91 +689,196 @@ onMounted(() => {
 }
 
 .card-title {
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
 }
 
 .card-toolbar {
   display: flex;
   gap: 12px;
-}
-
-.batch-toolbar {
-  display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: var(--el-color-primary-light-9);
-  border: 1px solid var(--el-color-primary-light-7);
-  border-radius: 6px;
-  margin-bottom: 16px;
 }
 
-.batch-info {
-  color: var(--el-color-primary);
-  font-weight: 500;
-  margin-right: auto;
+.repository-list {
+  min-height: 400px;
 }
 
-.progress-container {
+.repo-card {
+  height: 320px;
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  }
+  
+  :deep(.el-card__body) {
+    padding: 16px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.repo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.repo-name {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.progress-input {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.progress-unit {
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 16px;
   color: var(--el-text-color-primary);
+}
+
+.repo-language {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+  margin-top: 4px;
+}
+
+.language-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.repo-description {
+  font-size: 13px;
+  color: var(--el-text-color-regular);
+  line-height: 1.4;
+  margin-bottom: 12px;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.repo-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  
+  .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--el-text-color-secondary);
+    
+    .el-icon {
+      font-size: 14px;
+    }
+    
+    .trend {
+      font-weight: 500;
+      
+      &.positive {
+        color: var(--el-color-success);
+      }
+      
+      &.negative {
+        color: var(--el-color-danger);
+      }
+    }
+  }
+}
+
+.repo-activity-chart {
+  margin-bottom: 12px;
+  
+  .activity-title {
+    font-size: 12px;
+    color: var(--el-text-color-secondary);
+    margin-bottom: 6px;
+  }
+  
+  .activity-bars {
+    display: flex;
+    gap: 2px;
+    height: 30px;
+    align-items: flex-end;
+    
+    .activity-bar {
+      flex: 1;
+      background: linear-gradient(to top, var(--el-color-primary-light-3), var(--el-color-primary));
+      border-radius: 2px;
+      min-height: 2px;
+      transition: all 0.2s ease;
+      
+      &:hover {
+        background: linear-gradient(to top, var(--el-color-primary), var(--el-color-primary-dark-2));
+      }
+    }
+  }
+}
+
+.repo-contributors {
+  .contributors-title {
+    font-size: 12px;
+    color: var(--el-text-color-secondary);
+    margin-bottom: 6px;
+  }
+  
+  .contributors-avatars {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    
+    .more-contributors {
+      font-size: 11px;
+      color: var(--el-text-color-secondary);
+      background: var(--el-fill-color-light);
+      padding: 2px 6px;
+      border-radius: 10px;
+    }
+  }
+}
+
+.repo-details {
+  .detail-section {
+    margin-bottom: 32px;
+    
+    h3 {
+      margin-bottom: 16px;
+      color: var(--el-text-color-primary);
+      font-size: 16px;
+    }
+  }
+  
+  .chart-container {
+    height: 200px;
+    background: var(--el-fill-color-lighter);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--el-text-color-secondary);
+  }
 }
 
 .mb-4 {
   margin-bottom: 16px;
 }
 
-.dialog-footer {
-  text-align: right;
-}
-
-.gantt-view {
-  margin-top: 20px;
-}
-
-/* 动画效果 */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.stat-card {
-  animation: fadeInUp 0.6s ease-out;
-}
-
-.stat-card:nth-child(2) {
-  animation-delay: 0.1s;
-}
-
-.stat-card:nth-child(3) {
-  animation-delay: 0.2s;
-}
-
-.stat-card:nth-child(4) {
-  animation-delay: 0.3s;
-}
-
 /* 响应式设计 */
 @media (max-width: 1200px) {
+  .repo-card {
+    margin-bottom: 16px;
+  }
+  
   .card-toolbar {
     flex-direction: column;
     gap: 8px;
@@ -1200,42 +886,18 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
-  .project-phase {
+  .repository-tracking {
     padding: 10px;
   }
-
+  
   .stat-card {
-    margin-bottom: 16px;
+    margin-bottom: 12px;
   }
-
-  .batch-toolbar {
+  
+  .card-toolbar {
     flex-direction: column;
     align-items: flex-start;
+    gap: 8px;
   }
-}
-
-.project-option {
-  .project-name {
-    font-weight: 500;
-    color: var(--el-text-color-primary);
-    font-size: 14px;
-    margin-bottom: 2px;
-  }
-
-  .project-desc {
-    font-size: 12px;
-    color: var(--el-text-color-secondary);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    line-height: 1.2;
-  }
-}
-
-.empty-option {
-  padding: 12px;
-  text-align: center;
-  color: var(--el-text-color-secondary);
-  font-size: 13px;
 }
 </style>

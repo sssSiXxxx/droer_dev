@@ -17,6 +17,7 @@ export interface ProjectVO {
   versionInfo?: string;
   starCount?: number;
   forkCount?: number;
+  watchCount?: number;
   issuesCount?: number;
   prCount?: number;
   readmeUrl?: string;

@@ -80,8 +80,8 @@
                 >
                   {{ scope.row.projectName }}
                 </el-link>
-                <span 
-                  v-else 
+                <span
+                  v-else
                   :class="['project-name-text', {
                     'super-project-name': scope.row.applicationType === 'community' && scope.row.applicationStatus === 'approved'
                   }]"
@@ -273,6 +273,7 @@ import { useUserStore } from '@/store/modules/user';
 import { View, TrendCharts, Star, Share } from '@element-plus/icons-vue';
 import { useRoute } from 'vue-router';
 import { ElMessageBox } from 'element-plus';
+import {formatDate} from "@vueuse/core";
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 // 尝试不同的字典类型名称
@@ -690,13 +691,13 @@ const handleSyncData = async () => {
   try {
     syncLoading.value = true;
     proxy?.$modal.msgInfo('正在同步项目数据，请稍候...');
-    
+
     await syncProjectData();
     proxy?.$modal.msgSuccess('项目数据同步完成！');
-    
+
     // 刷新当前列表
     await getList();
-    
+
     // 同时刷新首页数据
     console.log('🔄 开始刷新首页统计数据...');
     try {
@@ -712,7 +713,7 @@ const handleSyncData = async () => {
       console.error('❌ 首页数据刷新异常:', dashboardError);
       proxy?.$modal.msgWarning('项目数据同步成功，但首页数据更新异常');
     }
-    
+
   } catch (error) {
     console.error('同步数据失败:', error);
     proxy?.$modal.msgError('同步数据失败，请稍后重试');
@@ -742,7 +743,20 @@ const showProjectDetail = (row: ProjectVO) => {
   ElMessageBox.alert(
     `
     <div style="text-align: left;">
-      <h3 style="margin-bottom: 20px; color: #333; text-align: center; background-color: #fdfde7; padding: 15px;">${row.projectName}</h3>
+<h3
+  style="
+    margin-bottom: 20px;
+    color: #444;
+    text-align: center;
+    background-color: #f9fafb;
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px solid #eee;
+    font-weight: 600;
+  "
+>
+   ${ row.projectName }
+</h3>
 
       <div style="margin-bottom: 2px; padding: 12px; background-color: white;">
         <strong style="color: #333;">项目描述：</strong>
@@ -773,12 +787,21 @@ const showProjectDetail = (row: ProjectVO) => {
         </p>
       </div>
 
-      <div style="margin-bottom: 2px; padding: 12px; background-color: #f0f9f0;">
-        <strong style="color: #333;">项目状态：</strong>
-        <p style="margin: 5px 0; color: #666;">${getDictLabelFromValue(osc_project_status.value, row.status) || '暂无状态信息'}</p>
+    <div style="margin-bottom: 2px; padding: 12px; background-color: #f0f9f0; color: #666;">
+  <strong style="color: #333;">人气指标：</strong>
+  <div style="display: flex; justify-content: space-around; text-align: center;">
+    <span>⭐ ${ row.starCount ?? 0 }</span>
+    <span>🍴 ${ row.forkCount ?? 0 }</span>
+    <span>👀 ${ row.watchCount ?? 0}</span>
+  </div>
+</div>
+
+<div style="margin-bottom: 2px; padding: 12px; background-color: white;">
+        <strong style="color: #333;">创建时间：</strong>
+        <p style="margin: 5px 0; color: #666;">${formatDate(new Date(row.createTime), 'YYYY-MM-DD HH:mm:ss')|| '暂无数据'}</p>
       </div>
 
-      <div style="margin-bottom: 2px; padding: 12px; background-color: white;">
+      <div style="margin-bottom: 2px; padding: 12px; background-color: #f0f9f0; color: #666;">
         <strong style="color: #333;">备注：</strong>
         <p style="margin: 5px 0; color: #666;">${row.remark || '暂无备注'}</p>
       </div>

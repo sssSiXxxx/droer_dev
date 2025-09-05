@@ -148,7 +148,7 @@ export const dynamicRoutes: RouteRecordRaw[] = [
         path: 'projectPhase',
         component: () => import('@/views/osc/projectPhase/index.vue'),
         name: 'ProjectPhaseClient',
-        meta: { title: '进度追踪', icon: 'time' },
+        meta: { title: '仓库追踪', icon: 'monitor' },
         permissions: ['osc:projectPhase:list']
       },
       {
