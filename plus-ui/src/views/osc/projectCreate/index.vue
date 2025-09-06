@@ -588,8 +588,8 @@ const submitForm = async (isSubmitAudit: boolean) => {
     if (isSubmitAudit) {
       // 提交审核成功
       proxy?.$modal.msgSuccess('孵化申请提交成功，等待审核');
-      // 跳转回我的创建页面，而不是创建表单页面
-      router.push('/osc/myProject');
+      // 跳转到申请记录页面，用户可以查看申请状态
+      router.push('/osc/applicationRecords');
       //随后清空表单数据
       form.value = {
         applicationType: undefined,
@@ -662,7 +662,19 @@ const cancel = () => {
   // 清除表单验证状态
   formRef.value?.clearValidate();
 
-  proxy?.$modal.msgSuccess('表单已清空');
+  // 停止自动保存
+  stopAutoSave();
+
+  // 跳转回草稿箱或申请记录页面
+  const userId = userStore.userId;
+  if (userId) {
+    router.push({
+      path: '/osc/projectDraft',
+      query: { createBy: userId }
+    });
+  } else {
+    router.push('/osc/applicationRecords');
+  }
 };
 /** 跳转到申请记录 */
 const goToApplicationRecords = () => {

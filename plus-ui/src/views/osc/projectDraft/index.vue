@@ -197,7 +197,7 @@ const getList = async () => {
       queryParams.value.createBy = userStore.userId;
     }
     
-    // 确保只查询草稿状态
+    // 确保只查询草稿状态，排除已删除的记录
     queryParams.value.applicationStatus = 'draft';
     
     console.log('草稿箱查询参数:', queryParams.value);
@@ -207,10 +207,21 @@ const getList = async () => {
     const res = await listProject(queryParams.value);
     console.log('草稿箱查询结果:', res);
     
-    draftList.value = res.rows || [];
-    total.value = res.total || 0;
+    // 去重处理：根据projectId去重，并确保状态为draft
+    const uniqueRows = res.rows ? res.rows.filter((item, index, self) => {
+      // 确保是草稿状态且不是已删除状态
+      const isDraft = item.applicationStatus === 'draft';
+      const isUnique = index === self.findIndex(t => t.projectId === item.projectId);
+      const isNotDeleted = item.applicationStatus !== 'deleted';
+      
+      return isDraft && isUnique && isNotDeleted;
+    }) : [];
+    
+    draftList.value = uniqueRows;
+    total.value = uniqueRows.length; // 使用去重后的数量
 
     console.log('草稿数量:', total.value);
+    console.log('去重后草稿数量:', draftList.value.length);
     console.log('草稿列表:', draftList.value.map(item => ({
       id: item.projectId,
       name: item.projectName,

@@ -13,13 +13,6 @@
                 <el-option label="社区项目" value="community" />
               </el-select>
             </el-form-item>
-            <el-form-item label="审核状态" prop="applicationStatus">
-              <el-select v-model="queryParams.applicationStatus" placeholder="请选择审核状态" clearable>
-                <el-option label="待审核" value="pending" />
-                <el-option label="已通过" value="approved" />
-                <el-option label="已拒绝" value="rejected" />
-              </el-select>
-            </el-form-item>
             <el-form-item>
               <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
               <el-button icon="Refresh" @click="resetQuery">重置</el-button>
@@ -35,10 +28,6 @@
     <el-row v-else :gutter="20">
       <el-col :span="8" v-for="item in projectAuditList" :key="item.projectId">
         <el-card class="mb-4 project-card" shadow="hover">
-          <!-- 添加选择框 -->
-          <div class="card-checkbox">
-            <el-checkbox v-model="item.selected" @change="handleSelectionChange"></el-checkbox>
-          </div>
           <template #header>
             <div class="flex justify-between items-center">
               <el-button type="text" class="font-bold text-left hover:text-blue-600 project-name-btn" @click="handleViewProject(item)">
@@ -79,27 +68,32 @@
           </div>
 
           <!-- 审核操作区域 -->
-          <div class="mt-4 flex justify-between" v-if="item.applicationStatus === 'pending' || item.status === '1'">
-            <div class="audit-actions">
+          <div
+              class="mt-4 flex justify-between"
+              v-if="item.applicationStatus === 'pending' || item.status === '1'"
+          >
+            <!-- 左边：审核操作 -->
+            <div class="flex gap-3">
               <el-button type="success" @click="handleQuickAudit(item.projectId, '1')">通过</el-button>
               <el-button type="danger" @click="openRejectDialog(item)">驳回</el-button>
+            </div>
+
+            <!-- 右边：其他操作 -->
+            <div>
               <el-button
-                v-if="item.applicationType === 'personal'"
-                type="primary"
-                @click="openProjectJoinDialog(item)"
+                  v-if="item.applicationType === 'personal'"
+                  type="primary"
+                  @click="openProjectJoinDialog(item)"
               >
                 加入项目列表
               </el-button>
               <el-button
-                v-else
-                type="warning"
-                @click="openAuditDialog(item)"
+                  v-else
+                  type="warning"
+                  @click="openAuditDialog(item)"
               >
                 详细审核
               </el-button>
-            </div>
-            <div class="delete-action">
-              <el-button type="danger" link icon="Delete" @click="handleDeleteSingle(item)">删除</el-button>
             </div>
           </div>
         </el-card>
@@ -190,8 +184,11 @@
             <el-descriptions-item label="社区影响" :span="2">
               <div class="description-text">{{ currentAuditItem.communityImpact }}</div>
             </el-descriptions-item>
+
+            <pre>{{ currentAuditItem }}</pre>
+
             <el-descriptions-item label="Star 数量">
-              {{ currentAuditItem.starCount || 0 }}
+              {{ currentAuditItem.starCount ?? 0 }}
             </el-descriptions-item>
             <el-descriptions-item label="Fork 数量">
               {{ currentAuditItem.forkCount || 0 }}
@@ -327,13 +324,13 @@ const total = ref(0);
 // 批量选择相关
 const multipleSelection = ref<ProjectVO[]>([]);
 
-// 查询参数
+// 查询参数 - 固定为待审核状态
 const queryParams = ref<ProjectQuery>({
   pageNum: 1,
   pageSize: 10,
   projectName: undefined,
   applicationType: undefined,
-  applicationStatus: 'pending' // 默认只查询待审核的申请
+  applicationStatus: 'pending' // 固定为待审核状态，不允许更改
 });
 
 // 驳回对话框
@@ -387,37 +384,42 @@ const joinForm = ref({
 const getList = async () => {
   loading.value = true;
   try {
+    // 强制确保只查询待审核状态
+    queryParams.value.applicationStatus = 'pending';
+
     console.log('审核列表查询参数:', queryParams.value);
-    console.log('查询状态:', queryParams.value.applicationStatus);
-    
+    console.log('固定查询状态:', queryParams.value.applicationStatus);
+
     const res = await listProjectAudit(queryParams.value);
     console.log('审核列表查询结果:', res);
     console.log('返回记录数:', res.rows ? res.rows.length : 0);
-    
-    projectAuditList.value = res.rows || [];
-    total.value = res.total || 0;
+
+    // 双重过滤：确保只有待审核状态的记录
+    const pendingRows = res.rows ? res.rows.filter(item => {
+      const isPending = item.applicationStatus === 'pending';
+
+      console.log(`项目 ${item.projectName}: status=${item.applicationStatus}, isPending=${isPending}`);
+      return isPending;
+    }) : [];
+
+    projectAuditList.value = pendingRows;
+    total.value = pendingRows.length;
+
+    console.log('过滤后待审核记录数:', projectAuditList.value.length);
 
     // 调试每条记录的状态
     if (projectAuditList.value.length > 0) {
-      console.log('审核列表状态分布:');
+      console.log('待审核列表状态分布:');
       projectAuditList.value.forEach((item, index) => {
         console.log(`记录${index + 1}:`, {
           name: item.projectName,
           applicationStatus: item.applicationStatus,
-          auditStatus: item.auditStatus || '未设置',
+          applicationType: item.applicationType,
           id: item.projectId
         });
       });
-    }
-
-    // 如果没有数据，显示提示信息
-    if (!projectAuditList.value || projectAuditList.value.length === 0) {
-      console.log('当前查询条件下无数据');
-      if (queryParams.value.applicationStatus === 'pending') {
-        proxy?.$modal.msgInfo('暂无待审核项目');
-      } else {
-        proxy?.$modal.msgInfo('暂无符合条件的项目');
-      }
+    } else {
+      console.log('当前无待审核项目');
     }
   } catch (error) {
     console.error('查询失败:', error);
@@ -442,23 +444,59 @@ const resetQuery = () => {
 /** 一键审核操作 */
 const handleQuickAudit = async (projectId: number, status: string) => {
   try {
+    // 获取当前项目信息，判断是个人项目还是社区项目
+    const currentProject = projectAuditList.value.find(item => item.projectId === projectId);
+
+    if (!currentProject) {
+      proxy?.$modal.msgError('未找到项目信息');
+      return;
+    }
+
+    // 审核数据，明确标识社区项目处理方式
     const auditData = {
       projectId,
       auditStatus: status,
-      auditOpinion: status === '1' ? '孵化申请审核通过' : '孵化申请审核不通过'
+      auditOpinion: status === '1' ? '孵化申请审核通过' : '孵化申请审核不通过',
+      applicationType: currentProject.applicationType, // 传递申请类型
+      // 关键参数：社区项目不创建新记录，只更新状态
+      isUpdateOnly: currentProject.applicationType === 'community',
+      skipProjectCreation: currentProject.applicationType === 'community'
     };
-    
-    console.log('快速审核数据:', auditData);
-    console.log('审核状态映射:', status === '1' ? '通过' : '拒绝');
-    
+
+    console.log('=== 快速审核数据分析 ===');
+    console.log('项目ID:', projectId);
+    console.log('项目名称:', currentProject.projectName);
+    console.log('申请类型:', currentProject.applicationType);
+    console.log('审核状态:', status === '1' ? '通过' : '拒绝');
+    console.log('是否仅更新状态:', auditData.isUpdateOnly);
+    console.log('是否跳过项目创建:', auditData.skipProjectCreation);
+    console.log('完整审核数据:', auditData);
+
     await auditProject(auditData);
-    proxy?.$modal.msgSuccess('审核成功');
-    
-    // 审核完成后重新加载列表
+
+    // 审核成功提示
+    const statusText = status === '1' ? '通过' : '驳回';
+    let message;
+
+    if (currentProject.applicationType === 'community') {
+      message = `社区项目升级审核${statusText}成功！项目状态已更新（未创建新项目），记录已存入审核记录`;
+    } else {
+      message = `个人项目审核${statusText}成功，记录已存入审核记录`;
+    }
+
+    proxy?.$modal.msgSuccess(message);
+
+    // 审核完成后重新加载列表，已审核的记录将不再显示在待审核列表中
     await getList();
+
+    // 提示用户可以在审核记录中查看
+    setTimeout(() => {
+      proxy?.$modal.msgInfo('已审核的记录可在"审核记录"页面查看');
+    }, 1500);
+
   } catch (error) {
     console.error('审核失败:', error);
-    proxy?.$modal.msgError('审核失败');
+    proxy?.$modal.msgError('审核失败，请重试');
   }
 };
 
@@ -473,18 +511,42 @@ const openRejectDialog = (row: any) => {
 const handleReject = () => {
   proxy?.$refs['rejectFormRef'].validate(async (valid: boolean) => {
     if (valid) {
+      // 获取当前项目信息
+      const currentProject = projectAuditList.value.find(item => item.projectId === rejectForm.value.projectId);
+
+      if (!currentProject) {
+        proxy?.$modal.msgError('未找到项目信息');
+        return;
+      }
+
       const auditData = {
         projectId: rejectForm.value.projectId,
         auditStatus: '2', // 驳回状态
-        auditOpinion: rejectForm.value.auditOpinion
+        auditOpinion: rejectForm.value.auditOpinion,
+        applicationType: currentProject.applicationType, // 传递申请类型
+        // 驳回时不需要创建新项目，只更新申请状态
+        isUpdateOnly: true,
+        skipProjectCreation: true
       };
-      
-      console.log('驳回审核数据:', auditData);
-      
+
+      console.log('=== 驳回审核数据分析 ===');
+      console.log('项目ID:', rejectForm.value.projectId);
+      console.log('项目名称:', currentProject.projectName);
+      console.log('申请类型:', currentProject.applicationType);
+      console.log('驳回原因:', rejectForm.value.auditOpinion);
+      console.log('完整审核数据:', auditData);
+
       await auditProject(auditData);
-      proxy?.$modal.msgSuccess('驳回成功');
+      proxy?.$modal.msgSuccess('驳回成功，记录已存入审核记录');
       rejectDialog.visible = false;
+
+      // 重新加载列表，已驳回的记录将不再显示在待审核列表中
       await getList();
+
+      // 提示用户可以在审核记录中查看
+      setTimeout(() => {
+        proxy?.$modal.msgInfo('已审核的记录可在"审核记录"页面查看');
+      }, 1500);
     }
   });
 };
@@ -504,10 +566,54 @@ const openAuditDialog = (row: any) => {
 const submitAudit = () => {
   proxy?.$refs['auditFormRef'].validate(async (valid: boolean) => {
     if (valid) {
-      await auditProject(auditForm.value);
-      proxy?.$modal.msgSuccess('审核成功');
+      // 获取当前项目信息
+      const currentProject = currentAuditItem.value;
+
+      if (!currentProject) {
+        proxy?.$modal.msgError('未找到项目信息');
+        return;
+      }
+
+      const auditData = {
+        ...auditForm.value,
+        applicationType: currentProject.applicationType, // 传递申请类型
+        // 关键参数：社区项目不创建新记录，只更新状态
+        isUpdateOnly: currentProject.applicationType === 'community',
+        skipProjectCreation: currentProject.applicationType === 'community'
+      };
+
+      console.log('=== 详细审核数据分析 ===');
+      console.log('项目ID:', auditForm.value.projectId);
+      console.log('项目名称:', currentProject.projectName);
+      console.log('申请类型:', currentProject.applicationType);
+      console.log('审核状态:', auditForm.value.auditStatus === '2' ? '通过' : '拒绝');
+      console.log('是否仅更新状态:', auditData.isUpdateOnly);
+      console.log('是否跳过项目创建:', auditData.skipProjectCreation);
+      console.log('完整审核数据:', auditData);
+
+      await auditProject(auditData);
+
+      // 根据审核状态给出不同提示
+      const statusText = auditForm.value.auditStatus === '2' ? '通过' : '拒绝';
+      let message;
+
+      if (currentProject.applicationType === 'community') {
+        message = `社区项目升级详细审核${statusText}成功！项目状态已更新（未创建新项目），记录已存入审核记录`;
+      } else {
+        message = `个人项目详细审核${statusText}成功，记录已存入审核记录`;
+      }
+
+      proxy?.$modal.msgSuccess(message);
+
       auditDialog.visible = false;
+
+      // 重新加载列表，已审核的记录将不再显示在待审核列表中
       await getList();
+
+      // 提示用户可以在审核记录中查看
+      setTimeout(() => {
+        proxy?.$modal.msgInfo('已审核的记录可在"审核记录"页面查看');
+      }, 1500);
     }
   });
 };
@@ -526,20 +632,49 @@ const openProjectJoinDialog = (row: any) => {
 /** 处理个人项目加入 */
 const handleProjectJoin = async () => {
   try {
+    const currentProject = currentJoinItem.value;
+
+    if (!currentProject || currentProject.applicationType !== 'personal') {
+      proxy?.$modal.msgError('此功能只适用于个人项目申请');
+      return;
+    }
+
     const auditData = {
       projectId: joinForm.value.projectId,
       auditStatus: '1', // 通过状态
       auditOpinion: joinForm.value.auditOpinion || '审核通过',
-      joinProjectList: joinForm.value.joinOption === 'approve' // 是否加入项目列表
+      applicationType: 'personal', // 明确标识为个人项目
+      joinProjectList: joinForm.value.joinOption === 'approve', // 是否加入项目列表
+      // 个人项目可以创建新项目记录
+      isUpdateOnly: false,
+      skipProjectCreation: false
     };
 
+    console.log('=== 个人项目加入审核数据分析 ===');
+    console.log('项目ID:', joinForm.value.projectId);
+    console.log('项目名称:', currentProject.projectName);
+    console.log('申请类型:', currentProject.applicationType);
+    console.log('是否加入项目列表:', auditData.joinProjectList);
+    console.log('完整审核数据:', auditData);
+
     await auditProject(auditData);
-    proxy?.$modal.msgSuccess('操作成功');
+
+    const joinText = joinForm.value.joinOption === 'approve' ? '并已加入项目列表' : '但未加入项目列表';
+    proxy?.$modal.msgSuccess(`个人项目审核通过${joinText}，记录已存入审核记录`);
+
     projectJoinDialog.visible = false;
+
+    // 重新加载列表，已审核的记录将不再显示在待审核列表中
     await getList();
+
+    // 提示用户可以在审核记录中查看
+    setTimeout(() => {
+      proxy?.$modal.msgInfo('已审核的记录可在"审核记录"页面查看');
+    }, 1500);
+
   } catch (error) {
     console.error('操作失败:', error);
-    proxy?.$modal.msgError('操作失败');
+    proxy?.$modal.msgError('操作失败，请重试');
   }
 };
 
@@ -581,12 +716,12 @@ const handleViewProject = async (row: any) => {
           <strong style="color: #333;">申请理由：</strong>
           <p style="margin: 5px 0; color: #666;">${projectData.applicationReason || '未填写'}</p>
         </div>
-        
+
         <div style="margin: 0 0 2px 0; padding: 12px; background-color: white; width: 100%; box-sizing: border-box;">
           <strong style="color: #333;">预期贡献：</strong>
           <p style="margin: 5px 0; color: #666;">${projectData.contribution || '未填写'}</p>
         </div>
-        
+
         <div style="margin: 0 0 2px 0; padding: 12px; background-color: #e8f4fd; width: 100%; box-sizing: border-box;">
           <strong style="color: #333;">项目现状：</strong>
           <p style="margin: 5px 0; color: #666;">${projectData.currentStatus || '未填写'}</p>
@@ -599,7 +734,7 @@ const handleViewProject = async (row: any) => {
           <strong style="color: #333;">升级理由：</strong>
           <p style="margin: 5px 0; color: #666;">${projectData.upgradeReason || '未填写'}</p>
         </div>
-        
+
         <div style="margin: 0 0 2px 0; padding: 12px; background-color: white; width: 100%; box-sizing: border-box;">
           <strong style="color: #333;">社区影响：</strong>
           <p style="margin: 5px 0; color: #666;">${projectData.communityImpact || '未填写'}</p>

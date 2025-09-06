@@ -42,17 +42,17 @@
         </div>
       </template>
 
-      <el-table 
-        v-loading="loading" 
-        :data="applicationRecordsList" 
-        stripe 
+      <el-table
+        v-loading="loading"
+        :data="applicationRecordsList"
+        stripe
         border
         style="width: 100%"
         class="application-records-table"
       >
         <el-table-column type="index" label="序号" width="60" align="center" />
-        
-        <el-table-column prop="projectName" label="项目名称" min-width="200" show-overflow-tooltip>
+
+        <el-table-column prop="projectName" label="项目名称" min-width="200" align="center" show-overflow-tooltip>
           <template #default="scope">
             <div class="project-name-cell">
               <el-link type="primary" @click="handleViewProject(scope.row)" :underline="false">
@@ -62,7 +62,7 @@
             </div>
           </template>
         </el-table-column>
-        
+
         <el-table-column prop="applicationType" label="申请类型" width="120" align="center">
           <template #default="scope">
             <el-tag :type="scope.row.applicationType === 'personal' ? 'success' : 'warning'" size="small">
@@ -70,7 +70,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        
+
         <el-table-column prop="applicationStatus" label="申请状态" width="100" align="center">
           <template #default="scope">
             <el-tag :type="getApplicationStatusType(scope.row.applicationStatus)" size="small">
@@ -78,22 +78,22 @@
             </el-tag>
           </template>
         </el-table-column>
-        
+
         <el-table-column prop="createTime" label="申请时间" width="180" align="center">
           <template #default="scope">
             {{ parseTime(scope.row.createTime, '{y}-{m}-{d} {h}:{i}') }}
           </template>
         </el-table-column>
-        
-        <el-table-column prop="repositoryUrl" label="仓库地址" min-width="250" show-overflow-tooltip>
+
+        <el-table-column prop="repositoryUrl" label="仓库地址" min-width="250" align="center" show-overflow-tooltip>
           <template #default="scope">
             <el-link type="primary" :href="scope.row.repositoryUrl" target="_blank" :underline="false">
               {{ scope.row.repositoryUrl }}
             </el-link>
           </template>
         </el-table-column>
-        
-        <el-table-column prop="auditOpinion" label="审核意见" min-width="200" show-overflow-tooltip>
+
+        <el-table-column prop="auditOpinion" label="审核意见" min-width="200" align="center" show-overflow-tooltip>
           <template #default="scope">
             <span v-if="scope.row.auditOpinion" class="audit-opinion">
               {{ scope.row.auditOpinion }}
@@ -101,52 +101,52 @@
             <span v-else class="no-audit-opinion">-</span>
           </template>
         </el-table-column>
-        
+
         <el-table-column label="操作" width="160" align="center" fixed="right">
           <template #default="scope">
             <el-tooltip content="查看详情" placement="top">
-              <el-button 
-                type="primary" 
-                link 
-                size="small" 
-                icon="View" 
+              <el-button
+                type="primary"
+                link
+                size="small"
+                icon="View"
                 @click="handleViewProject(scope.row)"
               >详情</el-button>
             </el-tooltip>
-            
+
             <el-tooltip v-if="scope.row.applicationStatus === 'rejected'" content="重新申请" placement="top">
-              <el-button 
-                type="success" 
-                link 
-                size="small" 
-                icon="RefreshRight" 
+              <el-button
+                type="success"
+                link
+                size="small"
+                icon="RefreshRight"
                 @click="handleReapply(scope.row)"
               >重申</el-button>
             </el-tooltip>
-            
+
             <el-tooltip v-if="scope.row.applicationStatus === 'draft'" content="继续编辑" placement="top">
-              <el-button 
-                type="warning" 
-                link 
-                size="small" 
-                icon="Edit" 
+              <el-button
+                type="warning"
+                link
+                size="small"
+                icon="Edit"
                 @click="handleEdit(scope.row)"
               >编辑</el-button>
             </el-tooltip>
           </template>
         </el-table-column>
-        
+
         <template #empty>
           <el-empty description="您还没有提交过孵化申请" />
         </template>
       </el-table>
 
-      <pagination 
-        v-show="total > 0" 
-        :total="total" 
-        v-model:page="queryParams.pageNum" 
-        v-model:limit="queryParams.pageSize" 
-        @pagination="getList" 
+      <pagination
+        v-show="total > 0"
+        :total="total"
+        v-model:page="queryParams.pageNum"
+        v-model:limit="queryParams.pageSize"
+        @pagination="getList"
       />
     </el-card>
   </div>
@@ -200,7 +200,7 @@ const getList = async () => {
       createBy: userStore.userId // 只查询当前用户创建的项目
     };
     console.log('查询参数:', searchParams);
-    
+
     const res = await listProject(searchParams);
     console.log('查询结果:', res);
     applicationRecordsList.value = res.rows;
@@ -410,11 +410,11 @@ onMounted(() => {
       align-items: center;
     }
   }
-  
+
   .audit-opinion {
     color: #666;
   }
-  
+
   .no-audit-opinion {
     color: #c0c4cc;
     font-style: italic;

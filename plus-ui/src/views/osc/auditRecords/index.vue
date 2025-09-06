@@ -29,28 +29,28 @@
       </div>
     </transition>
 
-    <!-- 专业审核记录列表 -->
+    <!-- 审核记录列表 -->
     <el-card shadow="never">
       <template #header>
         <div class="card-header">
-          <span class="header-title">审核记录</span>
           <div class="header-actions">
             <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
           </div>
         </div>
       </template>
 
-      <el-table 
-        v-loading="loading" 
-        :data="auditRecordsList" 
-        stripe 
+      <el-table
+        v-loading="loading"
+        :data="auditRecordsList"
+        stripe
         border
+        header-align="center"
         style="width: 100%"
         class="audit-records-table"
       >
         <el-table-column type="index" label="序号" width="60" align="center" />
-        
-        <el-table-column prop="projectName" label="项目名称" min-width="200" show-overflow-tooltip>
+
+        <el-table-column prop="projectName" label="项目名称" min-width="200" align="center" show-overflow-tooltip>
           <template #default="scope">
             <div class="project-name-cell">
               <el-link type="primary" @click="handleViewProject(scope.row)" :underline="false">
@@ -60,7 +60,7 @@
             </div>
           </template>
         </el-table-column>
-        
+
         <el-table-column prop="applicationType" label="申请类型" width="120" align="center">
           <template #default="scope">
             <el-tag :type="scope.row.applicationType === 'personal' ? 'success' : 'warning'" size="small">
@@ -68,7 +68,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        
+
         <el-table-column prop="applicationStatus" label="审核结果" width="100" align="center">
           <template #default="scope">
             <el-tag :type="getApplicationStatusType(scope.row.applicationStatus)" size="small">
@@ -76,48 +76,48 @@
             </el-tag>
           </template>
         </el-table-column>
-        
-        <el-table-column prop="auditOpinion" label="审核意见" min-width="200" show-overflow-tooltip />
-        
+
+        <el-table-column prop="auditOpinion" label="审核意见" min-width="200" align="center" show-overflow-tooltip />
+
         <el-table-column prop="auditTime" label="审核时间" width="180" align="center">
           <template #default="scope">
             {{ parseTime(scope.row.auditTime, '{y}-{m}-{d} {h}:{i}') }}
           </template>
         </el-table-column>
-        
-        <el-table-column prop="repositoryUrl" label="仓库地址" min-width="250" show-overflow-tooltip>
+
+        <el-table-column prop="repositoryUrl" label="仓库地址" min-width="250" align="center" show-overflow-tooltip>
           <template #default="scope">
             <el-link type="primary" :href="scope.row.repositoryUrl" target="_blank" :underline="false">
               {{ scope.row.repositoryUrl }}
             </el-link>
           </template>
         </el-table-column>
-        
+
         <el-table-column label="操作" width="120" align="center" fixed="right">
           <template #default="scope">
             <el-tooltip content="查看详情" placement="top">
-              <el-button 
-                type="primary" 
-                link 
-                size="small" 
-                icon="View" 
+              <el-button
+                type="primary"
+                link
+                size="small"
+                icon="View"
                 @click="handleViewProject(scope.row)"
               >详情</el-button>
             </el-tooltip>
           </template>
         </el-table-column>
-        
+
         <template #empty>
           <el-empty description="暂无审核记录" />
         </template>
       </el-table>
 
-      <pagination 
-        v-show="total > 0" 
-        :total="total" 
-        v-model:page="queryParams.pageNum" 
-        v-model:limit="queryParams.pageSize" 
-        @pagination="getList" 
+      <pagination
+        v-show="total > 0"
+        :total="total"
+        v-model:page="queryParams.pageNum"
+        v-model:limit="queryParams.pageSize"
+        @pagination="getList"
       />
     </el-card>
   </div>
@@ -166,7 +166,7 @@ const getList = async () => {
       applicationStatus: queryParams.value.applicationStatus || 'approved,rejected'
     };
     console.log('查询参数:', searchParams);
-    
+
     const res = await listProjectAudit(searchParams);
     console.log('查询结果:', res);
     auditRecordsList.value = res.rows;

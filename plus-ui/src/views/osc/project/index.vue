@@ -911,12 +911,12 @@ onMounted(() => {
 
 /* 超级项目名称样式 */
 .super-project-name {
-  background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+  background: linear-gradient(135deg, #ecd892 0%, #a88030 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   font-weight: 700 !important;
-  text-shadow: 0 1px 2px rgba(243, 156, 18, 0.3);
+  text-shadow: 0 1px 2px rgb(206, 166, 52);
   position: relative;
 }
 
