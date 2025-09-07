@@ -760,7 +760,7 @@ create table gen_table_column (
 -- OSS对象存储表
 -- ----------------------------
 create table sys_oss (
-    oss_id          bigint(20)   not null                   comment '对象存储主键',
+    oss_id          bigint(20)   not null auto_increment    comment '对象存储主键',
     file_name       varchar(255) not null default ''        comment '文件名',
     original_name   varchar(255) not null default ''        comment '原名',
     file_suffix     varchar(10)  not null default ''        comment '文件后缀名',
@@ -773,7 +773,7 @@ create table sys_oss (
     update_by       bigint(20)            default null      comment '更新人',
     service         varchar(20)  not null default 'minio'   comment '服务商',
     primary key (oss_id)
-) engine=innodb comment ='OSS对象存储表';
+) engine=innodb auto_increment=1 comment ='OSS对象存储表';
 
 -- ----------------------------
 -- OSS对象存储动态配置表

@@ -1034,7 +1034,7 @@ comment on column gen_table_column.update_time is '更新时间';
 -- ----------------------------
 create table if not exists sys_oss
 (
-    oss_id        int8,
+    oss_id        serial8 not null,
     file_name     varchar(255) default ''::varchar not null,
     original_name varchar(255) default ''::varchar not null,
     file_suffix   varchar(10)  default ''::varchar not null,

@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.dromara.common.core.constant.CacheNames;
 import org.dromara.common.core.domain.dto.OssDTO;
 import org.dromara.common.core.exception.ServiceException;
@@ -47,6 +48,7 @@ import java.util.Map;
  *
  * @author Lion Li
  */
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class SysOssServiceImpl implements ISysOssService, OssService {
@@ -223,12 +225,27 @@ public class SysOssServiceImpl implements ISysOssService, OssService {
     public void download(Long ossId, HttpServletResponse response) throws IOException {
         SysOssVo sysOss = SpringUtils.getAopProxy(this).getById(ossId);
         if (ObjectUtil.isNull(sysOss)) {
-            throw new ServiceException("文件数据不存在!");
+            log.warn("尝试下载不存在的文件，OSS ID: {}", ossId);
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            response.setContentType("application/json;charset=utf-8");
+            response.getWriter().write("{\"code\": 404, \"msg\": \"文件不存在或已被删除\"}");
+            return;
         }
-        FileUtils.setAttachmentResponseHeader(response, sysOss.getOriginalName());
-        response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE + "; charset=UTF-8");
-        OssClient storage = OssFactory.instance(sysOss.getService());
-        storage.download(sysOss.getFileName(), response.getOutputStream(), response::setContentLengthLong);
+        
+        try {
+            FileUtils.setAttachmentResponseHeader(response, sysOss.getOriginalName());
+            response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE + "; charset=UTF-8");
+            OssClient storage = OssFactory.instance(sysOss.getService());
+            storage.download(sysOss.getFileName(), response.getOutputStream(), response::setContentLengthLong);
+            log.info("文件下载成功，OSS ID: {}, 文件名: {}", ossId, sysOss.getOriginalName());
+        } catch (Exception e) {
+            log.error("下载文件失败，OSS ID: {}, 错误: {}", ossId, e.getMessage(), e);
+            if (!response.isCommitted()) {
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                response.setContentType("application/json;charset=utf-8");
+                response.getWriter().write("{\"code\": 500, \"msg\": \"文件下载失败: " + e.getMessage() + "\"}");
+            }
+        }
     }
 
     /**

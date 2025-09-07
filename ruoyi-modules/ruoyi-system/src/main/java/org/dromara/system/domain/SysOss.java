@@ -1,5 +1,6 @@
 package org.dromara.system.domain;
 
+import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -20,7 +21,7 @@ public class SysOss extends BaseEntity {
     /**
      * 对象存储主键
      */
-    @TableId(value = "oss_id")
+    @TableId(value = "oss_id", type = IdType.AUTO)
     private Long ossId;
 
     /**

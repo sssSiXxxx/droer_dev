@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 /**
  * 用户 业务层处理
  *
- * @author Lion Li
+ * @author lmq
  */
 @Slf4j
 @RequiredArgsConstructor
@@ -483,22 +483,22 @@ public class SysUserServiceImpl implements ISysUserService, UserService {
             // 删除用户与角色关联
             userRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>().eq(SysUserRole::getUserId, userId));
         }
-        
+
         // 如果角色数组为空或null，直接返回（允许用户没有角色）
         if (ArrayUtil.isEmpty(roleIds)) {
             return;
         }
-        
+
         List<Long> roleList = new ArrayList<>(List.of(roleIds));
         if (!LoginHelper.isSuperAdmin(userId)) {
             roleList.remove(SystemConstants.SUPER_ADMIN_ID);
         }
-        
+
         // 如果过滤后角色列表为空，直接返回
         if (CollUtil.isEmpty(roleList)) {
             return;
         }
-        
+
         // 新增用户与角色管理
         List<SysUserRole> list = StreamUtils.toList(roleList, roleId -> {
             SysUserRole ur = new SysUserRole();

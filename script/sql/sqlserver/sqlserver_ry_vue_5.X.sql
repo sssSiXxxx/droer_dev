@@ -2578,7 +2578,7 @@ GO
 
 CREATE TABLE sys_oss
 (
-    oss_id        bigint                          NOT NULL,
+    oss_id        bigint IDENTITY(1,1)            NOT NULL,
     file_name     nvarchar(255) DEFAULT ''        NOT NULL,
     original_name nvarchar(255) DEFAULT ''        NOT NULL,
     file_suffix   nvarchar(10)  DEFAULT ''        NOT NULL,

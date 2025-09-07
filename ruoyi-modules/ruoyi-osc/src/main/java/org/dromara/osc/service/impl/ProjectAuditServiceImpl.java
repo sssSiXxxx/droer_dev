@@ -33,7 +33,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 /**
  * 项目审核Service业务层处理
  *
- * @author Lion Li
+ * @author lmq
  * @date 2023-08-06
  */
 @RequiredArgsConstructor
@@ -56,7 +56,7 @@ public class ProjectAuditServiceImpl extends ServiceImpl<ProjectAuditMapper, Pro
             String auditStatus = bo.getAuditStatus();
             String applicationType = null;
             String applicationStatus = null;
-            
+
             // 从params中获取参数
             Map<String, Object> params = bo.getParams();
             if (params != null) {
@@ -68,11 +68,11 @@ public class ProjectAuditServiceImpl extends ServiceImpl<ProjectAuditMapper, Pro
                 }
             }
 
-            log.info("查询审核列表 - projectName: {}, auditStatus: {}, applicationType: {}, applicationStatus: {}", 
+            log.info("查询审核列表 - projectName: {}, auditStatus: {}, applicationType: {}, applicationStatus: {}",
                     projectName, auditStatus, applicationType, applicationStatus);
 
             List<ProjectAuditVo> allResults;
-            
+
             // 判断查询类型：如果applicationStatus包含approved或rejected，说明是查询审核记录
             if (applicationStatus != null && (applicationStatus.contains("approved") || applicationStatus.contains("rejected"))) {
                 // 查询审核记录：查询已经有审核结果的记录
@@ -83,7 +83,7 @@ public class ProjectAuditServiceImpl extends ServiceImpl<ProjectAuditMapper, Pro
                 if (allResults.size() > 0) {
                     for (int i = 0; i < Math.min(3, allResults.size()); i++) {
                         ProjectAuditVo vo = allResults.get(i);
-                        log.info("审核记录 {}: projectId={}, projectName={}, auditStatus={}, applicationStatus={}, auditTime={}", 
+                        log.info("审核记录 {}: projectId={}, projectName={}, auditStatus={}, applicationStatus={}, auditTime={}",
                                 i, vo.getProjectId(), vo.getProjectName(), vo.getAuditStatus(), vo.getApplicationStatus(), vo.getAuditTime());
                     }
                 }

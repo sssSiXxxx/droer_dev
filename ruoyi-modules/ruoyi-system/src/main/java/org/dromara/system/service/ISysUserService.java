@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * 用户 业务层
  *
- * @author Lion Li
+ * @author lmq
  */
 public interface ISysUserService {
 

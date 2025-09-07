@@ -1053,6 +1053,25 @@ create table sys_oss (
 
 alter table sys_oss add constraint pk_sys_oss primary key (oss_id);
 
+-- 创建OSS ID序列
+create sequence sys_oss_seq
+  start with 1
+  increment by 1
+  nomaxvalue
+  nocycle
+  cache 20;
+
+-- 创建触发器实现自增
+create or replace trigger sys_oss_trigger
+  before insert on sys_oss
+  for each row
+begin
+  if :new.oss_id is null then
+    select sys_oss_seq.nextval into :new.oss_id from dual;
+  end if;
+end;
+/
+
 comment on table sys_oss                    is 'OSS对象存储表';
 comment on column sys_oss.oss_id            is '对象存储主键';
 comment on column sys_oss.file_name         is '文件名';
