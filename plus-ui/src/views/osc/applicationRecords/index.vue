@@ -153,7 +153,7 @@
 </template>
 
 <script setup name="ApplicationRecords" lang="ts">
-import { listProject } from '@/api/osc/project';
+import { getApplicationRecords } from '@/api/osc/project';
 import { ProjectQuery } from '@/api/osc/project/types';
 import { View, RefreshRight, Edit } from '@element-plus/icons-vue';
 import { ElMessageBox } from 'element-plus';
@@ -179,6 +179,8 @@ const initQueryParams: ProjectQuery = {
   description: undefined,
   userId: undefined,
   createBy: undefined,
+  applicationType: undefined,
+  applicationStatus: undefined,
   orderByColumn: undefined,
   isAsc: undefined,
   params: {}
@@ -194,20 +196,31 @@ const { queryParams } = toRefs(data);
 const getList = async () => {
   loading.value = true;
   try {
-    // 查询当前用户的所有申请记录
-    const searchParams = {
-      ...queryParams.value,
-      createBy: userStore.userId // 只查询当前用户创建的项目
+    // 使用专门的申请记录API，能获取到审核意见
+    const params = {
+      createBy: userStore.userId,
+      projectName: queryParams.value.projectName,
+      applicationType: queryParams.value.applicationType,
+      applicationStatus: queryParams.value.applicationStatus,
+      pageNum: queryParams.value.pageNum,
+      pageSize: queryParams.value.pageSize
     };
-    console.log('查询参数:', searchParams);
+    console.log('查询参数:', params);
 
-    const res = await listProject(searchParams);
+    const res = await getApplicationRecords(params);
     console.log('查询结果:', res);
-    applicationRecordsList.value = res.rows;
-    total.value = res.total;
+    
+    if (res.code === 200) {
+      applicationRecordsList.value = res.rows;
+      total.value = res.total;
+    } else {
+      proxy?.$modal.msgError(res.msg || '查询失败');
+    }
 
     if (!applicationRecordsList.value || applicationRecordsList.value.length === 0) {
-      proxy?.$modal.msgInfo('您还没有提交过孵化申请');
+      if (queryParams.value.pageNum === 1) {
+        proxy?.$modal.msgInfo('您还没有提交过孵化申请');
+      }
     }
   } catch (error) {
     console.error('查询失败:', error);

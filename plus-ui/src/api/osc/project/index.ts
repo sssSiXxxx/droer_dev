@@ -101,3 +101,22 @@ export const syncSingleProject = (projectId: string | number) => {
     method: 'post'
   });
 };
+
+/**
+ * 查询用户申请记录
+ * @param params
+ */
+export const getApplicationRecords = (params: {
+  createBy: number;
+  projectName?: string;
+  applicationType?: string;
+  applicationStatus?: string;
+  pageNum?: number;
+  pageSize?: number;
+}): AxiosPromise<TableDataInfo<ProjectVO>> => {
+  return request({
+    url: '/osc/project/applicationRecords',
+    method: 'get',
+    params: params
+  });
+};

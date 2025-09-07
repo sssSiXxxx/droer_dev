@@ -139,6 +139,13 @@ public class ProjectServiceImpl implements IProjectService {
         // 排除已删除的申请（applicationStatus为deleted的记录）
         lqw.ne(Project::getApplicationStatus, "deleted");
 
+        // 判断查询类型
+        // 如果指定了createBy，说明是查询申请记录，不需要项目列表过滤
+        if (bo.getCreateBy() != null) {
+            log.info("申请记录查询模式，不应用项目列表过滤");
+            return lqw;
+        }
+
         // 项目列表显示逻辑：
         // 1. 社区项目：成为社区项目的都显示，审核通过的就特别显示成金色超级项目
         // 2. 个人项目：只显示已通过审核且选择加入项目列表的 (applicationType = 'personal' AND applicationStatus = 'approved' 且应该有标记)
@@ -601,5 +608,27 @@ public class ProjectServiceImpl implements IProjectService {
         }
 
         return null;
+    }
+
+    /**
+     * 查询用户申请记录
+     */
+    @Override
+    public TableDataInfo<ProjectVo> queryApplicationRecords(Long createBy, String projectName, String applicationType, String applicationStatus, PageQuery pageQuery) {
+        log.info("查询用户申请记录 - createBy: {}, projectName: {}, applicationType: {}, applicationStatus: {}, pageQuery: {}", 
+                createBy, projectName, applicationType, applicationStatus, pageQuery);
+        
+        try {
+            Page<ProjectVo> page = baseMapper.selectApplicationRecordsPage(pageQuery.build(), createBy, projectName, applicationType, applicationStatus);
+            
+            log.info("查询到 {} 条申请记录，总数: {}", page.getRecords().size(), page.getTotal());
+            return TableDataInfo.build(page);
+        } catch (Exception e) {
+            log.error("查询用户申请记录失败", e);
+            TableDataInfo<ProjectVo> errorResult = new TableDataInfo<>();
+            errorResult.setMsg("查询失败：" + e.getMessage());
+            errorResult.setCode(500);
+            return errorResult;
+        }
     }
 }

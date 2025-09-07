@@ -201,4 +201,24 @@ public class ProjectController extends BaseController {
             return R.fail("同步项目数据失败：" + e.getMessage());
         }
     }
+
+    /**
+     * 查询用户申请记录
+     */
+    @GetMapping("/applicationRecords")
+    public TableDataInfo<ProjectVo> getApplicationRecords(@RequestParam Long createBy,
+                                                         @RequestParam(required = false) String projectName,
+                                                         @RequestParam(required = false) String applicationType,
+                                                         @RequestParam(required = false) String applicationStatus,
+                                                         PageQuery pageQuery) {
+        try {
+            return projectService.queryApplicationRecords(createBy, projectName, applicationType, applicationStatus, pageQuery);
+        } catch (Exception e) {
+            log.error("查询申请记录失败", e);
+            TableDataInfo<ProjectVo> errorResult = new TableDataInfo<>();
+            errorResult.setMsg("查询申请记录失败：" + e.getMessage());
+            errorResult.setCode(500);
+            return errorResult;
+        }
+    }
 }

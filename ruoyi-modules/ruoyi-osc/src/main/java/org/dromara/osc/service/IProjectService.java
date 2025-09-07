@@ -91,4 +91,16 @@ public interface IProjectService {
      * @return 是否同步成功
      */
     boolean syncSingleProject(Long projectId);
+
+    /**
+     * 查询用户申请记录
+     *
+     * @param createBy 创建者ID
+     * @param projectName 项目名称
+     * @param applicationType 申请类型
+     * @param applicationStatus 申请状态
+     * @param pageQuery 分页参数
+     * @return 申请记录分页列表
+     */
+    TableDataInfo<ProjectVo> queryApplicationRecords(Long createBy, String projectName, String applicationType, String applicationStatus, PageQuery pageQuery);
 }

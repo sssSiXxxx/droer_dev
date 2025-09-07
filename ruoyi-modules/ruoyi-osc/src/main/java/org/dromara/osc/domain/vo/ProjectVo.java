@@ -285,4 +285,22 @@ public class ProjectVo implements Serializable {
     @ExcelProperty(value = "最后同步时间")
     private Date lastSyncTime;
 
+    /**
+     * 审核意见
+     */
+    @ExcelProperty(value = "审核意见")
+    private String auditOpinion;
+
+    /**
+     * 审核时间
+     */
+    @ExcelProperty(value = "审核时间")
+    private Date auditTime;
+
+    /**
+     * 审核人
+     */
+    @ExcelProperty(value = "审核人")
+    private Long auditUser;
+
 }
