@@ -163,7 +163,10 @@ const getList = async () => {
     // 只查询已处理的审核记录（已通过或已拒绝）
     const searchParams = {
       ...queryParams.value,
-      applicationStatus: queryParams.value.applicationStatus || 'approved,rejected'
+      // 将applicationStatus放到params中，后端从params中获取
+      params: {
+        applicationStatus: queryParams.value.applicationStatus || 'approved,rejected'
+      }
     };
     console.log('查询参数:', searchParams);
 

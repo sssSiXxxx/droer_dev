@@ -169,12 +169,84 @@ public class ProjectServiceImpl implements IProjectService {
      */
     @Override
     public Boolean insertByBo(ProjectBo bo) {
-        log.info("开始插入项目：{}", bo.getProjectName());
+        log.info("开始插入项目：{}, applicationType={}, applicationStatus={}",
+                bo.getProjectName(), bo.getApplicationType(), bo.getApplicationStatus());
+
+        // 检查是否是重复提交（针对社区项目升级申请）
+        if ("community".equals(bo.getApplicationType()) && bo.getProjectName() != null) {
+            // 检查是否已存在相同名称的社区项目
+            LambdaQueryWrapper<Project> checkWrapper = Wrappers.lambdaQuery();
+            checkWrapper.eq(Project::getProjectName, bo.getProjectName())
+                       .eq(Project::getApplicationType, "community");
+
+            Project existingProject = baseMapper.selectOne(checkWrapper);
+            if (existingProject != null) {
+                log.info("发现已存在的社区项目：{}, 进行更新操作", bo.getProjectName());
+                // 社区项目已存在，更新申请状态而不是创建新记录
+                existingProject.setApplicationStatus(bo.getApplicationStatus());
+                existingProject.setApplicationReason(bo.getApplicationReason());
+                existingProject.setUpgradeReason(bo.getUpgradeReason());
+                existingProject.setCommunityImpact(bo.getCommunityImpact());
+                existingProject.setContactEmail(bo.getContactEmail());
+                existingProject.setContactPhone(bo.getContactPhone());
+                existingProject.setRemarks(bo.getRemarks());
+                // 更新其他可能的字段
+                if (bo.getDescription() != null) {
+                    existingProject.setDescription(bo.getDescription());
+                }
+                if (bo.getRepositoryUrl() != null) {
+                    existingProject.setRepositoryUrl(bo.getRepositoryUrl());
+                }
+                if (bo.getWebsiteUrl() != null) {
+                    existingProject.setWebsiteUrl(bo.getWebsiteUrl());
+                }
+                if (bo.getLicense() != null) {
+                    existingProject.setLicense(bo.getLicense());
+                }
+
+                boolean updateResult = baseMapper.updateById(existingProject) > 0;
+                log.info("社区项目更新结果：{}", updateResult);
+
+                if (updateResult) {
+                    bo.setProjectId(existingProject.getProjectId());
+
+                    // 只有当状态变为pending时才需要审核记录
+                    if ("pending".equals(bo.getApplicationStatus())) {
+                        // 确保审核表中有对应记录
+                        LambdaQueryWrapper<ProjectAudit> auditCheckWrapper = Wrappers.lambdaQuery();
+                        auditCheckWrapper.eq(ProjectAudit::getProjectId, existingProject.getProjectId());
+                        ProjectAudit existingAudit = auditMapper.selectOne(auditCheckWrapper);
+
+                        if (existingAudit == null) {
+                            // 如果审核表中没有记录，创建一个
+                            ProjectAudit audit = new ProjectAudit();
+                            audit.setProjectId(existingProject.getProjectId());
+                            audit.setAuditStatus("0");   // 初始状态：待审核
+                            audit.setCreateTime(new Date());
+                            audit.setCreateBy(LoginHelper.getUserId());
+                            auditMapper.insert(audit);
+                            log.info("为社区项目创建审核记录：projectId={}", existingProject.getProjectId());
+                        } else {
+                            // 如果已有审核记录，重置为待审核状态
+                            existingAudit.setAuditStatus("0");
+                            existingAudit.setAuditOpinion(null);
+                            existingAudit.setUpdateTime(new Date());
+                            auditMapper.updateById(existingAudit);
+                            log.info("重置社区项目审核记录状态：auditId={}", existingAudit.getAuditId());
+                        }
+                    }
+                }
+
+                return updateResult;
+            }
+        }
+
+        // 如果不是重复的社区项目，或者是个人项目，则创建新记录
         Project add = MapstructUtils.convert(bo, Project.class);
         validEntityBeforeSave(add);
 
-        log.info("转换后的Project对象：projectName={}, description={}, status={}",
-                add.getProjectName(), add.getDescription(), add.getStatus());
+        log.info("转换后的Project对象：projectName={}, description={}, status={}, applicationType={}, applicationStatus={}",
+                add.getProjectName(), add.getDescription(), add.getStatus(), add.getApplicationType(), add.getApplicationStatus());
 
         boolean flag = baseMapper.insert(add) > 0;
         log.info("数据库插入结果：{}", flag);
@@ -182,13 +254,18 @@ public class ProjectServiceImpl implements IProjectService {
         if (flag) {
             bo.setProjectId(add.getProjectId());
             log.info("插入成功，生成的ID：{}", add.getProjectId());
-            //同时写入审核表
-            ProjectAudit audit = new ProjectAudit();
-            audit.setProjectId(add.getProjectId());
-            audit.setAuditStatus("0");   // 初始状态：待审核
-            audit.setCreateTime(new Date());
-            audit.setCreateBy(LoginHelper.getUserId()); // 当前用户
-            auditMapper.insert(audit);
+
+            if ("pending".equals(add.getApplicationStatus())) {
+                ProjectAudit audit = new ProjectAudit();
+                audit.setProjectId(add.getProjectId());
+                audit.setAuditStatus("0");   // 初始状态：待审核
+                audit.setCreateTime(new Date());
+                audit.setCreateBy(LoginHelper.getUserId());
+                auditMapper.insert(audit);
+                log.info("项目提交审核，创建审核记录：projectId={}", add.getProjectId());
+            } else {
+                log.info("项目状态为{}，不创建审核记录", add.getApplicationStatus());
+            }
         } else {
             log.error("插入失败");
         }
@@ -355,32 +432,32 @@ public class ProjectServiceImpl implements IProjectService {
     @Override
     public int syncProjectData() {
         log.info("开始同步所有项目的动态数据...");
-        
+
         try {
             // 获取所有有代码仓库地址的项目
             LambdaQueryWrapper<Project> wrapper = Wrappers.lambdaQuery();
             wrapper.isNotNull(Project::getRepositoryUrl)
                    .ne(Project::getRepositoryUrl, "");
-            
+
             List<Project> projects = baseMapper.selectList(wrapper);
             log.info("找到 {} 个需要同步的项目", projects.size());
-            
+
             if (projects.isEmpty()) {
                 log.info("没有找到需要同步的项目");
                 return 0;
             }
-            
+
             int updatedCount = 0;
-            
+
             for (Project project : projects) {
                 try {
                     if (syncSingleProjectData(project)) {
                         updatedCount++;
                     }
-                    
+
                     // 添加延迟避免API频率限制
                     Thread.sleep(1000);
-                    
+
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     break;
@@ -388,7 +465,7 @@ public class ProjectServiceImpl implements IProjectService {
                     log.warn("同步项目 {} 数据失败: {}", project.getProjectName(), e.getMessage());
                 }
             }
-            
+
             log.info("项目数据同步完成，成功更新了 {} 个项目", updatedCount);
             return updatedCount;
         } catch (Exception e) {
@@ -406,19 +483,19 @@ public class ProjectServiceImpl implements IProjectService {
     @Override
     public boolean syncSingleProject(Long projectId) {
         log.info("开始同步项目 {} 的动态数据", projectId);
-        
+
         try {
             Project project = baseMapper.selectById(projectId);
             if (project == null) {
                 log.warn("未找到项目 ID: {}", projectId);
                 return false;
             }
-            
+
             if (StringUtils.isBlank(project.getRepositoryUrl())) {
                 log.warn("项目 {} 没有代码仓库地址", project.getProjectName());
                 return false;
             }
-            
+
             return syncSingleProjectData(project);
         } catch (Exception e) {
             log.error("同步项目 {} 数据失败", projectId, e);
@@ -433,30 +510,30 @@ public class ProjectServiceImpl implements IProjectService {
         try {
             String repoUrl = project.getRepositoryUrl();
             log.info("正在同步项目: {} - {}", project.getProjectName(), repoUrl);
-            
+
             // 解析仓库URL，支持Gitee和GitHub
             String apiUrl = buildApiUrl(repoUrl);
             if (apiUrl == null) {
                 log.warn("无法解析仓库URL: {}", repoUrl);
                 return false;
             }
-            
+
             log.info("调用API: {}", apiUrl);
-            
+
             // 创建临时RestTemplate和ObjectMapper
             RestTemplate tempRestTemplate = new RestTemplate();
             ObjectMapper tempObjectMapper = new ObjectMapper();
             tempObjectMapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            
+
             // 调用API获取仓库信息
             org.springframework.http.ResponseEntity<String> response = tempRestTemplate.getForEntity(apiUrl, String.class);
             if (!response.getStatusCode().is2xxSuccessful()) {
                 log.warn("API调用失败，状态码: {}", response.getStatusCode());
                 return false;
             }
-            
+
             com.fasterxml.jackson.databind.JsonNode repoData = tempObjectMapper.readTree(response.getBody());
-            
+
             // 提取数据
             Integer starCount = repoData.path("stargazers_count").asInt(0);
             Integer forkCount = repoData.path("forks_count").asInt(0);
@@ -464,7 +541,7 @@ public class ProjectServiceImpl implements IProjectService {
             Integer issuesCount = repoData.path("open_issues_count").asInt(0);
             String language = repoData.path("language").asText(null);
             String size = String.valueOf(repoData.path("size").asLong(0));
-            
+
             // 更新项目数据
             Project updateProject = new Project();
             updateProject.setProjectId(project.getProjectId());
@@ -472,25 +549,25 @@ public class ProjectServiceImpl implements IProjectService {
             updateProject.setForkCount(forkCount);
             updateProject.setWatchCount(watchCount);
             updateProject.setIssuesCount(issuesCount);
-            
+
             if (StringUtils.isNotBlank(language)) {
                 updateProject.setTechStack(language);
             }
             updateProject.setProjectSize(size);
             updateProject.setUpdateTime(new Date());
             updateProject.setLastSyncTime(new Date());
-            
+
             int result = baseMapper.updateById(updateProject);
-            
+
             if (result > 0) {
-                log.info("项目 {} 数据同步成功: Star={}, Fork={}, Watch={}, Issues={}", 
+                log.info("项目 {} 数据同步成功: Star={}, Fork={}, Watch={}, Issues={}",
                     project.getProjectName(), starCount, forkCount, watchCount, issuesCount);
                 return true;
             } else {
                 log.warn("项目 {} 数据库更新失败", project.getProjectName());
                 return false;
             }
-            
+
         } catch (Exception e) {
             log.error("同步项目 {} 数据时发生异常", project.getProjectName(), e);
             return false;
@@ -504,7 +581,7 @@ public class ProjectServiceImpl implements IProjectService {
         if (StringUtils.isBlank(repoUrl)) {
             return null;
         }
-        
+
         // 匹配Gitee URL
         Pattern giteePattern = Pattern.compile("(?:https?://)?(?:www\\.)?gitee\\.com/([^/]+)/([^/]+?)(?:\\.git)?/?$");
         Matcher giteeMatcher = giteePattern.matcher(repoUrl);
@@ -513,7 +590,7 @@ public class ProjectServiceImpl implements IProjectService {
             String repo = giteeMatcher.group(2);
             return String.format("https://gitee.com/api/v5/repos/%s/%s", owner, repo);
         }
-        
+
         // 匹配GitHub URL
         Pattern githubPattern = Pattern.compile("(?:https?://)?(?:www\\.)?github\\.com/([^/]+)/([^/]+?)(?:\\.git)?/?$");
         Matcher githubMatcher = githubPattern.matcher(repoUrl);
@@ -522,7 +599,7 @@ public class ProjectServiceImpl implements IProjectService {
             String repo = githubMatcher.group(2);
             return String.format("https://api.github.com/repos/%s/%s", owner, repo);
         }
-        
+
         return null;
     }
 }

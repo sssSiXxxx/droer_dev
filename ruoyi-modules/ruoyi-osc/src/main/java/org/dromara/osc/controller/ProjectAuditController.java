@@ -55,6 +55,9 @@ public class ProjectAuditController extends BaseController {
                 bo.setAuditStatus("1"); // 通过
             } else if ("rejected".equals(applicationStatus)) {
                 bo.setAuditStatus("2"); // 拒绝
+            } else if (applicationStatus != null && applicationStatus.contains("approved,rejected")) {
+                // 审核记录查询，不设置auditStatus，让Service层判断
+                // bo.setAuditStatus(null);
             }
         }
         return projectAuditService.queryPageList(bo, pageQuery);

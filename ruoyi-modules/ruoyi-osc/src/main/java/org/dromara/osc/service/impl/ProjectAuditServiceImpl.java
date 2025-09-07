@@ -55,23 +55,52 @@ public class ProjectAuditServiceImpl extends ServiceImpl<ProjectAuditMapper, Pro
             String projectName = bo.getProjectName();
             String auditStatus = bo.getAuditStatus();
             String applicationType = null;
+            String applicationStatus = null;
             
-            // 从params中获取applicationType
+            // 从params中获取参数
             Map<String, Object> params = bo.getParams();
-            if (params != null && params.containsKey("applicationType")) {
-                applicationType = (String) params.get("applicationType");
+            if (params != null) {
+                if (params.containsKey("applicationType")) {
+                    applicationType = (String) params.get("applicationType");
+                }
+                if (params.containsKey("applicationStatus")) {
+                    applicationStatus = (String) params.get("applicationStatus");
+                }
             }
 
-            // 使用自定义SQL查询，关联项目表获取完整数据
-            List<ProjectAuditVo> allResults = baseMapper.selectAuditProjectsByCondition(projectName, applicationType, auditStatus);
+            log.info("查询审核列表 - projectName: {}, auditStatus: {}, applicationType: {}, applicationStatus: {}", 
+                    projectName, auditStatus, applicationType, applicationStatus);
+
+            List<ProjectAuditVo> allResults;
             
+            // 判断查询类型：如果applicationStatus包含approved或rejected，说明是查询审核记录
+            if (applicationStatus != null && (applicationStatus.contains("approved") || applicationStatus.contains("rejected"))) {
+                // 查询审核记录：查询已经有审核结果的记录
+                log.info("查询审核记录模式，applicationStatus: {}", applicationStatus);
+                allResults = baseMapper.selectAllAuditRecords(projectName, applicationType, auditStatus);
+                log.info("查询审核记录，结果数量: {}", allResults.size());
+                // 打印前几条记录的详细信息
+                if (allResults.size() > 0) {
+                    for (int i = 0; i < Math.min(3, allResults.size()); i++) {
+                        ProjectAuditVo vo = allResults.get(i);
+                        log.info("审核记录 {}: projectId={}, projectName={}, auditStatus={}, applicationStatus={}, auditTime={}", 
+                                i, vo.getProjectId(), vo.getProjectName(), vo.getAuditStatus(), vo.getApplicationStatus(), vo.getAuditTime());
+                    }
+                }
+            } else {
+                // 查询待审核项目：查询pending状态的项目
+                log.info("查询待审核项目模式");
+                allResults = baseMapper.selectAuditProjectsByCondition(projectName, applicationType, auditStatus);
+                log.info("查询待审核项目，结果数量: {}", allResults.size());
+            }
+
             // 手动分页处理
             int pageNum = pageQuery.getPageNum();
             int pageSize = pageQuery.getPageSize();
             int total = allResults.size();
             int startIndex = (pageNum - 1) * pageSize;
             int endIndex = Math.min(startIndex + pageSize, total);
-            
+
             List<ProjectAuditVo> pageResults = new ArrayList<>();
             if (startIndex < total) {
                 pageResults = allResults.subList(startIndex, endIndex);
@@ -83,9 +112,9 @@ public class ProjectAuditServiceImpl extends ServiceImpl<ProjectAuditMapper, Pro
             result.setTotal((long) total);
             result.setCode(200);
             result.setMsg("查询成功");
-            
+
             return result;
-            
+
         } catch (Exception e) {
             log.error("查询项目审核列表失败", e);
             TableDataInfo<ProjectAuditVo> errorResult = new TableDataInfo<>();
@@ -211,6 +240,8 @@ public class ProjectAuditServiceImpl extends ServiceImpl<ProjectAuditMapper, Pro
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean audit(ProjectAuditBo bo) {
+        log.info("开始审核项目，projectId={}, auditStatus={}", bo.getProjectId(), bo.getAuditStatus());
+
         // 1. 检查是否已存在该项目的审核记录
         LambdaQueryWrapper<ProjectAudit> checkWrapper = Wrappers.lambdaQuery();
         checkWrapper.eq(ProjectAudit::getProjectId, bo.getProjectId());
@@ -222,66 +253,94 @@ public class ProjectAuditServiceImpl extends ServiceImpl<ProjectAuditMapper, Pro
             throw new RuntimeException("项目不存在，projectId=" + bo.getProjectId());
         }
 
-        // 3. 审核状态映射
+        log.info("项目当前状态：applicationType={}, applicationStatus={}, status={}",
+                existingProject.getApplicationType(), existingProject.getApplicationStatus(), existingProject.getStatus());
+
+        // 3. 审核状态映射 - 修正状态映射逻辑
         String projectStatus;
         String applicationStatus;
 
         if ("1".equals(bo.getAuditStatus())) {
-            projectStatus = "2";         // 审核通过 -> 进行中
+            // 审核通过
+            projectStatus = "2";         // 进行中
             applicationStatus = "approved";
         } else if ("2".equals(bo.getAuditStatus())) {
-            projectStatus = "5";         // 审核驳回 -> 已驳回
+            // 审核驳回
+            projectStatus = "5";         // 已驳回
+            applicationStatus = "rejected";
+        } else if ("3".equals(bo.getAuditStatus())) {
+            // 审核拒绝
+            projectStatus = "5";         // 已驳回
             applicationStatus = "rejected";
         } else {
-            projectStatus = bo.getAuditStatus();
+            // 其他状态保持待审核
+            projectStatus = "1";         // 待审核
             applicationStatus = "pending";
         }
 
+        log.info("审核后目标状态：projectStatus={}, applicationStatus={}", projectStatus, applicationStatus);
+
         // 4. 不同申请类型逻辑
         if ("community".equals(existingProject.getApplicationType())) {
-            // 社区项目：只更新，不新增
+            // 社区项目：只更新现有项目状态，不创建新项目
             existingProject.setStatus(projectStatus);
             existingProject.setApplicationStatus(applicationStatus);
             projectMapper.updateById(existingProject);
 
-            log.info("社区项目审核：projectId={}, 审核状态={}, applicationStatus={}",
-                    bo.getProjectId(), bo.getAuditStatus(), applicationStatus);
+            log.info("社区项目审核完成：projectId={}, 最终状态={}({})",
+                    bo.getProjectId(), projectStatus, applicationStatus);
 
         } else if ("personal".equals(existingProject.getApplicationType())) {
             // 个人项目：根据 joinProjectList 判断是否加入列表
-            if ("1".equals(bo.getAuditStatus()) && Boolean.TRUE.equals(bo.getJoinProjectList())) {
-                existingProject.setStatus("2");
-                existingProject.setApplicationStatus("approved");
-                projectMapper.updateById(existingProject);
-                log.info("个人项目审核通过并加入项目列表：{}", existingProject.getProjectName());
+            if ("1".equals(bo.getAuditStatus())) {
+                // 审核通过
+                if (Boolean.TRUE.equals(bo.getJoinProjectList())) {
+                    // 通过且加入项目列表
+                    existingProject.setStatus("2");  // 进行中
+                    existingProject.setApplicationStatus("approved");
+                    log.info("个人项目审核通过并加入项目列表：{}", existingProject.getProjectName());
+                } else {
+                    // 只通过不加入列表
+                    existingProject.setStatus("2");  // 进行中但不在项目列表显示
+                    existingProject.setApplicationStatus("approved");
+                    log.info("个人项目审核通过但不加入项目列表：{}", existingProject.getProjectName());
+                }
             } else {
+                // 审核不通过
                 existingProject.setStatus(projectStatus);
                 existingProject.setApplicationStatus(applicationStatus);
-                projectMapper.updateById(existingProject);
-                log.info("个人项目审核未通过或未选择加入项目列表：{}", existingProject.getProjectName());
+                log.info("个人项目审核未通过：{}", existingProject.getProjectName());
             }
+            projectMapper.updateById(existingProject);
+
         } else {
-            // 其他类型：直接更新
+            // 其他类型或管理员直接创建的项目：直接更新
             existingProject.setStatus(projectStatus);
             existingProject.setApplicationStatus(applicationStatus);
             projectMapper.updateById(existingProject);
-            log.info("其他类型项目审核：{}", existingProject.getProjectName());
+            log.info("其他类型项目审核完成：{}", existingProject.getProjectName());
         }
 
-        // 5. 审核记录表
+        // 5. 审核记录表处理 - 确保审核记录正确保存
+        ProjectAudit auditRecord;
         if (existingAudit != null) {
             // 已存在则更新
             bo.setAuditId(existingAudit.getAuditId());
-            ProjectAudit update = MapstructUtils.convert(bo, ProjectAudit.class);
-            update.setAuditUser(LoginHelper.getUserId());
-            update.setAuditTime(new Date());
-            return baseMapper.updateById(update) > 0;
+            auditRecord = MapstructUtils.convert(bo, ProjectAudit.class);
+            auditRecord.setAuditId(existingAudit.getAuditId());
+            auditRecord.setAuditUser(LoginHelper.getUserId());
+            auditRecord.setAuditTime(new Date());
+            boolean result = baseMapper.updateById(auditRecord) > 0;
+            log.info("更新审核记录：auditId={}, result={}", existingAudit.getAuditId(), result);
+            return result;
         } else {
             // 不存在则插入
-            ProjectAudit audit = MapstructUtils.convert(bo, ProjectAudit.class);
-            audit.setAuditUser(LoginHelper.getUserId());
-            audit.setAuditTime(new Date());
-            return baseMapper.insert(audit) > 0;
+            auditRecord = MapstructUtils.convert(bo, ProjectAudit.class);
+            auditRecord.setAuditUser(LoginHelper.getUserId());
+            auditRecord.setAuditTime(new Date());
+            boolean result = baseMapper.insert(auditRecord) > 0;
+            log.info("新增审核记录：projectId={}, result={}", bo.getProjectId(), result);
+            return result;
         }
     }
 

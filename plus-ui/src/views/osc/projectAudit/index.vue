@@ -224,8 +224,8 @@
       <el-form ref="auditFormRef" :model="auditForm" :rules="auditRules" label-width="100px">
         <el-form-item label="审核状态" prop="auditStatus">
           <el-radio-group v-model="auditForm.auditStatus">
-            <el-radio value="2">通过</el-radio>
-            <el-radio value="3">拒绝</el-radio>
+            <el-radio value="1">通过</el-radio>
+            <el-radio value="2">拒绝</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="审核意见" prop="auditOpinion">
@@ -340,7 +340,7 @@ const rejectDialog = reactive({
 
 const rejectForm = ref({
   projectId: undefined,
-  auditStatus: '3', // 驳回状态
+  auditStatus: '2',
   auditOpinion: ''
 });
 
@@ -586,7 +586,7 @@ const submitAudit = () => {
       console.log('项目ID:', auditForm.value.projectId);
       console.log('项目名称:', currentProject.projectName);
       console.log('申请类型:', currentProject.applicationType);
-      console.log('审核状态:', auditForm.value.auditStatus === '2' ? '通过' : '拒绝');
+      console.log('审核状态:', auditForm.value.auditStatus === '1' ? '通过' : '拒绝');
       console.log('是否仅更新状态:', auditData.isUpdateOnly);
       console.log('是否跳过项目创建:', auditData.skipProjectCreation);
       console.log('完整审核数据:', auditData);
@@ -594,7 +594,7 @@ const submitAudit = () => {
       await auditProject(auditData);
 
       // 根据审核状态给出不同提示
-      const statusText = auditForm.value.auditStatus === '2' ? '通过' : '拒绝';
+      const statusText = auditForm.value.auditStatus === '1' ? '通过' : '拒绝';
       let message;
 
       if (currentProject.applicationType === 'community') {
