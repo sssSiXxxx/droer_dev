@@ -119,13 +119,11 @@ INSERT INTO sys_user (user_id, dept_id, user_name, nick_name, user_type, email, 
 -- 7. create_by: 设置为1(系统管理员)
 
 
-
--- 初始所有用户密码为666666
+-- 初始化密码666666
 UPDATE sys_user
-SET password = '$2a$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36rF1eCEi0aKBdZ5P9XJ3yW'
+SET password = '$2a$10$b8yUzN0C71sbz.PhNOCgJe.Tu1yWC3RNrTyjSQ8p1W0.aaUXUJ.Ne'
 WHERE user_id BETWEEN 10000 AND 10103;
 
 UPDATE sys_user
-SET password = '$2a$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36rF1eCEi0aKBdZ5P9XJ3yW'
+SET password = '$2a$10$b8yUzN0C71sbz.PhNOCgJe.Tu1yWC3RNrTyjSQ8p1W0.aaUXUJ.Ne'
 WHERE user_id = 2;
-
