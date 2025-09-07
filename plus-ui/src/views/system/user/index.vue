@@ -107,9 +107,10 @@
         <el-table-column label="手机号码" align="center" prop="phonenumber" width="120" />
         <el-table-column label="加入时间" align="center" prop="joinTime" width="160">
           <template #default="scope">
-            {{ scope.row.joinTime || scope.row.createTime }}
+            {{ formatDate(scope.row.joinTime || scope.row.createTime) }}
           </template>
         </el-table-column>
+
         <el-table-column label="操作" fixed="right" width="180" class-name="small-padding fixed-width">
           <template #default="scope">
             <el-tooltip content="修改" placement="top">
@@ -299,6 +300,7 @@ import { optionselect } from '@/api/system/post';
 import { hasPermi } from '@/directive/permission';
 import { checkPermi } from '@/utils/permission';
 import { listProject } from '@/api/osc/project';
+import { formatDate } from '@/utils/format'
 
 // 防抖函数
 const debounce = (func: Function, wait: number) => {
