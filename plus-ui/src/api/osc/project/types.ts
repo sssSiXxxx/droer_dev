@@ -24,7 +24,7 @@ export interface ProjectVO {
   wikiUrl?: string;
   apiDocUrl?: string;
   lastCommitTime?: string;
-  createDept?: number;
+  lastSyncTime?: string;
   createBy?: number;
   createTime?: string;
   updateBy?: number;
@@ -62,7 +62,7 @@ export interface ProjectForm {
   wikiUrl?: string;
   apiDocUrl?: string;
   lastCommitTime?: string;
-  // 孵化申请字段
+  lastSyncTime?: string;
   applicationType?: string;
   applicationStatus?: string;
   license?: string;

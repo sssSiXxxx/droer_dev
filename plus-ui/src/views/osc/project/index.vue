@@ -42,9 +42,6 @@
             <el-button type="warning" plain icon="Download" @click="handleExport" v-hasPermi="['osc:project:export']">导出</el-button>
           </el-col>
           <el-col :span="1.5">
-            <el-button type="info" plain icon="Upload" @click="handleImport" v-hasPermi="['osc:project:import']">导入</el-button>
-          </el-col>
-          <el-col :span="1.5">
             <el-button type="primary" plain icon="Refresh" @click="handleSyncData" :loading="syncLoading" v-hasPermi="['osc:project:sync']">同步数据</el-button>
           </el-col>
           <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
@@ -225,41 +222,6 @@
         </div>
       </template>
     </el-dialog>
-
-    <!-- 导入对话框 -->
-    <el-dialog :title="upload.title" v-model="upload.open" width="400px" append-to-body>
-<!--      <el-upload-->
-<!--        ref="uploadRef"-->
-<!--        :limit="1"-->
-<!--        accept=".xlsx,.xls"-->
-<!--        :headers="upload.headers"-->
-<!--        :action="upload.url + '?updateSupport=' + upload.updateSupport"-->
-<!--        :disabled="upload.isUploading"-->
-<!--        :on-progress="handleFileUploadProgress"-->
-<!--        :on-success="handleFileSuccess"-->
-<!--        :auto-upload="false"-->
-<!--        drag-->
-<!--      >-->
-<!--        <el-icon class="el-icon&#45;&#45;upload"><upload-filled /></el-icon>-->
-<!--        <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>-->
-<!--        <template #tip>-->
-<!--          <div class="el-upload__tip">-->
-<!--            <el-checkbox v-model="upload.updateSupport" />-->
-<!--            是否更新已经存在的数据，仅更新模式支持。-->
-<!--            <br />-->
-<!--            <span>仅允许导入xls、xlsx格式文件。</span>-->
-<!--            <br />-->
-<!--            <span>模板下载：<el-button type="text" @click="downloadTemplate">下载模板</el-button></span>-->
-<!--          </div>-->
-<!--        </template>-->
-<!--      </el-upload>-->
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button type="primary" @click="submitFileForm">确 定</el-button>
-          <el-button @click="upload.open = false">取 消</el-button>
-        </div>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
@@ -274,6 +236,7 @@ import { View, TrendCharts, Star, Share } from '@element-plus/icons-vue';
 import { useRoute } from 'vue-router';
 import { ElMessageBox } from 'element-plus';
 import {formatDate} from "@vueuse/core";
+import router from "@/router";
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 // 尝试不同的字典类型名称
@@ -656,35 +619,6 @@ const handleExport = () => {
   );
 };
 
-/** 文件上传中处理 */
-const handleFileUploadProgress = (event: any, file: any) => {
-  upload.isUploading = true;
-};
-
-/** 文件上传成功处理 */
-const handleFileSuccess = (response: any, file: any) => {
-  upload.open = false;
-  upload.isUploading = false;
-  uploadRef.value.clearFiles();
-  proxy?.$modal.msgSuccess('导入成功');
-  getList();
-};
-
-/** 导入按钮操作 */
-const handleImport = () => {
-  upload.title = '项目数据导入';
-  upload.open = true;
-};
-
-/** 下载模板操作 */
-const downloadTemplate = () => {
-  proxy?.download('osc/project/importTemplate', {}, `project_template_${new Date().getTime()}.xlsx`);
-};
-
-/** 文件上传中处理 */
-const submitFileForm = () => {
-  uploadRef.value.submit();
-};
 
 /** 同步项目数据 */
 const handleSyncData = async () => {
@@ -737,6 +671,31 @@ const showProjectDetail = (row: ProjectVO) => {
       .split(',')
       .map((item) => getDictLabelFromValue(dictList, item.trim()))
       .join('、');
+  };
+
+  // 格式化时间显示
+  const formatTime = (time?: string | Date) => {
+    if (!time) return '暂无';
+
+    const date = new Date(time);
+    if (isNaN(date.getTime())) return '无效日期';
+
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) {
+      return `${days}天前 (${date.toLocaleDateString()})`;
+    } else if (hours > 0) {
+      return `${hours}小时前`;
+    } else if (minutes > 0) {
+      return `${minutes}分钟前`;
+    } else {
+      return '刚刚';
+    }
   };
 
   // 创建项目详情对话框
@@ -797,8 +756,17 @@ const showProjectDetail = (row: ProjectVO) => {
 </div>
 
 <div style="margin-bottom: 2px; padding: 12px; background-color: white;">
-        <strong style="color: #333;">创建时间：</strong>
-        <p style="margin: 5px 0; color: #666;">${formatDate(new Date(row.createTime), 'YYYY-MM-DD HH:mm:ss')|| '暂无数据'}</p>
+        <strong style="color: #333;">时间信息：</strong>
+        <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+          <div style="flex: 1;">
+            <span style="color: #666; font-size: 12px;">创建时间：</span><br>
+            <span style="color: #333; font-weight: 500;">${formatDate(new Date(row.createTime), 'YYYY-MM-DD HH:mm:ss') || '暂无数据'}</span>
+          </div>
+          <div style="flex: 1; text-align: right;">
+            <span style="color: #666; font-size: 12px;">最新提交：</span><br>
+            <span style="color: #1890ff; font-weight: 500;">${formatTime(row.lastCommitTime)}</span>
+          </div>
+        </div>
       </div>
 
       <div style="margin-bottom: 2px; padding: 12px; background-color: #f0f9f0; color: #666;">

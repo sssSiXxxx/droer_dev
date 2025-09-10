@@ -74,6 +74,22 @@
         </el-col>
       </el-row>
 
+      <!-- 时间信息行 -->
+      <el-row :gutter="24" style="margin-top: 20px; background-color: #f8f9fa; padding: 15px; border-radius: 8px;">
+        <el-col :span="12">
+          <div class="time-display">
+            <strong>创建时间：</strong>
+            <span>{{ formatTime(projectInfo.createTime) || '数据加载中...' }}</span>
+          </div>
+        </el-col>
+        <el-col :span="12">
+          <div class="time-display">
+            <strong>最新提交时间：</strong>
+            <span>{{ formatTime(projectInfo.lastCommitTime) || '数据加载中...' }}</span>
+          </div>
+        </el-col>
+      </el-row>
+
       <el-row :gutter="24" style="margin-top: 16px">
         <el-col :span="24">
           <div class="info-item description-item">
@@ -112,7 +128,7 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
-import { Document, ArrowLeft, Star, Share, User, Warning } from '@element-plus/icons-vue';
+import { Document, ArrowLeft, Star, Share, User, Warning, Clock, Refresh, Calendar } from '@element-plus/icons-vue';
 import { getProject } from '@/api/osc/project';
 import { listUser } from '@/api/system/user';
 import { ProjectVO } from '@/api/osc/project/types';
@@ -154,6 +170,31 @@ const getProjectInfo = async () => {
   }
 };
 
+
+// 格式化时间
+const formatTime = (time?: string | Date) => {
+  if (!time) return '暂无';
+
+  const date = new Date(time);
+  if (isNaN(date.getTime())) return '无效日期';
+
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const seconds = Math.floor(diff / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (days > 0) {
+    return `${days}天前 (${date.toLocaleDateString()})`;
+  } else if (hours > 0) {
+    return `${hours}小时前`;
+  } else if (minutes > 0) {
+    return `${minutes}分钟前`;
+  } else {
+    return '刚刚';
+  }
+};
 
 // 获取贡献者数量
 const getContributorCount = () => {
@@ -289,4 +330,61 @@ onMounted(async () => {
   margin-top: 4px;
 }
 
+/* 时间显示样式 */
+.time-display {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+}
+
+.time-display strong {
+  color: #333;
+  font-weight: 600;
+}
+
+.time-display span {
+  color: #666;
+}
+
+/* 时间项样式 */
+.time-item {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border-radius: 8px;
+  border-left: 4px solid #0ea5e9;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  min-height: 60px;
+}
+
+.time-item:hover {
+  background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+  transform: translateY(-1px);
+}
+
+.time-icon {
+  font-size: 18px;
+  color: #0ea5e9;
+  margin-right: 12px;
+}
+
+.time-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.time-label {
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.time-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: #0f172a;
+}
 </style>

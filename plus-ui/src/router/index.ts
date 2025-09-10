@@ -145,13 +145,6 @@ export const dynamicRoutes: RouteRecordRaw[] = [
         permissions: ['osc:projectCreate:list']
       },
       {
-        path: 'projectPhase',
-        component: () => import('@/views/osc/projectPhase/index.vue'),
-        name: 'ProjectPhaseClient',
-        meta: { title: '仓库追踪', icon: 'monitor' },
-        permissions: ['osc:projectPhase:list']
-      },
-      {
         path: 'projectAudit',
         component: () => import('@/views/osc/projectAudit/index.vue'),
         name: 'ProjectAuditClient',

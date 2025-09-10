@@ -548,6 +548,20 @@ public class ProjectServiceImpl implements IProjectService {
             Integer issuesCount = repoData.path("open_issues_count").asInt(0);
             String language = repoData.path("language").asText(null);
             String size = String.valueOf(repoData.path("size").asLong(0));
+            
+            // 获取最后提交时间
+            Date lastCommitTime = null;
+            String pushedAt = repoData.path("pushed_at").asText(null);
+            if (StringUtils.isNotBlank(pushedAt)) {
+                try {
+                    // 解析ISO 8601时间格式 (如: "2023-10-15T10:30:45Z")
+                    lastCommitTime = java.sql.Timestamp.valueOf(
+                        pushedAt.replace("T", " ").replace("Z", "")
+                    );
+                } catch (Exception e) {
+                    log.warn("解析最后提交时间失败: {}, 原始值: {}", e.getMessage(), pushedAt);
+                }
+            }
 
             // 更新项目数据
             Project updateProject = new Project();
@@ -561,14 +575,21 @@ public class ProjectServiceImpl implements IProjectService {
                 updateProject.setTechStack(language);
             }
             updateProject.setProjectSize(size);
+            
+            // 设置最后提交时间
+            if (lastCommitTime != null) {
+                updateProject.setLastCommitTime(lastCommitTime);
+            }
+            
             updateProject.setUpdateTime(new Date());
             updateProject.setLastSyncTime(new Date());
 
             int result = baseMapper.updateById(updateProject);
 
             if (result > 0) {
-                log.info("项目 {} 数据同步成功: Star={}, Fork={}, Watch={}, Issues={}",
-                    project.getProjectName(), starCount, forkCount, watchCount, issuesCount);
+                log.info("项目 {} 数据同步成功: Star={}, Fork={}, Watch={}, Issues={}, LastCommit={}",
+                    project.getProjectName(), starCount, forkCount, watchCount, issuesCount, 
+                    lastCommitTime != null ? lastCommitTime : "未获取到");
                 return true;
             } else {
                 log.warn("项目 {} 数据库更新失败", project.getProjectName());
