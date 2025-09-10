@@ -25,15 +25,6 @@
       <RealtimeStats :compact="true" :show-header="false" ref="realtimeStatsRef" />
     </div>
 
-    <!-- 搜索区域 -->
-    <div class="search-section">
-      <div class="search-container">
-        <h2>探索优秀项目</h2>
-        <p>搜索和发现 Dromara 社区的开源项目</p>
-        <ProjectSearchCombo placeholder="搜索项目名称或描述..." :max-results="20" @search="handleProjectSearch" @select="handleProjectSelect" />
-      </div>
-    </div>
-
     <!-- 主要内容区域 -->
     <div class="main-content">
       <!-- 社区活跃度趋势图表 -->
@@ -815,7 +806,7 @@ onMounted(async () => {
   } catch (error) {
     console.warn('⚠️ 通知服务启动失败:', error);
   }
-  
+
   // 监听来自项目列表的数据刷新事件
   const handleDashboardRefresh = (event: CustomEvent) => {
     console.log('🔔 收到首页数据刷新通知:', event.detail);
@@ -825,9 +816,9 @@ onMounted(async () => {
       refreshAllDataAndUI();
     }
   };
-  
+
   window.addEventListener('dashboard-refresh', handleDashboardRefresh);
-  
+
   // 页面卸载时移除事件监听
   onUnmounted(() => {
     window.removeEventListener('dashboard-refresh', handleDashboardRefresh);
