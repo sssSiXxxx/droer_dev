@@ -64,48 +64,20 @@ public class SysOssServiceImpl implements ISysOssService, OssService {
      */
     @Override
     public TableDataInfo<SysOssVo> queryPageList(SysOssBo bo, PageQuery pageQuery) {
-        System.out.println("=== OSS查询开始 ===");
-        System.out.println("查询条件: " + bo);
-        System.out.println("分页参数: 页码=" + pageQuery.getPageNum() + ", 大小=" + pageQuery.getPageSize());
-
         try {
             LambdaQueryWrapper<SysOss> lqw = buildQueryWrapper(bo);
-
-            // 使用自定义查询方法，直接关联项目名称
-            Page<SysOssVo> result = baseMapper.selectOssPageWithProjectName(pageQuery.build(), lqw);
-
-            System.out.println("查询成功，记录数: " + result.getRecords().size());
-            System.out.println("总记录数: " + result.getTotal());
-
-            // 调试查询结果
-            if (result.getRecords().size() > 0) {
-                result.getRecords().forEach(item -> {
-                    System.out.println("文件记录: ossId=" + item.getOssId() +
-                                     ", fileName=" + item.getFileName() +
-                                     ", projectId=" + item.getProjectId() +
-                                     ", projectName=" + item.getProjectName());
-                });
-            }
-
-            // 处理URL匹配
+            Page<SysOssVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
+            
             List<SysOssVo> voList = result.getRecords().stream()
                 .map(this::matchingUrl)
                 .toList();
-
             result.setRecords(voList);
-
-            System.out.println("=== OSS查询成功结束 ===");
+            
             return TableDataInfo.build(result);
         } catch (Exception e) {
-            System.err.println("OSS查询失败: " + e.getMessage());
-            e.printStackTrace();
-
-            // 如果查询失败，返回空结果
             Page<SysOssVo> emptyResult = new Page<>();
             emptyResult.setRecords(new ArrayList<>());
             emptyResult.setTotal(0);
-
-            System.out.println("=== OSS查询失败结束，返回空结果 ===");
             return TableDataInfo.build(emptyResult);
         }
     }
@@ -183,8 +155,6 @@ public class SysOssServiceImpl implements ISysOssService, OssService {
         lqw.like(StringUtils.isNotBlank(bo.getOriginalName()), SysOss::getOriginalName, bo.getOriginalName());
         lqw.eq(StringUtils.isNotBlank(bo.getFileSuffix()), SysOss::getFileSuffix, bo.getFileSuffix());
         lqw.eq(StringUtils.isNotBlank(bo.getUrl()), SysOss::getUrl, bo.getUrl());
-        lqw.eq(ObjectUtil.isNotNull(bo.getProjectId()), SysOss::getProjectId, bo.getProjectId());
-        lqw.eq(StringUtils.isNotBlank(bo.getFileType()), SysOss::getFileType, bo.getFileType());
         lqw.between(params.get("beginCreateTime") != null && params.get("endCreateTime") != null,
             SysOss::getCreateTime, params.get("beginCreateTime"), params.get("endCreateTime"));
         lqw.eq(ObjectUtil.isNotNull(bo.getCreateBy()), SysOss::getCreateBy, bo.getCreateBy());
@@ -231,7 +201,7 @@ public class SysOssServiceImpl implements ISysOssService, OssService {
             response.getWriter().write("{\"code\": 404, \"msg\": \"文件不存在或已被删除\"}");
             return;
         }
-        
+
         try {
             FileUtils.setAttachmentResponseHeader(response, sysOss.getOriginalName());
             response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE + "; charset=UTF-8");
@@ -256,35 +226,18 @@ public class SysOssServiceImpl implements ISysOssService, OssService {
      * @throws ServiceException 如果上传过程中发生异常，则抛出 ServiceException 异常
      */
     @Override
-    public SysOssVo upload(MultipartFile file, Long projectId, String fileType) {
-        System.out.println("=== OSS 上传开始 ===");
-        System.out.println("文件名: " + file.getOriginalFilename());
-        System.out.println("项目ID: " + projectId);
-        System.out.println("文件类型: " + fileType);
-        System.out.println("文件大小: " + file.getSize() + " bytes");
-
+    public SysOssVo upload(MultipartFile file) {
         String originalfileName = file.getOriginalFilename();
-
         String suffix = StringUtils.substring(originalfileName, originalfileName.lastIndexOf("."), originalfileName.length());
         OssClient storage = OssFactory.instance();
         UploadResult uploadResult;
         try {
             uploadResult = storage.uploadSuffix(file.getBytes(), suffix, file.getContentType());
-            System.out.println("OSS 上传成功，生成文件名: " + uploadResult.getFilename());
         } catch (IOException e) {
-            System.err.println("OSS 上传失败: " + e.getMessage());
             throw new ServiceException(e.getMessage());
         }
         // 保存文件信息
-        SysOssVo result = buildResultEntity(originalfileName, suffix, storage.getConfigKey(), uploadResult, projectId, fileType);
-        System.out.println("数据库记录已创建，OSS ID: " + result.getOssId());
-        System.out.println("=== OSS 上传结束 ===");
-        return result;
-    }
-
-    @Override
-    public SysOssVo upload(MultipartFile file) {
-        return upload(file, null, "other");
+        return buildResultEntity(originalfileName, suffix, storage.getConfigKey(), uploadResult);
     }
 
     /**
@@ -299,41 +252,22 @@ public class SysOssServiceImpl implements ISysOssService, OssService {
         String suffix = StringUtils.substring(originalfileName, originalfileName.lastIndexOf("."), originalfileName.length());
         OssClient storage = OssFactory.instance();
         UploadResult uploadResult = storage.uploadSuffix(file, suffix);
-        // 保存文件信息，使用默认的 projectId 和 fileType
-        return buildResultEntity(originalfileName, suffix, storage.getConfigKey(), uploadResult, null, "other");
+        return buildResultEntity(originalfileName, suffix, storage.getConfigKey(), uploadResult);
     }
 
     @NotNull
-    private SysOssVo buildResultEntity(String originalfileName, String suffix, String configKey, UploadResult uploadResult,
-                                     Long projectId, String fileType) {
-        System.out.println("=== 构建数据库记录 ===");
-        System.out.println("原始文件名: " + originalfileName);
-        System.out.println("项目ID: " + projectId);
-        System.out.println("文件类型: " + fileType);
-        System.out.println("上传结果文件名: " + uploadResult.getFilename());
+    private SysOssVo buildResultEntity(String originalfileName, String suffix, String configKey, UploadResult uploadResult) {
 
         SysOss oss = new SysOss();
         oss.setUrl(uploadResult.getUrl());
         oss.setFileSuffix(suffix);
         oss.setFileName(uploadResult.getFilename());
-        oss.setOriginalName(originalfileName); // 保存原始文件名
+        oss.setOriginalName(originalfileName);
         oss.setService(configKey);
-        oss.setProjectId(projectId);
-        oss.setFileType(fileType);
-        // 设置文件大小，如果 uploadResult 没有 size 则设为 null
         oss.setSize(uploadResult.getSize() != null ? uploadResult.getSize() : null);
 
-        System.out.println("准备插入数据库...");
-        int insertResult = baseMapper.insert(oss);
-        System.out.println("数据库插入结果: " + insertResult + " 条记录");
-        System.out.println("生成的OSS ID: " + oss.getOssId());
-
-        if (insertResult != 1) {
-            System.err.println("警告：插入结果异常，期望1条记录，实际: " + insertResult + " 条");
-        }
-
+        baseMapper.insert(oss);
         SysOssVo sysOssVo = MapstructUtils.convert(oss, SysOssVo.class);
-        System.out.println("=== 数据库记录构建完成 ===");
         return this.matchingUrl(sysOssVo);
     }
 
@@ -364,22 +298,7 @@ public class SysOssServiceImpl implements ISysOssService, OssService {
      * @return SysOssVo视图对象
      */
     private SysOssVo convertToVo(SysOss oss) {
-        SysOssVo vo = MapstructUtils.convert(oss, SysOssVo.class);
-
-        // 如果有项目ID但没有项目名称，尝试通过Spring上下文查询项目名称
-        if (vo.getProjectId() != null && StringUtils.isBlank(vo.getProjectName())) {
-            try {
-                // 使用HTTP请求方式获取项目信息，避免模块依赖问题
-                String apiUrl = "http://localhost:8080/osc/project/" + vo.getProjectId();
-                // 这里暂时使用简单的映射，在实际环境中项目信息应该通过适当的方式获取
-                vo.setProjectName("项目-" + vo.getProjectId());
-            } catch (Exception e) {
-                // 如果查询失败，使用默认值
-                vo.setProjectName("项目-" + vo.getProjectId());
-            }
-        }
-
-        return vo;
+        return MapstructUtils.convert(oss, SysOssVo.class);
     }
 
     /**

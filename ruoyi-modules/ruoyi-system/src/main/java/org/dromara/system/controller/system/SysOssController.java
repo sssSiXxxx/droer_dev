@@ -69,13 +69,11 @@ public class SysOssController extends BaseController {
     // @SaCheckPermission("system:oss:upload")  // 临时注释掉权限检查
     @Log(title = "OSS对象存储", businessType = BusinessType.INSERT)
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public R<SysOssUploadVo> upload(@RequestPart("file") MultipartFile file,
-                                   @RequestParam(required = false) Long projectId,
-                                   @RequestParam(required = false, defaultValue = "other") String fileType) {
+    public R<SysOssUploadVo> upload(@RequestPart("file") MultipartFile file) {
         if (ObjectUtil.isNull(file)) {
             return R.fail("上传文件不能为空");
         }
-        SysOssVo oss = ossService.upload(file, projectId, fileType);
+        SysOssVo oss = ossService.upload(file);
         SysOssUploadVo uploadVo = new SysOssUploadVo();
         uploadVo.setUrl(oss.getUrl());
         uploadVo.setFileName(oss.getOriginalName());

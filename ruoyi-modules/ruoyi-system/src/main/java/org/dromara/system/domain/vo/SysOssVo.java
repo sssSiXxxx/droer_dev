@@ -2,6 +2,8 @@ package org.dromara.system.domain.vo;
 
 import io.github.linpeilie.annotations.AutoMapper;
 import lombok.Data;
+import org.dromara.common.translation.annotation.Translation;
+import org.dromara.common.translation.constant.TransConstant;
 import org.dromara.system.domain.SysOss;
 
 import java.io.Serial;
@@ -30,15 +32,6 @@ public class SysOssVo implements Serializable {
      */
     private Long tenantId;
 
-    /**
-     * 所属项目ID
-     */
-    private Long projectId;
-
-    /**
-     * 所属项目名称
-     */
-    private String projectName;
 
     /**
      * 分类ID
@@ -80,10 +73,6 @@ public class SysOssVo implements Serializable {
      */
     private Long size;
 
-    /**
-     * 文档类型（logo: Logo图片, requirement: 需求文档, help: 帮助文档, design: 设计文档, api: 接口文档, other: 其他文档）
-     */
-    private String fileType;
 
     /**
      * 创建部门
@@ -94,6 +83,12 @@ public class SysOssVo implements Serializable {
      * 创建者
      */
     private Long createBy;
+
+    /**
+     * 创建者名称
+     */
+    @Translation(type = TransConstant.USER_ID_TO_NAME, mapper = "createBy")
+    private String createByName;
 
     /**
      * 创建时间

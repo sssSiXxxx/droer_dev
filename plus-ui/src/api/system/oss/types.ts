@@ -6,9 +6,6 @@ export interface OssVO extends BaseEntity {
   url: string;
   createByName: string;
   service: string;
-  projectId?: string | number;
-  projectName?: string;
-  fileType?: string;
   size?: number;
 }
 
@@ -18,14 +15,10 @@ export interface OssQuery extends PageQuery {
   fileSuffix?: string;
   createTime?: string;
   service?: string;
-  projectId?: string | number;
-  fileType?: string;
   orderByColumn?: string;
   isAsc?: string;
 }
 
 export interface OssForm {
   file: undefined | string;
-  projectId?: string | number;
-  fileType?: string;
 }
