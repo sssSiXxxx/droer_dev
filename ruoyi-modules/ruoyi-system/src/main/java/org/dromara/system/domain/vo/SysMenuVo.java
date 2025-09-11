@@ -1,5 +1,6 @@
 package org.dromara.system.domain.vo;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.github.linpeilie.annotations.AutoMapper;
 import lombok.Data;
 import org.dromara.system.domain.SysMenu;
@@ -26,6 +27,7 @@ public class SysMenuVo implements Serializable {
     /**
      * 菜单ID
      */
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long menuId;
 
     /**

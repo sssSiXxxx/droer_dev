@@ -434,8 +434,8 @@ const data = reactive<PageData<ProjectForm, ProjectQuery>>({
 const { queryParams, form, rules } = toRefs(data);
 
 /** 根据用户ID获取用户昵称 */
-const getUserNickName = (userId: number) => {
-  const user = userList.value.find(u => u.userId === userId);
+const getUserNickName = (userId: number | string) => {
+  const user = userList.value.find(u => u.userId == userId); // 使用 == 而不是 === 来比较
   return user ? user.nickName : '未设置';
 };
 

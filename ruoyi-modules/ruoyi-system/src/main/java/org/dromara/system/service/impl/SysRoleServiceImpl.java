@@ -215,6 +215,9 @@ public class SysRoleServiceImpl implements ISysRoleService, RoleService {
      */
     @Override
     public void checkRoleAllowed(SysRoleBo role) {
+        if (ObjectUtil.isNull(role)) {
+            throw new ServiceException("角色信息不能为空");
+        }
         if (ObjectUtil.isNotNull(role.getRoleId()) && LoginHelper.isSuperAdmin(role.getRoleId())) {
             throw new ServiceException("不允许操作超级管理员角色");
         }
@@ -227,6 +230,9 @@ public class SysRoleServiceImpl implements ISysRoleService, RoleService {
         // 修改不允许修改 管理员标识符
         if (ObjectUtil.isNotNull(role.getRoleId())) {
             SysRole sysRole = baseMapper.selectById(role.getRoleId());
+            if (ObjectUtil.isNull(sysRole)) {
+                throw new ServiceException("角色不存在，无法进行操作!");
+            }
             // 如果标识符不相等 判断为修改了管理员标识符
             if (!StringUtils.equals(sysRole.getRoleKey(), role.getRoleKey())) {
                 if (StringUtils.equalsAny(sysRole.getRoleKey(), keys)) {
@@ -414,6 +420,9 @@ public class SysRoleServiceImpl implements ISysRoleService, RoleService {
     public int deleteRoleByIds(Long[] roleIds) {
         for (Long roleId : roleIds) {
             SysRole role = baseMapper.selectById(roleId);
+            if (ObjectUtil.isNull(role)) {
+                throw new ServiceException(String.format("角色ID %1$s 不存在，无法删除!", roleId));
+            }
             checkRoleAllowed(BeanUtil.toBean(role, SysRoleBo.class));
             checkRoleDataScope(roleId);
             if (countUserRoleByRoleId(roleId) > 0) {

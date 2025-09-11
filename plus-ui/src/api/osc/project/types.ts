@@ -1,5 +1,5 @@
 export interface ProjectVO {
-  projectId?: number;
+  projectId?: number | string;
   projectName?: string;
   projectCode?: string;
   description?: string;
@@ -12,7 +12,7 @@ export interface ProjectVO {
   techStack?: string;
   programmingLanguage?: string;
   coreContributors?: string;
-  userId?: number;
+  userId?: number | string;
   contactInfo?: string;
   versionInfo?: string;
   starCount?: number;
@@ -25,9 +25,9 @@ export interface ProjectVO {
   apiDocUrl?: string;
   lastCommitTime?: string;
   lastSyncTime?: string;
-  createBy?: number;
+  createBy?: number | string;
   createTime?: string;
-  updateBy?: number;
+  updateBy?: number | string;
   updateTime?: string;
   // 孵化申请字段
   applicationType?: string;
@@ -44,7 +44,7 @@ export interface ProjectVO {
 }
 
 export interface ProjectForm {
-  projectId?: number;
+  projectId?: number | string;
   projectName?: string;
   projectCode?: string;
   description?: string;
@@ -53,7 +53,7 @@ export interface ProjectForm {
   logoUrl?: string;
   status?: string;
   remark?: string;
-  userId?: number;
+  userId?: number | string;
   starCount?: number;
   forkCount?: number;
   issuesCount?: number;

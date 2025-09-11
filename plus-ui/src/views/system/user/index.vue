@@ -792,7 +792,7 @@ const handleUpdate = async (row?: UserForm) => {
 
 /** 根据角色ID获取角色名称 */
 const getRoleNameById = (roleId: number) => {
-  const role = roleOptions.value.find(r => r.roleId === roleId);
+  const role = roleOptions.value.find(r => r.roleId == roleId);
   return role ? role.roleName : `角色${roleId}`;
 };
 

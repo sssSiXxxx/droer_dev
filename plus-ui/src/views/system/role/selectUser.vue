@@ -15,21 +15,22 @@
       </el-form>
       <el-row>
         <el-table ref="tableRef" border :data="userList" height="260px" @row-click="clickRow" @selection-change="handleSelectionChange">
-          <el-table-column type="selection" width="55"></el-table-column>
-          <el-table-column label="用户名称" prop="userName" :show-overflow-tooltip="true" />
-          <el-table-column label="用户昵称" prop="nickName" :show-overflow-tooltip="true" />
-          <el-table-column label="邮箱" prop="email" :show-overflow-tooltip="true" />
-          <el-table-column label="手机" prop="phonenumber" :show-overflow-tooltip="true" />
+          <el-table-column type="selection" width="55" align="center"></el-table-column>
+          <el-table-column label="用户名称" prop="userName" :show-overflow-tooltip="true" align="center"/>
+          <el-table-column label="用户昵称" prop="nickName" :show-overflow-tooltip="true" align="center"/>
+          <el-table-column label="邮箱" prop="email" :show-overflow-tooltip="true" align="center"/>
+          <el-table-column label="手机" prop="phonenumber" :show-overflow-tooltip="true" align="center"/>
           <el-table-column label="状态" align="center" prop="status">
             <template #default="scope">
               <dict-tag :options="sys_normal_disable" :value="scope.row.status" />
             </template>
           </el-table-column>
-          <el-table-column label="创建时间" align="center" prop="createTime" width="180">
+          <el-table-column label="创建时间" align="center" prop="createTime">
             <template #default="scope">
-              <span>{{ proxy.parseTime(scope.row.createTime) }}</span>
+              <span>{{ formatDate(scope.row.createTime, 'YYYY-MM-DD HH:mm:ss') }}</span>
             </template>
           </el-table-column>
+
         </el-table>
         <pagination v-if="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
       </el-row>
@@ -47,6 +48,8 @@
 import { authUserSelectAll, unallocatedUserList } from '@/api/system/role';
 import { UserVO } from '@/api/system/user/types';
 import { UserQuery } from '@/api/system/user/types';
+import {formatDate} from "@/utils/format";
+
 
 const props = defineProps({
   roleId: {

@@ -1,10 +1,11 @@
 -- Dromara 项目数据导入脚本
 -- 生成时间: 2025-09-01T16:59:20.080Z
--- 项目总数: 99
+-- 项目总数: 79
 -- 匹配完整 os_project 表结构
 
--- 清空现有 Dromara 项目数据 (谨慎执行，建议备份)
--- DELETE FROM os_project WHERE repository_url LIKE '%github.com/dromara%';
+
+ALTER TABLE os_project 
+ADD CONSTRAINT uniq_project_user UNIQUE (user_id, project_name, application_type);
 
 -- 插入项目数据到 os_project 表
 INSERT INTO os_project (
@@ -73,13 +74,13 @@ INSERT INTO os_project (
     '2',
     100,
     1,
-    '2022-01-07 16:35:27', -- 已修正 create_time
+    '2022-01-07 16:35:27', 
     1,
     NOW(),
     'Dromara开源项目',
     'apollo,consul,dubbo,dynamic-threadpool,grpc,java,micrometer,monitor,nacos,rocketmq,spring,springboot,springcloud,thread,threadpool,threadpoolexecutor,zookeeper',
     'Java',
-    '2025-08-09 01:45:59', -- 已修正 last_commit_time
+    '2025-08-09 01:45:59', 
     4553,
     854,
     'yanhom1314',
@@ -121,13 +122,13 @@ INSERT INTO os_project (
     '2',
     100,
     1,
-    '2020-02-03 10:34:29', -- 已修正 create_time
+    '2020-02-03 10:34:29', 
     1,
     NOW(),
     'Dromara开源项目',
     'aouth2,authorization,java,springcloud,sso,token',
     'Java',
-    '2025-06-07 04:00:08', -- 已修正 last_commit_time
+    '2025-06-07 04:00:08', 
     18121,
     2820,
     'click33',
@@ -170,13 +171,13 @@ INSERT INTO os_project (
     '1',
     100,
     1,
-    '2022-06-10 10:22:15', -- 已修正 create_time
+    '2022-06-10 10:22:15', 
     1,
     NOW(),
     'Dromara开源项目',
     '',
     'Java',
-    '2025-07-28 02:45:37', -- 已修正 last_commit_time
+    '2025-07-28 02:45:37', 
     629,
     112,
     'aoshiguchen',
@@ -219,13 +220,13 @@ INSERT INTO os_project (
     '1',
     100,
     1,
-    '2024-01-02 09:13:48', -- 已修正 create_time
+    '2024-01-02 09:13:48', 
     1,
     NOW(),
     'Dromara开源项目',
     'workflow',
     'Java',
-    '2025-08-26 01:09:16', -- 已修正 last_commit_time
+    '2025-08-26 01:09:16', 
     373,
     55,
     'minliuhua',
@@ -268,13 +269,13 @@ INSERT INTO os_project (
     '1',
     100,
     1,
-    '2020-09-13 06:30:06', -- 已修正 create_time
+    '2020-09-13 06:30:06', 
     1,
     NOW(),
     'Dromara开源项目',
     'java,mqtt,mqtt-broker,mqtt-client',
     'Java',
-    '2025-09-01 06:04:53', -- 已修正 last_commit_time
+    '2025-09-01 06:04:53', 
     389,
     70,
     'ChunMengLu',
@@ -317,13 +318,13 @@ INSERT INTO os_project (
     '1',
     100,
     1,
-    '2021-01-08 10:54:59', -- 已修正 create_time
+    '2021-01-08 10:54:59', 
     1,
     NOW(),
     'Dromara开源项目',
     'cms,element-plus,java,mybatis,vue3',
     'Java',
-    '2025-09-01 14:12:44', -- 已修正 last_commit_time
+    '2025-09-01 14:12:44',
     103,
     46,
     'ujcms',
@@ -348,15 +349,14 @@ INSERT INTO os_project (
 );
 
 INSERT INTO os_project (
-    project_name, project_code, description, repository_url, website_url,
-    logo_url, status, create_dept, create_by, create_time, update_by, update_time,
+    project_name, project_code, description, repository_url, website_url,如
     remark, tech_stack, programming_language, last_commit_time, star_count, fork_count,
     core_contributors, contact_info, version_info, issues_count, pr_count, readme_url,
     wiki_url, api_doc_url, user_id, application_type, application_status, license,
     application_reason, contribution, current_status, upgrade_reason, community_impact,
     contact_email, contact_phone
 ) VALUES (
-    -- tenant_id 已移除
+ 
     'electron-egg',
     'electron-egg',
     'A simple, cross platform, enterprise desktop software development framework',

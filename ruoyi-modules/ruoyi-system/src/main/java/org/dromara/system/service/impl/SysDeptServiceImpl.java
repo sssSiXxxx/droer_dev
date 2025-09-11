@@ -153,6 +153,10 @@ public class SysDeptServiceImpl implements ISysDeptService, DeptService {
     @Override
     public List<Long> selectDeptListByRoleId(Long roleId) {
         SysRole role = roleMapper.selectById(roleId);
+        if (role == null) {
+            // 如果角色不存在，返回空列表而不是抛出空指针异常
+            return new ArrayList<>();
+        }
         return baseMapper.selectDeptListByRoleId(roleId, role.getDeptCheckStrictly());
     }
 

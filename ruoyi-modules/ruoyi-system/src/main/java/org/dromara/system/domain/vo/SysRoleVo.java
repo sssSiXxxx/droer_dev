@@ -2,6 +2,7 @@ package org.dromara.system.domain.vo;
 
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.github.linpeilie.annotations.AutoMapper;
 import lombok.Data;
 import org.dromara.common.core.constant.SystemConstants;
@@ -30,6 +31,7 @@ public class SysRoleVo implements Serializable {
      * 角色ID
      */
     @ExcelProperty(value = "角色序号")
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long roleId;
 
     /**

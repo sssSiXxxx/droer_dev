@@ -44,9 +44,9 @@
             <dict-tag :options="sys_normal_disable" :value="scope.row.status" />
           </template>
         </el-table-column>
-        <el-table-column label="创建时间" align="center" prop="createTime" width="180">
+        <el-table-column label="创建时间" align="center" prop="createTime">
           <template #default="scope">
-            <span>{{ scope.row.createTime }}</span>
+            <span>{{ formatDate(scope.row.createTime, 'YYYY-MM-DD HH:mm:ss') }}</span>
           </template>
         </el-table-column>
         <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
@@ -69,9 +69,11 @@ import { allocatedUserList, authUserCancel, authUserCancelAll } from '@/api/syst
 import { UserQuery } from '@/api/system/user/types';
 import { UserVO } from '@/api/system/user/types';
 import SelectUser from './selectUser.vue';
-import { RouteLocationNormalized } from 'vue-router';
+import { RouteLocationNormalized, useRouter } from 'vue-router';
+import {formatDate} from "@/utils/format";
 
 const route = useRoute();
+const router = useRouter();
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 const { sys_normal_disable } = toRefs<any>(proxy?.useDict('sys_normal_disable'));
 
@@ -103,19 +105,9 @@ const getList = async () => {
 };
 // 返回按钮
 const handleClose = () => {
-  const obj: RouteLocationNormalized = {
-    path: '/system/role',
-    fullPath: '',
-    hash: '',
-    matched: [],
-    meta: undefined,
-    name: undefined,
-    params: undefined,
-    query: undefined,
-    redirectedFrom: undefined
-  };
-  proxy?.$tab.closeOpenPage(obj);
+  router.push('/system/role');
 };
+
 /** 搜索按钮操作 */
 const handleQuery = () => {
   queryParams.pageNum = 1;
