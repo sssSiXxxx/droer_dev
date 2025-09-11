@@ -105,7 +105,7 @@ const getList = async () => {
 };
 // 返回按钮
 const handleClose = () => {
-  router.push('/system/role');
+  router.push('/oscuser/role');
 };
 
 /** 搜索按钮操作 */
