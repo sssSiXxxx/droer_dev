@@ -47,17 +47,81 @@
             />
           </div>
         </el-card>
+
+        <!-- 社区项目选择卡片（仅社区项目显示） -->
+        <el-card v-if="form.applicationType === 'community'" class="form-card mb-4">
+          <template #header>
+            <div class="card-header">
+              <el-icon><Star /></el-icon>
+              <span>选择社区项目</span>
+            </div>
+          </template>
+
+          <el-form-item label="社区项目" prop="selectedCommunityProject">
+            <el-select
+              v-model="selectedCommunityProject"
+              placeholder="请选择要申请升级的社区项目"
+              @change="handleCommunityProjectSelect"
+              filterable
+              clearable
+              class="w-full"
+              size="large"
+            >
+              <el-option
+                v-for="project in communityProjects"
+                :key="project.projectId"
+                :label="project.projectName"
+                :value="project.projectId"
+              >
+                <div class="project-option">
+                  <span class="project-name">{{ project.projectName }}</span>
+                  <span class="project-desc">{{ project.description }}</span>
+                </div>
+              </el-option>
+            </el-select>
+          </el-form-item>
+
+          <!-- 提示信息 -->
+          <div v-if="!selectedCommunityProject" class="project-select-tip">
+            <el-alert
+              title="选择社区项目后，系统将自动填充项目的基本信息（名称、描述、仓库地址等）且不可修改"
+              type="info"
+              :closable="false"
+              show-icon
+            />
+          </div>
+
+          <!-- 项目信息预览（选择项目后显示） -->
+          <div v-if="selectedCommunityProject" class="project-info-preview">
+            <el-alert
+              :title="`已选择项目：${form.projectName || ''}，基本信息已自动填充`"
+              type="success"
+              :closable="false"
+              show-icon
+            />
+          </div>
+        </el-card>
         <!-- 基本信息卡片 -->
-        <el-card class="form-card mb-4">
+        <el-card class="form-card mb-4" v-show="form.applicationType === 'personal' || (form.applicationType === 'community' && selectedCommunityProject)">
           <template #header>
             <div class="card-header">
               <el-icon><InfoFilled /></el-icon>
               <span>基本信息</span>
+              <span v-if="form.applicationType === 'community' && selectedCommunityProject" class="auto-fill-badge">自动填充</span>
             </div>
           </template>
 
           <el-form-item label="项目名称" prop="projectName" class="mb-4">
-            <el-input v-model="form.projectName" placeholder="请输入项目名称" :maxlength="50" show-word-limit />
+            <el-input
+              v-model="form.projectName"
+              placeholder="请输入项目名称"
+              :maxlength="50"
+              show-word-limit
+              :disabled="form.applicationType === 'community' && selectedCommunityProject"
+            />
+            <div v-if="form.applicationType === 'community' && selectedCommunityProject" class="field-hint">
+              该信息从社区项目自动填充，不可修改
+            </div>
           </el-form-item>
 
           <el-form-item label="项目描述" prop="description">
@@ -68,30 +132,48 @@
               placeholder="请详细描述项目的功能和特点，让评审委员会更好地了解您的项目"
               :maxlength="500"
               show-word-limit
+              :disabled="form.applicationType === 'community' && selectedCommunityProject"
             />
+            <div v-if="form.applicationType === 'community' && selectedCommunityProject" class="field-hint">
+              该信息从社区项目自动填充，不可修改
+            </div>
           </el-form-item>
 
           <el-row :gutter="20">
             <el-col :span="12">
               <el-form-item label="代码仓库" prop="repositoryUrl">
-                <el-input v-model="form.repositoryUrl" placeholder="https://github.com/yourname/project">
+                <el-input
+                  v-model="form.repositoryUrl"
+                  placeholder="https://github.com/yourname/project"
+                  :disabled="form.applicationType === 'community' && selectedCommunityProject"
+                >
                   <template #append>
                     <el-button @click="() => openUrl(form.repositoryUrl)" :disabled="!form.repositoryUrl">
                       <el-icon><Link /></el-icon>
                     </el-button>
                   </template>
                 </el-input>
+                <div v-if="form.applicationType === 'community' && selectedCommunityProject" class="field-hint">
+                  该信息从社区项目自动填充，不可修改
+                </div>
               </el-form-item>
             </el-col>
             <el-col :span="12">
               <el-form-item label="项目网站" prop="websiteUrl">
-                <el-input v-model="form.websiteUrl" placeholder="https://yourproject.com（可选）">
+                <el-input
+                  v-model="form.websiteUrl"
+                  placeholder="https://yourproject.com（可选）"
+                  :disabled="form.applicationType === 'community' && selectedCommunityProject"
+                >
                   <template #append>
                     <el-button @click="() => openUrl(form.websiteUrl)" :disabled="!form.websiteUrl">
                       <el-icon><Link /></el-icon>
                     </el-button>
                   </template>
                 </el-input>
+                <div v-if="form.applicationType === 'community' && selectedCommunityProject" class="field-hint">
+                  该信息从社区项目自动填充，不可修改
+                </div>
               </el-form-item>
             </el-col>
           </el-row>
@@ -99,7 +181,12 @@
           <el-row :gutter="20" class="mt-4">
             <el-col :span="12">
               <el-form-item label="开源协议" prop="license">
-                <el-select v-model="form.license" placeholder="请选择开源协议" class="w-full">
+                <el-select
+                  v-model="form.license"
+                  placeholder="请选择开源协议"
+                  class="w-full"
+                  :disabled="form.applicationType === 'community' && selectedCommunityProject"
+                >
                   <el-option label="Apache 2.0" value="Apache-2.0" />
                   <el-option label="MIT" value="MIT" />
                   <el-option label="GPL v3" value="GPL-3.0" />
@@ -107,6 +194,9 @@
                   <el-option label="Mozilla Public License 2.0" value="MPL-2.0" />
                   <el-option label="其他" value="OTHER" />
                 </el-select>
+                <div v-if="form.applicationType === 'community' && selectedCommunityProject" class="field-hint">
+                  该信息从社区项目自动填充，不可修改
+                </div>
               </el-form-item>
             </el-col>
           </el-row>
@@ -146,36 +236,14 @@
           </el-row>
         </el-card>
 
-        <!-- 社区项目特有字段 -->
-        <el-card v-if="form.applicationType === 'community'" class="form-card mb-4">
+        <!-- 社区项目升级申请字段 -->
+        <el-card v-if="form.applicationType === 'community' && selectedCommunityProject" class="form-card mb-4">
           <template #header>
             <div class="card-header">
               <el-icon><Star /></el-icon>
-              <span>社区项目信息</span>
+              <span>升级申请信息</span>
             </div>
           </template>
-
-          <!-- 社区项目选择 -->
-          <el-form-item label="选择社区项目" prop="selectedCommunityProject">
-            <el-select
-              v-model="selectedCommunityProject"
-              placeholder="请选择要申请升级的社区项目"
-              @change="handleCommunityProjectSelect"
-              filterable
-              class="w-full"
-            >
-              <el-option
-                v-for="project in communityProjects"
-                :key="project.projectId"
-                :label="project.projectName"
-                :value="project.projectId"
-              >
-                <div class="project-option">
-                  <span class="project-name">{{ project.projectName }}</span>
-                </div>
-              </el-option>
-            </el-select>
-          </el-form-item>
 
           <el-row :gutter="20" style="margin-bottom: 16px;">
             <el-col :span="12">
@@ -192,28 +260,40 @@
             </el-col>
           </el-row>
 
-          <el-row :gutter="20">
-            <el-col :span="6">
-              <el-form-item label="Star数量" prop="starCount">
-                <el-input-number v-model="form.starCount" :min="0" placeholder="0" class="w-full" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="6">
-              <el-form-item label="Fork数量" prop="forkCount">
-                <el-input-number v-model="form.forkCount" :min="0" placeholder="0" class="w-full" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="6">
-              <el-form-item label="Issues数量" prop="issuesCount">
-                <el-input-number v-model="form.issuesCount" :min="0" placeholder="0" class="w-full" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="6">
-              <el-form-item label="PR数量" prop="prCount">
-                <el-input-number v-model="form.prCount" :min="0" placeholder="0" class="w-full" />
-              </el-form-item>
-            </el-col>
-          </el-row>
+          <!-- 项目统计数据（自动填充且只读） -->
+          <div class="project-stats-section">
+            <div class="stats-title">
+              <el-icon><DataAnalysis /></el-icon>
+              <span>项目统计数据</span>
+              <span class="auto-fill-badge">自动填充</span>
+            </div>
+            <el-row :gutter="20">
+              <el-col :span="6">
+                <el-form-item label="Star数量" prop="starCount">
+                  <el-input-number v-model="form.starCount" :min="0" disabled class="w-full" />
+                  <div class="field-hint">该数据从社区项目自动获取</div>
+                </el-form-item>
+              </el-col>
+              <el-col :span="6">
+                <el-form-item label="Fork数量" prop="forkCount">
+                  <el-input-number v-model="form.forkCount" :min="0" disabled class="w-full" />
+                  <div class="field-hint">该数据从社区项目自动获取</div>
+                </el-form-item>
+              </el-col>
+              <el-col :span="6">
+                <el-form-item label="Issues数量" prop="issuesCount">
+                  <el-input-number v-model="form.issuesCount" :min="0" disabled class="w-full" />
+                  <div class="field-hint">该数据从社区项目自动获取</div>
+                </el-form-item>
+              </el-col>
+              <el-col :span="6">
+                <el-form-item label="PR数量" prop="prCount">
+                  <el-input-number v-model="form.prCount" :min="0" disabled class="w-full" />
+                  <div class="field-hint">该数据从社区项目自动获取</div>
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </div>
         </el-card>
 
         <!-- 联系信息卡片 -->
@@ -278,7 +358,7 @@
 
 <script setup name="IncubationApplication" lang="ts">
 import { getCurrentInstance, ref, onMounted, onBeforeUnmount, watch } from 'vue';
-import { Star, Document, InfoFilled, Setting, User, Phone, More, Check, DocumentAdd, Timer, Link } from '@element-plus/icons-vue';
+import { Star, Document, InfoFilled, Setting, User, Phone, More, Check, DocumentAdd, Timer, Link, DataAnalysis } from '@element-plus/icons-vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useUserStore } from '@/store/modules/user';
 import { getProject, addProject, updateProject, listProject } from '@/api/osc/project';
@@ -306,6 +386,7 @@ const communityProjects = ref<ProjectVO[]>([]);
 interface IncubationForm {
   applicationId?: number;
   applicationType?: 'personal' | 'community';
+  sourceProjectId?: number; // 社区项目升级时的源项目ID
   projectName?: string;
   description?: string;
   repositoryUrl?: string;
@@ -331,6 +412,7 @@ interface IncubationForm {
 
 const form = ref<IncubationForm>({
   applicationType: undefined,
+  sourceProjectId: undefined,
   projectName: undefined,
   description: undefined,
   repositoryUrl: undefined,
@@ -426,6 +508,7 @@ const getSubmitRules = () => {
   } else if (form.value.applicationType === 'community') {
     return {
       ...baseRules,
+      // selectedCommunityProject: [{ required: true, message: '请选择要升级的社区项目', trigger: 'change' }],
       upgradeReason: [{ required: true, message: '升级理由不能为空', trigger: 'blur' }],
       communityImpact: [{ required: true, message: '社区影响不能为空', trigger: 'blur' }]
     };
@@ -438,16 +521,28 @@ const getSubmitRules = () => {
 const onApplicationTypeChange = (type: 'personal' | 'community') => {
   // 清空类型特有的字段
   if (type === 'personal') {
+    // 切换到个人项目时，清空社区项目相关字段
     form.value.upgradeReason = undefined;
     form.value.communityImpact = undefined;
     form.value.starCount = undefined;
     form.value.forkCount = undefined;
     form.value.issuesCount = undefined;
     form.value.prCount = undefined;
+    form.value.sourceProjectId = undefined;
+    selectedCommunityProject.value = undefined;
   } else {
+    // 切换到社区项目时，清空个人项目相关字段和基本信息
     form.value.applicationReason = undefined;
     form.value.contribution = undefined;
     form.value.currentStatus = undefined;
+    // 清空基本信息，等待用户选择社区项目后自动填充
+    form.value.projectName = undefined;
+    form.value.description = undefined;
+    form.value.repositoryUrl = undefined;
+    form.value.websiteUrl = undefined;
+    form.value.license = undefined;
+    form.value.sourceProjectId = undefined;
+    selectedCommunityProject.value = undefined;
   }
 };
 
@@ -559,7 +654,7 @@ const submitForm = async (isSubmitAudit: boolean) => {
       ...form.value,
       applicationStatus: applicationStatus,
       userId: userId,
-      status: '1' // 添加默认项目状态为活跃状态
+      status: '1'
     };
 
     console.log('提交孵化申请数据:', submitData);
@@ -570,7 +665,13 @@ const submitForm = async (isSubmitAudit: boolean) => {
     let result;
     const applicationId = route.query.applicationId;
 
-    if (applicationId && form.value.applicationId) {
+    // 对于社区项目升级申请，使用sourceProjectId作为要更新的项目ID
+    if (form.value.applicationType === 'community' && form.value.sourceProjectId) {
+      // 社区项目升级：直接更新源项目记录
+      submitData.projectId = form.value.sourceProjectId;
+      console.log('社区项目升级模式，更新项目ID:', form.value.sourceProjectId);
+      result = await updateProject(submitData);
+    } else if (applicationId && form.value.applicationId) {
       // 编辑模式：更新现有申请
       submitData.projectId = applicationId;
       console.log('编辑模式，更新申请ID:', applicationId);
@@ -579,20 +680,17 @@ const submitForm = async (isSubmitAudit: boolean) => {
       // 新建模式：创建新申请
       console.log('新建模式，创建新孵化申请');
       result = await addProject(submitData);
-      // 如果是新建，保存返回的ID
       if (result && result.data) {
         form.value.applicationId = result.data;
       }
     }
 
     if (isSubmitAudit) {
-      // 提交审核成功
       proxy?.$modal.msgSuccess('孵化申请提交成功，等待审核');
-      // 跳转到申请记录页面，用户可以查看申请状态
       router.push('/osc/applicationRecords');
-      //随后清空表单数据
       form.value = {
         applicationType: undefined,
+        sourceProjectId: undefined,
         projectName: undefined,
         description: undefined,
         repositoryUrl: undefined,
@@ -615,7 +713,6 @@ const submitForm = async (isSubmitAudit: boolean) => {
     } else {
       proxy?.$modal.msgSuccess('草稿保存成功');
       console.log('草稿保存成功，即将跳转到草稿箱');
-      // 跳转到草稿箱，确保带上用户ID参数
       router.push({
         path: '/osc/projectDraft',
         query: { createBy: userId }
@@ -627,18 +724,16 @@ const submitForm = async (isSubmitAudit: boolean) => {
       proxy?.$modal.msgError(isSubmitAudit ? '提交失败' : '保存草稿失败');
     }
   } finally {
-    // 恢复为默认的验证规则
     rules.value = getSubmitRules();
-    // 重置提交状态
     isSubmitting.value = false;
   }
 };
 
 /** 取消按钮 */
 const cancel = () => {
-  // 清空表单数据
   form.value = {
     applicationType: undefined,
+    sourceProjectId: undefined,
     projectName: undefined,
     description: undefined,
     repositoryUrl: undefined,
@@ -659,13 +754,10 @@ const cancel = () => {
     applicationStatus: 'draft'
   };
 
-  // 清除表单验证状态
   formRef.value?.clearValidate();
 
-  // 停止自动保存
   stopAutoSave();
 
-  // 跳转回草稿箱或申请记录页面
   const userId = userStore.userId;
   if (userId) {
     router.push({
@@ -715,7 +807,21 @@ const getCommunityProjects = async () => {
 
 /** 处理社区项目选择 */
 const handleCommunityProjectSelect = async (projectId: number) => {
-  if (!projectId) return;
+  if (!projectId) {
+    // 清空选择时，清空自动填充的字段
+    form.value.projectName = undefined;
+    form.value.description = undefined;
+    form.value.repositoryUrl = undefined;
+    form.value.websiteUrl = undefined;
+    form.value.license = undefined;
+    form.value.starCount = undefined;
+    form.value.forkCount = undefined;
+    form.value.issuesCount = undefined;
+    form.value.prCount = undefined;
+    // 重要：清空原项目关联
+    form.value.sourceProjectId = undefined;
+    return;
+  }
 
   try {
     const res = await getProject(projectId);
@@ -726,12 +832,15 @@ const handleCommunityProjectSelect = async (projectId: number) => {
       form.value.repositoryUrl = res.data.repositoryUrl;
       form.value.websiteUrl = res.data.websiteUrl;
       form.value.license = res.data.license;
-      form.value.starCount = res.data.starCount;
-      form.value.forkCount = res.data.forkCount;
-      form.value.issuesCount = res.data.issuesCount;
-      form.value.prCount = res.data.prCount;
+      form.value.starCount = res.data.starCount || 0;
+      form.value.forkCount = res.data.forkCount || 0;
+      form.value.issuesCount = res.data.issuesCount || 0;
+      form.value.prCount = res.data.prCount || 0;
+      
+      // 重要：设置源项目ID，用于后端识别这是升级申请而不是新建申请
+      form.value.sourceProjectId = projectId;
 
-      proxy?.$modal.msgSuccess('已自动填充项目信息');
+      proxy?.$modal.msgSuccess('已自动填充项目信息，请填写升级申请相关信息');
     }
   } catch (error) {
     console.error('获取项目信息失败:', error);
@@ -744,10 +853,10 @@ const getInfo = async (applicationId: string) => {
   try {
     const res = await getProject(applicationId);
     if (res.data) {
-      // 填充表单数据
       form.value = {
         applicationId: res.data.projectId,
         applicationType: res.data.applicationType,
+        sourceProjectId: res.data.sourceProjectId, // 编辑模式下保持sourceProjectId
         projectName: res.data.projectName,
         description: res.data.description,
         repositoryUrl: res.data.repositoryUrl,
@@ -767,6 +876,11 @@ const getInfo = async (applicationId: string) => {
         remarks: res.data.remarks,
         applicationStatus: res.data.applicationStatus || 'draft'
       };
+      
+      // 如果是社区项目且有sourceProjectId，设置选中的社区项目
+      if (res.data.applicationType === 'community' && res.data.sourceProjectId) {
+        selectedCommunityProject.value = res.data.sourceProjectId;
+      }
     }
   } catch (error) {
     console.error('获取孵化申请信息失败:', error);
@@ -780,14 +894,11 @@ onMounted(async () => {
     await getInfo(applicationId as string);
   }
 
-  // 获取社区项目列表
   await getCommunityProjects();
 
-  // 启动自动保存
   startAutoSave();
 });
 
-// 组件卸载前停止自动保存
 onBeforeUnmount(() => {
   stopAutoSave();
 });
@@ -942,6 +1053,111 @@ onBeforeUnmount(() => {
 
     &:last-child {
       margin-right: 0;
+    }
+  }
+}
+
+.auto-fill-badge {
+  margin-left: 8px;
+  padding: 2px 8px;
+  background-color: var(--el-color-success);
+  color: white;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: normal;
+}
+
+.field-hint {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--el-color-info);
+  line-height: 1.4;
+}
+
+.project-select-tip {
+  margin-top: 16px;
+}
+
+.project-info-preview {
+  margin-top: 16px;
+}
+
+.project-option {
+  display: flex;
+  flex-direction: column;
+
+  .project-name {
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+
+  .project-desc {
+    font-size: 12px;
+    color: var(--el-text-color-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 300px;
+  }
+}
+
+.project-stats-section {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--el-border-color-light);
+
+  .stats-title {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--el-text-color-regular);
+
+    .el-icon {
+      margin-right: 6px;
+      color: var(--el-color-primary);
+    }
+  }
+}
+
+:deep(.el-input.is-disabled .el-input__inner),
+:deep(.el-textarea.is-disabled .el-textarea__inner),
+:deep(.el-select.is-disabled .el-select__wrapper),
+:deep(.el-input-number.is-disabled .el-input__inner) {
+  background-color: var(--el-fill-color-light);
+  color: var(--el-text-color-secondary);
+  cursor: not-allowed;
+}
+
+:deep(.el-select) {
+  .el-select__wrapper {
+    &.is-focused {
+      box-shadow: 0 0 0 1px var(--el-color-primary) inset;
+    }
+  }
+
+  .el-select__placeholder {
+    color: var(--el-text-color-placeholder);
+  }
+}
+
+:deep(.el-alert) {
+  &.el-alert--info {
+    background-color: #f0f9ff;
+    border-color: #0ea5e9;
+
+    .el-alert__content .el-alert__title {
+      color: #0284c7;
+    }
+  }
+
+  &.el-alert--success {
+    background-color: #f0fdf4;
+    border-color: #22c55e;
+
+    .el-alert__content .el-alert__title {
+      color: #16a34a;
     }
   }
 }

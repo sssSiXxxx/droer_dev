@@ -602,7 +602,9 @@ const handleViewDetail = (row: ProjectVO) => {
 /** 删除按钮操作 */
 const handleDelete = async (row?: ProjectVO) => {
   const _projectIds = row?.projectId || ids.value;
-  await proxy?.$modal.confirm('是否确认删除项目列表编号为"' + _projectIds + '"的数据项？').finally(() => (loading.value = false));
+  //获取项目名
+  const projectName = row?.projectName || '';
+  await proxy?.$modal.confirm('是否确认删除项目"' +projectName+ '"？').finally(() => (loading.value = false));
   await delProject(_projectIds);
   proxy?.$modal.msgSuccess('删除成功');
   await getList();
