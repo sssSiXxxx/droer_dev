@@ -1,4 +1,4 @@
-![48f2b499f3844ae9d7ea5c235df80eae](D:\Program Files\xwechat_files\wxid_z9wya6flhsxo22_944d\temp\RWTemp\2025-09\4a2d734bc6c591cbd5322b2a321941ad\48f2b499f3844ae9d7ea5c235df80eae.jpg)
+![输入图片说明](plus-ui/public/readme_pic.jpg)
 
 > **Dromara 开源社区一体化管理系统** 是一款基于 Spring Boot + RuoYi-Vue-Plus-Single 的开源社区管理平台，
 >  提供社区项目全信息管理，项目孵化管理、人员管理、文档管理、统计分析等功能，帮助开源组织高效运营社区。
