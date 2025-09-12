@@ -103,7 +103,7 @@ npm dev
 
 ## 架构图
 
-![image-20250912094909728](C:\Users\liume\AppData\Roaming\Typora\typora-user-images\image-20250912094909728.png)
+![输入图片说明](plus-ui/public/arc_pic.png)
 
 ## 配置说明
 
