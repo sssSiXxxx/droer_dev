@@ -107,8 +107,9 @@ npm dev
 
 ## 配置说明
 
-- `application.yml`：数据库、Redis、Gitee API token
+- `application.yml`：数据库、Redis
 - `VITE_APP_CONTEXT_PATH`：前端接口地址
+- `plus-ui/.env.development` ：须在文件中配置gitee\github api token,获取同步信息
 
 ## 致谢
 
