@@ -1,4 +1,4 @@
-![输入图片说明](plus-ui/public/readme_pic.jpg)
+![顶部封面](plus-ui/public/readme_pic.jpg)
 
 > **Dromara 开源社区一体化管理系统** 是一款基于 Spring Boot + RuoYi-Vue-Plus-Single 的开源社区管理平台，
 >  提供社区项目全信息管理，项目孵化管理、人员管理、文档管理、统计分析等功能，帮助开源组织高效运营社区。
@@ -79,7 +79,7 @@ root/
 
 默认使用mysql数据库导入，依次导入运行以下脚本：
 
-   
+   ![6e8b447c51509cb24e0393f04a5f4543](D:\Program Files\xwechat_files\wxid_z9wya6flhsxo22_944d\temp\RWTemp\2025-09\4a2d734bc6c591cbd5322b2a321941ad\6e8b447c51509cb24e0393f04a5f4543.jpg)
 
 #### 本地运行
 
@@ -103,7 +103,7 @@ npm dev
 
 ## 架构图
 
-![输入图片说明](plus-ui/public/arc_pic.png)
+![架构图](plus-ui/public/arc_pic.png)
 
 ## 配置说明
 
