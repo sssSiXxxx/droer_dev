@@ -79,8 +79,7 @@ root/
 
 默认使用mysql数据库导入，依次导入运行以下脚本：
 
-   ![6e8b447c51509cb24e0393f04a5f4543](D:\Program Files\xwechat_files\wxid_z9wya6flhsxo22_944d\temp\RWTemp\2025-09\4a2d734bc6c591cbd5322b2a321941ad\6e8b447c51509cb24e0393f04a5f4543.jpg)
-
+  ![数据与建表](plus-ui/public/data&sql.jpg)
 #### 本地运行
 
 ```bash
