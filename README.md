@@ -80,6 +80,7 @@ root/
 默认使用mysql数据库导入，依次导入运行以下脚本：
 
   ![数据与建表](plus-ui/public/data&sql.jpg)
+
 #### 本地运行
 
 ```bash
