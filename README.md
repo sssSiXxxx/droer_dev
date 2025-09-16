@@ -121,30 +121,30 @@ npm dev
 
 > 系统部分功能展示展示如下：
 
-![image-20250916114630429](C:\Users\liume\AppData\Roaming\Typora\typora-user-images\image-20250916114630429.png)
+![登录页面](plus-ui/sys_login.png)
 
-![image-20250916115131935](C:\Users\liume\AppData\Roaming\Typora\typora-user-images\image-20250916115131935.png)
+![仪表盘](plus-ui/public/sys_dashboard.png)
 
-![image-20250916121031255](C:\Users\liume\AppData\Roaming\Typora\typora-user-images\image-20250916121031255.png)
+![项目列表](plus-ui/public/sys_projectlist.png)
 
-![image-20250916115724745](C:\Users\liume\AppData\Roaming\Typora\typora-user-images\image-20250916115724745.png)
+![项目详情](plus-ui/public/sys_projectdetail.png)
 
-![image-20250916115959925](C:\Users\liume\AppData\Roaming\Typora\typora-user-images\image-20250916115959925.png)
+![孵化申请1](plus-ui/public/sys_application1.png)
 
-![image-20250916120029831](C:\Users\liume\AppData\Roaming\Typora\typora-user-images\image-20250916120029831.png)
+![孵化申请2](plus-ui/public/sys_application2.png)
 
-![image-20250916120235816](C:\Users\liume\AppData\Roaming\Typora\typora-user-images\image-20250916120235816.png)
+![申请记录](plus-ui/public/sys_apprecords.png)
 
-![image-20250916120524401](C:\Users\liume\AppData\Roaming\Typora\typora-user-images\image-20250916120524401.png)
+![草稿箱](plus-ui/public/sys_draft.png)
 
-![image-20250916120629618](C:\Users\liume\AppData\Roaming\Typora\typora-user-images\image-20250916120629618.png)
+![项目审核](plus-ui/public/sys_auditlist.png)
 
-![image-20250916120712731](C:\Users\liume\AppData\Roaming\Typora\typora-user-images\image-20250916120712731.png)
+![审核记录](plus-ui/public/sys_auditrecords.png)
 
-![image-20250916121121854](C:\Users\liume\AppData\Roaming\Typora\typora-user-images\image-20250916121121854.png)
+![文档管理](plus-ui/public/sys_docupload.png)
 
-![image-20250916121213069](C:\Users\liume\AppData\Roaming\Typora\typora-user-images\image-20250916121213069.png)
+![信息管理](plus-ui/public/sys_peoplelist.png)
 
-![image-20250916121747380](C:\Users\liume\AppData\Roaming\Typora\typora-user-images\image-20250916121747380.png)
+![编辑信息](plus-ui/public/sys_peopleedit.png)
 
-![image-20250916121826649](C:\Users\liume\AppData\Roaming\Typora\typora-user-images\image-20250916121826649.png)
+![角色管理](plus-ui/public/sys_roleset.png)
