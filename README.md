@@ -117,9 +117,34 @@ npm dev
 - 感谢唐导师耐心指导和及时点拨
 - 参考了 RuoYi-Vue-Plus 等优秀开源项目
 
-## 部署使用文档
+## 系统展示
 
-> 部署使用流程与脚手架项目一致，具体可查看 [RuoYi-Vue-Plus](https://gitee.com/dromara/RuoYi-Vue-Plus) 和 [plus-doc](https://plus-doc.dromara.org)
+> 系统部分功能展示展示如下：
 
+![image-20250916114630429](C:\Users\liume\AppData\Roaming\Typora\typora-user-images\image-20250916114630429.png)
 
+![image-20250916115131935](C:\Users\liume\AppData\Roaming\Typora\typora-user-images\image-20250916115131935.png)
 
+![image-20250916121031255](C:\Users\liume\AppData\Roaming\Typora\typora-user-images\image-20250916121031255.png)
+
+![image-20250916115724745](C:\Users\liume\AppData\Roaming\Typora\typora-user-images\image-20250916115724745.png)
+
+![image-20250916115959925](C:\Users\liume\AppData\Roaming\Typora\typora-user-images\image-20250916115959925.png)
+
+![image-20250916120029831](C:\Users\liume\AppData\Roaming\Typora\typora-user-images\image-20250916120029831.png)
+
+![image-20250916120235816](C:\Users\liume\AppData\Roaming\Typora\typora-user-images\image-20250916120235816.png)
+
+![image-20250916120524401](C:\Users\liume\AppData\Roaming\Typora\typora-user-images\image-20250916120524401.png)
+
+![image-20250916120629618](C:\Users\liume\AppData\Roaming\Typora\typora-user-images\image-20250916120629618.png)
+
+![image-20250916120712731](C:\Users\liume\AppData\Roaming\Typora\typora-user-images\image-20250916120712731.png)
+
+![image-20250916121121854](C:\Users\liume\AppData\Roaming\Typora\typora-user-images\image-20250916121121854.png)
+
+![image-20250916121213069](C:\Users\liume\AppData\Roaming\Typora\typora-user-images\image-20250916121213069.png)
+
+![image-20250916121747380](C:\Users\liume\AppData\Roaming\Typora\typora-user-images\image-20250916121747380.png)
+
+![image-20250916121826649](C:\Users\liume\AppData\Roaming\Typora\typora-user-images\image-20250916121826649.png)
