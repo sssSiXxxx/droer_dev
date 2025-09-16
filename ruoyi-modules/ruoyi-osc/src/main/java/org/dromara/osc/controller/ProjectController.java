@@ -1,0 +1,224 @@
+package org.dromara.osc.controller;
+
+import java.util.List;
+import java.util.ArrayList;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.constraints.*;
+import cn.dev33.satoken.annotation.SaCheckPermission;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.validation.annotation.Validated;
+import org.dromara.common.idempotent.annotation.RepeatSubmit;
+import org.dromara.common.log.annotation.Log;
+import org.dromara.common.web.core.BaseController;
+import org.dromara.common.mybatis.core.page.PageQuery;
+import org.dromara.common.core.domain.R;
+import org.dromara.common.core.validate.AddGroup;
+import org.dromara.common.core.validate.EditGroup;
+import org.dromara.common.log.enums.BusinessType;
+import org.dromara.common.excel.utils.ExcelUtil;
+import org.dromara.osc.domain.vo.ProjectVo;
+import org.dromara.osc.domain.vo.ProjectImportVo;
+import org.dromara.osc.domain.bo.ProjectBo;
+import org.dromara.osc.service.IProjectService;
+import org.dromara.common.mybatis.core.page.TableDataInfo;
+import org.springframework.web.multipart.MultipartFile;
+
+/**
+ * 项目列表
+ *
+ * @author lmq
+ * @date 2025-08-02
+ */
+@Validated
+@RequiredArgsConstructor
+@Slf4j
+@RestController
+@RequestMapping("/osc/project")
+public class ProjectController extends BaseController {
+
+    private final IProjectService projectService;
+
+    /**
+     * 查询项目列表列表
+     */
+    @SaCheckPermission("osc:project:list")
+    @GetMapping("/list")
+    public TableDataInfo<ProjectVo> list(ProjectBo bo, PageQuery pageQuery) {
+        return projectService.queryPageList(bo, pageQuery);
+    }
+
+    /**
+     * 查询项目列表（用于OSS文件上传，无需权限）
+     */
+    @GetMapping("/oss/list")
+    public TableDataInfo<ProjectVo> listForOss(ProjectBo bo, PageQuery pageQuery) {
+        log.info("OSS接口调用 - 查询参数: {}, 分页参数: {}", bo, pageQuery);
+        try {
+            TableDataInfo<ProjectVo> result = projectService.queryPageList(bo, pageQuery);
+            log.info("OSS接口调用成功 - 返回数据条数: {}", result.getRows().size());
+            return result;
+        } catch (Exception e) {
+            log.error("OSS接口调用失败", e);
+            throw e;
+        }
+    }
+
+    /**
+     * 导出项目列表列表
+     */
+    @SaCheckPermission("osc:project:export")
+    @Log(title = "项目列表", businessType = BusinessType.EXPORT)
+    @PostMapping("/export")
+    public void export(ProjectBo bo, HttpServletResponse response) {
+        List<ProjectVo> list = projectService.queryList(bo);
+        ExcelUtil.exportExcel(list, "项目列表", ProjectVo.class, response);
+    }
+
+    /**
+     * 获取项目列表详细信息
+     *
+     * @param projectId 主键
+     */
+    @SaCheckPermission("osc:project:query")
+    @GetMapping("/{projectId}")
+    public R<ProjectVo> getInfo(@NotNull(message = "主键不能为空")
+                                     @PathVariable Long projectId) {
+        return R.ok(projectService.queryById(projectId));
+    }
+
+    /**
+     * 新增项目列表
+     */
+    @SaCheckPermission("osc:project:add")
+    @Log(title = "项目列表", businessType = BusinessType.INSERT)
+    @RepeatSubmit()
+    @PostMapping()
+    public R<Void> add(@Validated(AddGroup.class) @RequestBody ProjectBo bo) {
+        return toAjax(projectService.insertByBo(bo));
+    }
+
+    /**
+     * 修改项目列表
+     */
+    @SaCheckPermission("osc:project:edit")
+    @Log(title = "项目列表", businessType = BusinessType.UPDATE)
+    @RepeatSubmit()
+    @PutMapping()
+    public R<Void> edit(@Validated(EditGroup.class) @RequestBody ProjectBo bo) {
+        return toAjax(projectService.updateByBo(bo));
+    }
+
+    /**
+     * 删除项目列表
+     *
+     * @param projectIds 主键串
+     */
+    @SaCheckPermission("osc:project:remove")
+    @Log(title = "项目列表", businessType = BusinessType.DELETE)
+    @DeleteMapping("/{projectIds}")
+    public R<Void> remove(@NotEmpty(message = "主键不能为空")
+                          @PathVariable Long[] projectIds) {
+        return toAjax(projectService.deleteWithValidByIds(List.of(projectIds), true));
+    }
+
+    /**
+     * 导入项目数据
+     */
+    @Log(title = "项目列表", businessType = BusinessType.IMPORT)
+    @RepeatSubmit()
+    @PostMapping("/importData")
+    public R<String> importData(MultipartFile file, boolean updateSupport) throws Exception {
+        log.info("接收到导入请求，文件大小：{} bytes，updateSupport：{}", file.getSize(), updateSupport);
+        try {
+            projectService.importData(file, updateSupport);
+            log.info("导入处理完成");
+            return R.ok("导入成功");
+        } catch (Exception e) {
+            log.error("导入过程中发生错误：{}", e.getMessage(), e);
+            return R.fail("导入失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 下载导入模板
+     */
+    @PostMapping("/importTemplate")
+    public void importTemplate(HttpServletResponse response) {
+        ExcelUtil.exportExcel(new ArrayList<>(), "项目数据", ProjectImportVo.class, response);
+    }
+
+    /**
+     * 同步项目数据（从Git仓库更新Star、Fork等动态数据）
+     */
+    @SaCheckPermission("osc:project:sync")
+    @Log(title = "项目数据同步", businessType = BusinessType.UPDATE)
+    @PostMapping("/sync")
+    public R<String> syncProjectData() {
+        try {
+            log.info("开始同步项目动态数据...");
+            
+            // 先检查数据库字段
+            try {
+                // 测试查询，检查新字段是否存在
+                ProjectVo testProject = projectService.queryById(1L);
+                log.info("数据库字段检查通过");
+            } catch (Exception e) {
+                log.error("数据库字段检查失败，可能需要执行数据库迁移脚本", e);
+                return R.fail("同步失败：数据库字段不完整，请先执行数据库迁移脚本");
+            }
+            
+            int updatedCount = projectService.syncProjectData();
+            log.info("项目数据同步完成，更新了 {} 个项目", updatedCount);
+            return R.ok("数据同步成功，更新了 " + updatedCount + " 个项目", String.valueOf(updatedCount));
+        } catch (Exception e) {
+            log.error("同步项目数据失败", e);
+            return R.fail("同步数据失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 同步单个项目数据
+     */
+    @SaCheckPermission("osc:project:sync")
+    @Log(title = "单个项目数据同步", businessType = BusinessType.UPDATE)
+    @PostMapping("/sync/{projectId}")
+    public R<String> syncSingleProject(@NotNull(message = "项目ID不能为空") @PathVariable Long projectId) {
+        try {
+            log.info("开始同步项目 {} 的动态数据...", projectId);
+            boolean success = projectService.syncSingleProject(projectId);
+            if (success) {
+                log.info("项目 {} 数据同步完成", projectId);
+                return R.ok("项目数据同步成功");
+            } else {
+                log.warn("项目 {} 数据同步失败", projectId);
+                return R.fail("项目数据同步失败");
+            }
+        } catch (Exception e) {
+            log.error("同步项目 {} 数据失败", projectId, e);
+            return R.fail("同步项目数据失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 查询用户申请记录
+     */
+    @GetMapping("/applicationRecords")
+    public TableDataInfo<ProjectVo> getApplicationRecords(@RequestParam Long createBy,
+                                                         @RequestParam(required = false) String projectName,
+                                                         @RequestParam(required = false) String applicationType,
+                                                         @RequestParam(required = false) String applicationStatus,
+                                                         PageQuery pageQuery) {
+        try {
+            return projectService.queryApplicationRecords(createBy, projectName, applicationType, applicationStatus, pageQuery);
+        } catch (Exception e) {
+            log.error("查询申请记录失败", e);
+            TableDataInfo<ProjectVo> errorResult = new TableDataInfo<>();
+            errorResult.setMsg("查询申请记录失败：" + e.getMessage());
+            errorResult.setCode(500);
+            return errorResult;
+        }
+    }
+}

@@ -1,0 +1,319 @@
+@use './variables.module.scss' as *;
+@use './mixin.scss';
+@use './transition.scss';
+@use './element-ui.scss';
+@use './sidebar.scss';
+@use './btn.scss';
+@use './ruoyi.scss';
+@use 'animate.css';
+@use 'element-plus/dist/index.css';
+
+body {
+  height: 100%;
+  margin: 0;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-family:
+    Helvetica Neue,
+    Helvetica,
+    PingFang SC,
+    Hiragino Sans GB,
+    Microsoft YaHei,
+    Arial,
+    sans-serif;
+}
+
+label {
+  font-weight: 700;
+}
+
+html {
+  height: 100%;
+  box-sizing: border-box;
+}
+
+html.dark .svg-icon,
+html.dark svg {
+  fill: var(--el-text-color-regular);
+}
+
+#app {
+  height: 100%;
+}
+
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
+}
+
+.no-padding {
+  padding: 0px !important;
+}
+
+.padding-content {
+  padding: 4px 0;
+}
+
+a:focus,
+a:active {
+  outline: none;
+}
+
+a,
+a:focus,
+a:hover {
+  cursor: pointer;
+  color: inherit;
+  text-decoration: none;
+}
+
+div:focus {
+  outline: none;
+}
+
+.fr {
+  float: right;
+}
+
+.fl {
+  float: left;
+}
+
+.pr-5 {
+  padding-right: 5px;
+}
+
+.pl-5 {
+  padding-left: 5px;
+}
+
+.block {
+  display: block;
+}
+
+.pointer {
+  cursor: pointer;
+}
+
+.inlineBlock {
+  display: block;
+}
+
+.clearfix {
+  &:after {
+    visibility: hidden;
+    display: block;
+    font-size: 0;
+    content: ' ';
+    clear: both;
+    height: 0;
+  }
+}
+
+aside {
+  background: #eef1f6;
+  padding: 8px 24px;
+  margin-bottom: 20px;
+  border-radius: 2px;
+  display: block;
+  line-height: 32px;
+  font-size: 16px;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  color: #2c3e50;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  a {
+    color: #337ab7;
+    cursor: pointer;
+
+    &:hover {
+      color: rgb(32, 160, 255);
+    }
+  }
+}
+
+//main-container全局样式
+.app-container {
+  padding: 20px;
+}
+
+// search面板样式
+.panel,
+.search {
+  margin-bottom: 0.75rem;
+  border-radius: 0.25rem;
+  border: 1px solid var(--el-border-color-light);
+  background-color: var(--el-bg-color-overlay);
+  padding: 0.75rem;
+  transition: all ease 0.3s;
+
+  &:hover {
+    box-shadow: 0 2px 12px #0000001a;
+    transition: all ease 0.3s;
+  }
+}
+
+.components-container {
+  margin: 30px 50px;
+  position: relative;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.sub-navbar {
+  height: 50px;
+  line-height: 50px;
+  position: relative;
+  width: 100%;
+  text-align: right;
+  padding-right: 20px;
+  transition: 600ms ease position;
+  background: linear-gradient(90deg, rgba(32, 182, 249, 1) 0%, rgba(32, 182, 249, 1) 0%, rgba(33, 120, 241, 1) 100%, rgba(33, 120, 241, 1) 100%);
+
+  .subtitle {
+    font-size: 20px;
+    color: #fff;
+  }
+
+  &.draft {
+    background: #d0d0d0;
+  }
+
+  &.deleted {
+    background: #d0d0d0;
+  }
+}
+
+.link-type,
+.link-type:focus {
+  color: #337ab7;
+  cursor: pointer;
+
+  &:hover {
+    color: rgb(32, 160, 255);
+  }
+}
+
+.filter-container {
+  padding-bottom: 10px;
+
+  .filter-item {
+    display: inline-block;
+    vertical-align: middle;
+    margin-bottom: 10px;
+  }
+}
+
+// 项目详情对话框样式
+.project-detail-dialog {
+  .el-message-box {
+    width: 90% !important;
+    max-width: 1000px !important;
+    min-width: 700px !important;
+  }
+
+  .el-message-box__content {
+    padding: 0 !important;
+    max-height: 75vh !important;
+    overflow-y: auto !important;
+  }
+
+  .el-message-box__message {
+    max-height: 75vh !important;
+    overflow-y: auto !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .el-message-box__message > div {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}
+
+/* 统一浅绿色主题 - Element Plus CSS 变量覆盖 */
+:root {
+  --el-color-primary: #10b981;
+  --el-color-primary-light-3: #34d399;
+  --el-color-primary-light-5: #6ee7b7;
+  --el-color-primary-light-7: #a7f3d0;
+  --el-color-primary-light-8: #c6f6d5;
+  --el-color-primary-light-9: #d1fae5;
+  --el-color-primary-dark-2: #047857;
+  --el-color-success: #22c55e;
+  --el-color-warning: #84cc16;
+  --el-color-danger: #dc2626;
+  --el-color-info: #6b7280;
+
+  /* 链接颜色 */
+  --el-color-primary-rgb: 16, 185, 129;
+
+  /* 菜单相关颜色 */
+  --tags-view-active-bg: #10b981;
+  --tags-view-active-border-color: #10b981;
+}
+
+/* 覆盖侧边栏选中状态颜色 */
+.el-menu--vertical .el-menu-item.is-active {
+  background-color: rgba(16, 185, 129, 0.1) !important;
+  color: #10b981 !important;
+}
+
+.el-menu--vertical .el-sub-menu.is-active > .el-sub-menu__title {
+  color: #10b981 !important;
+}
+
+/* 覆盖按钮颜色 */
+.el-button--primary {
+  --el-button-bg-color: #10b981;
+  --el-button-border-color: #10b981;
+  --el-button-hover-bg-color: #059669;
+  --el-button-hover-border-color: #059669;
+  --el-button-active-bg-color: #047857;
+  --el-button-active-border-color: #047857;
+}
+
+/* 覆盖表单组件焦点颜色 */
+.el-input__wrapper.is-focus,
+.el-select .el-input__wrapper.is-focus,
+.el-textarea__inner:focus {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.2) inset !important;
+}
+
+/* 覆盖标签页颜色 */
+.el-tabs__item.is-active {
+  color: #10b981 !important;
+}
+
+.el-tabs__active-bar {
+  background-color: #10b981 !important;
+}
+
+/* 覆盖进度条颜色 */
+.el-progress-bar__inner {
+  background-color: #10b981 !important;
+}
+
+/* 覆盖开关颜色 */
+.el-switch.is-checked .el-switch__core {
+  background-color: #10b981 !important;
+  border-color: #10b981 !important;
+}
+
+/* 覆盖滑块颜色 */
+.el-slider__button {
+  border-color: #10b981 !important;
+}
+
+.el-slider__bar {
+  background-color: #10b981 !important;
+}
